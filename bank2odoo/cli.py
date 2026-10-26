@@ -1,22 +1,46 @@
-"""Safe status-only entrypoint; no statement processing is currently available."""
+"""Headless developer/accountant-review candidate entrypoint (no desktop GUI)."""
 
 import argparse
+from decimal import Decimal, InvalidOperation
+from pathlib import Path
+import sys
 
+from bank2odoo.core.engine import Context, convert
+from bank2odoo.reporting.output import save_candidate
+from bank2odoo.validation.financial import StatementError
 
-MESSAGE = (
-    "Bank2Odoo foundation only. Bank conversion and the desktop interface "
-    "are not implemented. No files were read, converted, or written."
-)
+VERSION = "0.2.0"
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="bank2odoo",
-        description="Bank2Odoo foundation status (no conversion available).",
-    )
-    parser.add_argument(
-        "--version", action="version", version="Bank2Odoo 0.1.0 (foundation only)"
-    )
-    parser.parse_args(argv)
-    print(MESSAGE)
+        prog="bank2odoo", description="Bank statement review candidate; NO GUI and NO Odoo import")
+    parser.add_argument("--version", action="version", version=f"Bank2Odoo {VERSION} (headless candidate engine)")
+    parser.add_argument("--input", type=Path)
+    parser.add_argument("--output", type=Path, help="New 3-column CSV path (no overwrite)")
+    parser.add_argument("--report", type=Path, help="New PRIVATE plain-text report path (no overwrite)")
+    parser.add_argument("--source-unit", choices=("IRR", "TOMAN"))
+    parser.add_argument("--target-unit", choices=("IRR", "TOMAN"))
+    parser.add_argument("--journal", help="Accountant-chosen Bank Journal name; not independently verified")
+    parser.add_argument("--decimal-places", type=int, default=0, help="Confirmed Odoo Journal currency precision")
+    parser.add_argument("--approved-factor", help="Required when units differ; exact factor (10 or 0.1)")
+    args = parser.parse_args(argv)
+    needed = ("input", "output", "report", "source_unit", "target_unit", "journal")
+    if not all(getattr(args, key) is not None for key in needed):
+        if any(getattr(args, key) is not None for key in needed):
+            parser.error("Conversion requires --input --output --report --source-unit --target-unit --journal")
+        print("Bank2Odoo headless conversion engine; accountant-facing PySide6 GUI is NOT implemented.\n"
+              "No bank file processed. Use --help for explicit review-candidate conversion command.")
+        return 0
+    try:
+        approved_factor = Decimal(args.approved_factor) if args.approved_factor is not None else None
+        result = convert(args.input, Context(args.source_unit, args.target_unit, args.journal,
+                                             args.decimal_places, approved_factor))
+        save_candidate(result, args.output, args.report)
+    except (StatementError, OSError, InvalidOperation) as exc:
+        print(f"Conversion NOT completed; no approved Odoo import: {exc}", file=sys.stderr)
+        return 1
+    print(f"REVIEW CANDIDATE ONLY: {len(result.rows)} {result.bank} transactions; "
+          f"balance check: {result.balance_status}. CSV and PRIVATE report written. "
+          "No Odoo import or journal verification performed.")
     return 0

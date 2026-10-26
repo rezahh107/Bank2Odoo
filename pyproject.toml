@@ -1,12 +1,13 @@
 [project]
 name = "bank2odoo"
-version = "0.1.0"
-description = "Offline Iranian bank statement to Odoo CSV converter (foundation only)"
+version = "0.2.0"
+description = "Offline Iranian bank statement to Odoo review-candidate CSV converter"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
-dependencies = []
+dependencies = ["persiantools==6.2.0", "xlrd==2.0.2"]
+
+[dependency-groups]
+dev = ["xlwt==1.3.0"] # Test-only authentic BIFF8 XLS writer; never used in converter.
 
 [tool.uv]
-# No bank conversion or GUI dependency is needed before those features exist.
-# Run from this checkout with `uv run python -m bank2odoo`.
 package = false

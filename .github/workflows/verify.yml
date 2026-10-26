@@ -1,4 +1,4 @@
-name: Foundation verification
+name: Bank2Odoo headless engine verification
 
 on:
   pull_request:
