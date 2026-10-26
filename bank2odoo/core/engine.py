@@ -8,7 +8,7 @@ from pathlib import Path
 
 from bank2odoo.banks.reader import SourceRow, read_statement
 from bank2odoo.validation.financial import (StatementError, amount, clock,
-    exact_scaled, jalali_date, normalized_header, safe_label)
+    exact_scaled, exact_sub, exact_sum, jalali_date, normalized_header, safe_label)
 
 
 UNITS = {"IRR", "TOMAN"}
@@ -93,9 +93,9 @@ def _movement(row: SourceRow, bank: str, context: Context, factor: Decimal) -> M
             raise StatementError("Bank Melli amount must be a positive magnitude; signed/zero correction needs review")
         movement_type = normalized_header(f["kind"])
         if movement_type in ("برداشت", "بدهکار"):
-            signed = -abs(raw_amount)
+            signed = raw_amount.copy_negate()
         elif movement_type in ("واریز", "بستانکار"):
-            signed = abs(raw_amount)
+            signed = raw_amount.copy_abs()
         else:
             raise StatementError(f"Unrecognized Bank Melli transaction type: {f['kind']!r}")
     else:
@@ -104,7 +104,7 @@ def _movement(row: SourceRow, bank: str, context: Context, factor: Decimal) -> M
         debit, credit = debit or Decimal(0), credit or Decimal(0)
         if debit < 0 or credit < 0 or (debit > 0) == (credit > 0):
             raise StatementError("Bank Mellat debit/credit sides must have exactly one positive value")
-        signed = credit - debit
+        signed = exact_sub(credit, debit)
     return Movement(row, date_value, time, signed,
                     exact_scaled(signed, factor, context.decimal_places), balance,
                     label, f.get("reference", ""), f.get("kind", ""))
@@ -129,24 +129,24 @@ def _balances(rows: tuple[Movement, ...]) -> tuple[str, Decimal | None, Decimal 
         # With oldest first, each current transaction changes previous closing balance.
         for previous, current in zip(rows, rows[1:]):
             assert previous.balance is not None and current.balance is not None
-            if current.balance - previous.balance != current.signed:
+            if exact_sub(current.balance, previous.balance) != current.signed:
                 raise StatementError(f"Consecutive balance mismatch at source rows {previous.row.physical_row}/{current.row.physical_row}")
         first, last = rows[0], rows[-1]
         assert first.balance is not None and last.balance is not None
-        opening, closing = first.balance - first.signed, last.balance
+        opening, closing = exact_sub(first.balance, first.signed), last.balance
         order = "oldest-to-newest"
     else:
         # With newest first, prior/newer balance minus current/older balance = prior movement.
         for newer, older in zip(rows, rows[1:]):
             assert newer.balance is not None and older.balance is not None
-            if newer.balance - older.balance != newer.signed:
+            if exact_sub(newer.balance, older.balance) != newer.signed:
                 raise StatementError(f"Consecutive balance mismatch at source rows {newer.row.physical_row}/{older.row.physical_row}")
         first, last = rows[0], rows[-1]
         assert first.balance is not None and last.balance is not None
-        opening, closing = last.balance - last.signed, first.balance
+        opening, closing = exact_sub(last.balance, last.signed), first.balance
         order = "newest-to-oldest"
-    net = sum((r.signed for r in rows), Decimal(0))
-    if closing - opening != net:
+    net = exact_sum(r.signed for r in rows)
+    if exact_sub(closing, opening) != net:
         raise StatementError("Closing minus inferred opening does not equal source movement net")
     return f"PASS: {len(rows)-1} consecutive balance transitions", opening, closing, order, issues
 
@@ -182,9 +182,9 @@ def convert(path: Path, context: Context) -> Conversion:
         if len(group) > 1 and len(days) == 1:
             issues.append("TENTATIVE shared-reference association: source rows " +
                           ", ".join(str(m.row.physical_row) for m in group))
-    debits = sum((-m.signed for m in movements if m.signed < 0), Decimal(0))
-    credits = sum((m.signed for m in movements if m.signed > 0), Decimal(0))
+    debits = exact_sum(m.signed.copy_abs() for m in movements if m.signed < 0)
+    credits = exact_sum(m.signed for m in movements if m.signed > 0)
     return Conversion(source.bank, path.name, sha256(raw).hexdigest(), source.encoding,
                       source.separator, movements, factor, context.source_unit, context.target_unit,
-                      context.journal, debits, credits, credits-debits, balance_status,
+                      context.journal, debits, credits, exact_sub(credits, debits), balance_status,
                       opening, closing, ordering, tuple(issues))
