@@ -60,6 +60,29 @@ class EngineEndToEndTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name)
 
+    def test_28_digit_credits_do_not_round_in_aggregate_or_report(self) -> None:
+        # Expected 29-digit total is a literal independent of Decimal arithmetic.
+        single = "9999999999999999999999999999"
+        exact_total = "19999999999999999999999999998"
+        source = self.root / "precision_mellat.csv"
+        write_mellat(source, [
+            ["1", "1405/07/01", "10:00:00", "001", "واریز یک", "0", single, single],
+            ["2", "1405/07/02", "11:00:00", "002", "واریز دو", "0", single, exact_total],
+        ])
+        result = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+        self.assertEqual(result.credit_total, Decimal(exact_total))
+        self.assertEqual(result.net, Decimal(exact_total))
+        self.assertEqual(result.opening, Decimal("0"))
+        self.assertEqual(result.closing, Decimal(exact_total))
+        self.assertEqual(result.balance_status, "PASS: 1 consecutive balance transitions")
+        expected_csv = ("Date,Label,Amount\n"
+                        f"2026-09-23,واریز یک,{single}\n"
+                        f"2026-09-24,واریز دو,{single}\n")
+        self.assertEqual(output_csv(result), expected_csv)
+        report = control_report(result)
+        self.assertIn(f"credit total: {exact_total}; net: {exact_total}", report)
+        self.assertIn(f"Converted net (IRR): {exact_total}", report)
+
     def test_melli_true_ole_xls_reverse_both_signs_and_associated_fee(self) -> None:
         original = self.root / "legacy.data"  # prove content, not extension
         rows = [
