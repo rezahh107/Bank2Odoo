@@ -45,7 +45,12 @@ def write_mellat(path: Path, values: list[list[str]], encoding: str = "utf-8-sig
     writer.writerow(["Synthetic test file, not a real bank statement"])
     writer.writerow(MELLAT_HEADER)
     writer.writerows(values)
-    path.write_bytes(stream.getvalue().encode(encoding))
+    text = stream.getvalue()
+    if encoding == "cp1256":
+        # Genuine Windows Arabic encoding has U+064A, not Persian U+06CC.
+        # Do not replace undecodable bytes: produce an actually encodable sample.
+        text = text.replace("ی", "ي").replace("ک", "ك")
+    path.write_bytes(text.encode(encoding))
 
 
 class EngineEndToEndTests(unittest.TestCase):
@@ -57,7 +62,7 @@ class EngineEndToEndTests(unittest.TestCase):
     def test_melli_true_ole_xls_reverse_both_signs_and_associated_fee(self) -> None:
         original = self.root / "legacy.data"  # prove content, not extension
         rows = [
-            ["3", "۱۴۰۵/۰۷/۰۳", "09:00:01", "برداشت", "۵", "0009", "", "کارمزد پل", "", "695"],
+            ["3", "۱۴۰۵/۰۷/۰۲", "09:00:01", "برداشت", "۵", "0009", "", "کارمزد پل", "", "695"],
             ["2", "1405/07/02", "09:00:00", "برداشت", "300", "0009", "", "انتقال پل", "", "700"],
             ["1", "1405/07/01", "09:00:00", "واریز", "1,000", "0003", "", "واریز آزمایشی", "", "1000"],
         ]
@@ -66,7 +71,7 @@ class EngineEndToEndTests(unittest.TestCase):
         result = convert(original, Context("IRR", "IRR", "Synthetic Journal"))
         csv_actual = output_csv(result)
         expected = ("Date,Label,Amount\n"
-                    "2026-09-25,کارمزد پل,-5\n"
+                    "2026-09-24,کارمزد پل,-5\n"
                     "2026-09-24,انتقال پل,-300\n"
                     "2026-09-23,واریز آزمایشی,1000\n")
         self.assertEqual(csv_actual, expected)
@@ -81,18 +86,18 @@ class EngineEndToEndTests(unittest.TestCase):
     def test_mellat_real_cp1256_csv_forward_and_private_report(self) -> None:
         source = self.root / "mellat.binary-looking"  # format determined by actual data
         rows = [
-            ["1", "1405/07/01", "10:00:00", "0007", 'واریز آزمایشی', "0", "2000", "2500"],
-            ["2", "1405/07/02", "10:00:00", "0008", 'برداشت، آزمایشی', "100", "0", "2400"],
+            ["1", "1405/07/01", "10:00:00", "0007", 'واریز نمونه', "0", "2000", "2500"],
+            ["2", "1405/07/02", "10:00:00", "0008", 'برداشت، نمونه', "100", "0", "2400"],
             ["3", "1405/07/03", "10:00:00", "0008", 'کارمزد پل', "10", "0", "2390"],
-            ["4", "1405/07/04", "10:00:00", "0008", 'اصلاحیه "نمونه", بدون تایید', "0", "100", "2490"],
+            ["4", "1405/07/04", "10:00:00", "0008", 'اصلاح "نمونه", دوباره', "0", "100", "2490"],
         ]
         write_mellat(source, rows, encoding="cp1256")
         result = convert(source, Context("TOMAN", "IRR", "Synthetic Journal", approved_factor=Decimal(10)))
         expected = ("Date,Label,Amount\n"
-                    "2026-09-23,واریز آزمایشی,20000\n"
-                    "2026-09-24,برداشت، آزمایشی,-1000\n"
+                    "2026-09-23,واریز نمونه,20000\n"
+                    "2026-09-24,برداشت، نمونه,-1000\n"
                     "2026-09-25,کارمزد پل,-100\n"
-                    '2026-09-26,"اصلاحیه ""نمونه"", بدون تایید",1000\n')
+                    '2026-09-26,"اصلاح ""نمونه"", دوباره",1000\n')
         self.assertEqual(output_csv(result), expected)
         self.assertEqual(result.encoding, "cp1256")
         self.assertEqual(result.balance_status, "PASS: 3 consecutive balance transitions")
@@ -146,7 +151,7 @@ class EngineEndToEndTests(unittest.TestCase):
             ["2", "1405/07/02", "10:00:00", "0002", "نمونه", "30", "0", "20"],
         ]
         variants = [
-            (5, "20", "debit/credit"),
+            (6, "20", "debit/credit"),
             (1, "1400/12/30", "Impossible Jalali"),
             (7, "21", "balance mismatch"),
             (5, "-30", "debit/credit"),
