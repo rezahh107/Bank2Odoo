@@ -1,0 +1,12 @@
+[project]
+name = "bank2odoo"
+version = "0.1.0"
+description = "Offline Iranian bank statement to Odoo CSV converter (foundation only)"
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+dependencies = []
+
+[tool.uv]
+# No bank conversion or GUI dependency is needed before those features exist.
+# Run from this checkout with `uv run python -m bank2odoo`.
+package = false

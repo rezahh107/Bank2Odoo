@@ -1,0 +1,28 @@
+name: Foundation verification
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.10.0"
+      - name: Install Python
+        run: uv python install 3.13
+      - name: Sync exact locked environment
+        run: uv sync --locked
+      - name: Run automated verification
+        run: uv run --locked python -m unittest discover -s tests -v
+      - name: Smoke-run real entrypoint
+        run: uv run --locked python -m bank2odoo
