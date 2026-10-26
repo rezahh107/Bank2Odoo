@@ -51,7 +51,8 @@ class PrivacyGuardRegressionTests(unittest.TestCase):
                 self.add_synthetic(root, path, force=True)
                 result = self.run_guard(root)
                 self.assertNotEqual(result.returncode, 0, f"Missed {path}: {result.stdout}")
-                self.assertIn(path, result.stderr)
+                # unittest prints repr(list[str]); Windows paths contain escaped backslashes.
+                self.assertIn(repr(str(Path(path))), result.stderr)
 
     def test_new_ignore_rule_enforced_without_classifier_change(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
