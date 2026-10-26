@@ -50,6 +50,7 @@ def write_mellat(path: Path, values: list[list[str]], encoding: str = "utf-8-sig
         # Genuine Windows Arabic encoding has U+064A, not Persian U+06CC.
         # Do not replace undecodable bytes: produce an actually encodable sample.
         text = text.replace("ی", "ي").replace("ک", "ك")
+        text = text.translate(str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789"))
     path.write_bytes(text.encode(encoding))
 
 
