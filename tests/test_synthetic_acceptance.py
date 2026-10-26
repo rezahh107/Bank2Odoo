@@ -174,6 +174,73 @@ class CheckerMutationQualification(unittest.TestCase):
                     with self.assertRaisesRegex(ContractMismatch, failure):
                         check_result(bank, *paths)
 
+    def assert_source_rejected_with_matching_report_hash(self, bank, paths):
+        # All candidate CSV/trace fields remain frozen; only the supplied bank
+        # source changes. A self-consistent report hash must not authorize it.
+        table, report = self.load_candidate(paths)
+        report['source_sha256'] = hashlib.sha256(paths[2].read_bytes()).hexdigest()
+        self.write_candidate(paths, table, report)
+        with self.assertRaisesRegex(ContractMismatch, 'canonical synthetic source'):
+            check_result(bank, *paths)
+
+    def test_substituted_source_with_matching_report_hash_is_rejected_for_both_banks(self):
+        for bank in ('melli', 'mellat'):
+            with self.subTest(bank=bank):
+                paths = self.sample(bank)
+                altered = copy.deepcopy(self.cases[bank])
+                altered['rows'][0]['reference'] += '-CHANGED'
+                if bank == 'melli':
+                    render_melli(altered, paths[2])
+                    self.assertEqual(len(inspect_biff8(paths[2])),
+                                     len(inspect_biff8(render_melli(self.cases[bank], self.root/'original.xls'))))
+                else:
+                    render_mellat(altered, paths[2])
+                self.assert_source_rejected_with_matching_report_hash(bank, paths)
+
+    def test_melli_modified_xls_bytes_with_matching_report_hash_are_rejected(self):
+        paths = self.sample('melli')
+        source = paths[2]
+        original = source.read_bytes()
+        reference = self.cases['melli']['rows'][0]['reference']
+        before = reference.encode('utf-16le')
+        after = reference.replace('TEST', 'TAST', 1).encode('utf-16le')
+        self.assertEqual(original.count(before), 1)
+        source.write_bytes(original.replace(before, after, 1))
+        self.assertIn(reference.replace('TEST', 'TAST', 1), inspect_biff8(source).values())
+        self.assert_source_rejected_with_matching_report_hash('melli', paths)
+
+    def test_mellat_modified_csv_bytes_and_leading_zero_serial_are_rejected(self):
+        bank = 'mellat'
+        serial = self.cases[bank]['rows'][0]['serial']
+        description = self.cases[bank]['rows'][-1]['description']
+        for mutation, before, after in (
+            ('lost leading zero', serial.encode('utf-8'), serial[1:].encode('utf-8')),
+            ('changed description', description.encode('utf-8'),
+             (description + ' اضافه').encode('utf-8')),
+        ):
+            with self.subTest(mutation=mutation):
+                paths = self.sample(bank)
+                original = paths[2].read_bytes()
+                self.assertEqual(original.count(before), 1)
+                paths[2].write_bytes(original.replace(before, after, 1))
+                with paths[2].open(encoding='utf-8-sig', newline='') as handle:
+                    rows = list(csv.reader(handle))
+                self.assertEqual(len(rows), 61)
+                self.assertEqual(len(rows[3]), 12)
+                if mutation == 'lost leading zero':
+                    self.assertEqual(rows[3][3], serial[1:])
+                else:
+                    self.assertEqual(rows[-1][4], description + ' اضافه')
+                self.assert_source_rejected_with_matching_report_hash(bank, paths)
+
+    def test_missing_source_file_is_evidence_unavailable_for_both_banks(self):
+        for bank in ('melli', 'mellat'):
+            with self.subTest(bank=bank):
+                paths = self.sample(bank)
+                paths[2].unlink()
+                with self.assertRaises(EvidenceUnavailable):
+                    check_result(bank, *paths)
+
     def test_missing_evidence_is_not_a_pass_or_math_failure(self):
         paths = self.sample('melli')
         paths[1].unlink()

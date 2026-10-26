@@ -5,8 +5,9 @@ from decimal import Decimal, InvalidOperation
 import hashlib
 import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
-from .fixtures import ledgers
+from .fixtures import ledgers, render_melli, render_mellat
 
 BASE = Path(__file__).parent
 EXPECTED_FIELDS = ('output_row', 'source_row', 'source_id', 'source_date', 'date',
@@ -124,6 +125,25 @@ def validate_reference(bank, *, source=None, reference=None):
     return len(entries)-1
 
 
+def _require_canonical_source(bank, source_path):
+    """Bind actual source bytes to the ledger-backed, frozen synthetic fixture."""
+    # The ledger must still agree with the separate, frozen expected references.
+    try:
+        validate_reference(bank)
+        with TemporaryDirectory() as temporary:
+            canonical = Path(temporary) / ('synthetic.xls' if bank == 'melli' else 'synthetic.csv')
+            if bank == 'melli':
+                render_melli(ledgers()[bank], canonical)
+            elif bank == 'mellat':
+                render_mellat(ledgers()[bank], canonical)
+            else:
+                raise ContractMismatch(f'Unsupported synthetic bank: {bank}')
+            if Path(source_path).read_bytes() != canonical.read_bytes():
+                raise ContractMismatch(f'{bank}: source bytes differ from canonical synthetic source')
+    except FileNotFoundError as exc:
+        raise EvidenceUnavailable(f'canonical source evidence unavailable: {exc}') from exc
+
+
 def check_result(bank, csv_path, report_path, source_path):
     """Compare future *actual* outputs with immutable expected material.
 
@@ -158,4 +178,5 @@ def check_result(bank, csv_path, report_path, source_path):
     for idx, (actual_trace, expected_row) in enumerate(zip(report['trace'], ref['rows']), 1):
         for key in EXPECTED_FIELDS:
             require_equal(actual_trace.get(key), expected_row[key], f'trace {key} at {idx}')
+    _require_canonical_source(bank, source_path)
     return {'bank':bank, 'count':ref['count'], 'status':'SYNTHETIC_REFERENCE_MATCH_ONLY'}
