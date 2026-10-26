@@ -72,7 +72,7 @@ def clock(value: str) -> tuple[int, int, int] | None:
 
 def safe_label(value: str) -> str:
     s = re.sub(r"[\x00-\x1f\x7f-\x9f\u200e\u200f\u202a-\u202e]", " ", value)
-    return re.sub(r"\s+", " ", s).strip()
+    return re.sub(r"\s+", " ", s).strip().translate(str.maketrans({"ي": "ی", "ك": "ک"}))
 
 
 def exact_scaled(value: Decimal, factor: Decimal, decimal_places: int) -> Decimal:
