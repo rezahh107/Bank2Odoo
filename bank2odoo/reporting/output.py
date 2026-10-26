@@ -71,8 +71,15 @@ def save_candidate(result: Conversion, csv_path: Path, report_path: Path) -> Non
         raise StatementError("Output files must be distinct and must not already exist")
     if csv_path.parent != report_path.parent or not csv_path.parent.is_dir():
         raise StatementError("Both outputs must use the same existing private directory")
-    files = (csv_path, report_path)
-    contents = (output_csv(result), control_report(result))
+    # Git ignores are not sufficient to keep real bank data out of a public
+    # checkout, especially for plain-text control reports.
+    checkout = Path(__file__).resolve().parents[2]
+    if csv_path.is_relative_to(checkout) or report_path.is_relative_to(checkout):
+        raise StatementError("Financial outputs must be saved outside the public source checkout")
+    # Publish the private report first: an interrupted run must never leave
+    # an unaccompanied Odoo-looking CSV behind.
+    files = (report_path, csv_path)
+    contents = (control_report(result), output_csv(result))
     staged = []
     published = []
     try:
