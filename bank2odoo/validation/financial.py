@@ -94,6 +94,7 @@ def _exact_binary(left: Decimal, right: Decimal, operation: str) -> Decimal:
             ctx.prec = precision
             ctx.Emax = MAX_EMAX
             ctx.Emin = MIN_EMIN
+            ctx.traps[InvalidOperation] = True
             ctx.traps[Inexact] = True
             ctx.traps[Rounded] = True
             if operation == "add":
@@ -133,6 +134,7 @@ def exact_scaled(value: Decimal, factor: Decimal, decimal_places: int) -> Decima
             ctx.prec = precision
             ctx.Emax = MAX_EMAX
             ctx.Emin = MIN_EMIN
+            ctx.traps[InvalidOperation] = True
             ctx.traps[Inexact] = True
             result.quantize(unit)
     except (DecimalException, ValueError) as exc:
