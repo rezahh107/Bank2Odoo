@@ -83,6 +83,103 @@ class EngineEndToEndTests(unittest.TestCase):
         self.assertIn(f"credit total: {exact_total}; net: {exact_total}", report)
         self.assertIn(f"Converted net (IRR): {exact_total}", report)
 
+    def test_large_debits_cancellation_and_balance_transitions(self) -> None:
+        single = "9999999999999999999999999999"
+        exact_total = "19999999999999999999999999999"
+        source = self.root / "synthetic_cancellation.csv"
+        write_mellat(source, [
+            ["1", "1405/07/01", "10:00:00", "101", "واریز", "0", single, single],
+            ["2", "1405/07/02", "10:00:00", "102", "برداشت", single, "0", "0"],
+            ["3", "1405/07/03", "10:00:00", "103", "کارمزد", single, "0", "-" + single],
+            ["4", "1405/07/04", "10:00:00", "104", "اصلاح", "0", single, "0"],
+            ["5", "1405/07/05", "10:00:00", "105", "واریز", "0", "1", "1"],
+            ["6", "1405/07/06", "10:00:00", "106", "برداشت", "1", "0", "0"],
+        ])
+        from decimal import localcontext
+        with localcontext() as decimal_ctx:
+            decimal_ctx.prec = 3  # External context must never affect money.
+            result = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+            report = control_report(result)
+        self.assertEqual(result.debit_total, Decimal(exact_total))
+        self.assertEqual(result.credit_total, Decimal(exact_total))
+        self.assertEqual(result.net, Decimal("0"))
+        self.assertEqual((result.opening, result.closing), (Decimal("0"), Decimal("0")))
+        self.assertEqual(result.balance_status, "PASS: 5 consecutive balance transitions")
+        self.assertIn("Converted net (IRR): 0", report)
+        self.assertEqual(len(result.rows), 6)
+        self.assertIn(f"2026-09-25,کارمزد,-{single}\n", output_csv(result))
+
+    def test_large_factor_scaling_and_control_report_are_exact(self) -> None:
+        single = "9999999999999999999999999999"
+        source_total = "19999999999999999999999999998"
+        scaled_single = "99999999999999999999999999990"
+        scaled_total = "199999999999999999999999999980"
+        source = self.root / "synthetic_units.csv"
+        write_mellat(source, [
+            ["1", "1405/07/01", "10:00:00", "110", "نمونه یک", "0", single, single],
+            ["2", "1405/07/02", "10:00:00", "111", "نمونه دو", "0", single, source_total],
+        ])
+        result = convert(source, Context("TOMAN", "IRR", "Synthetic Journal",
+                                         approved_factor=Decimal("10")))
+        self.assertEqual(result.credit_total, Decimal(source_total))
+        self.assertEqual([format(x.converted, "f") for x in result.rows],
+                         [scaled_single, scaled_single])
+        self.assertEqual(
+            output_csv(result),
+            "Date,Label,Amount\n"
+            f"2026-09-23,نمونه یک,{scaled_single}\n"
+            f"2026-09-24,نمونه دو,{scaled_single}\n",
+        )
+        self.assertIn(f"Converted net (IRR): {scaled_total}", control_report(result))
+
+    def test_large_melli_reverse_balance_and_conflict_detection(self) -> None:
+        single = "9999999999999999999999999999"
+        source = self.root / "synthetic_melli.xls"
+        rows = [
+            ["2", "1405/07/02", "10:00:00", "برداشت", single, "004", "",
+             "کارمزد آزمایشی", "", "0"],
+            ["1", "1405/07/01", "10:00:00", "واریز", single, "005", "",
+             "اصلاحیه آزمایشی", "", single],
+        ]
+        write_melli(source, rows)
+        result = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+        self.assertEqual(result.net, Decimal("0"))
+        self.assertEqual((result.opening, result.closing), (Decimal("0"), Decimal("0")))
+        self.assertEqual(result.balance_status, "PASS: 1 consecutive balance transitions")
+        self.assertIn(f"2026-09-24,کارمزد آزمایشی,-{single}", output_csv(result))
+        rows[0][9] = "1"  # Exact arithmetic must detect a one-unit mismatch.
+        write_melli(source, rows)
+        with self.assertRaisesRegex(StatementError, "balance mismatch"):
+            convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+
+    def test_fractional_precision_and_unit_factor_boundaries(self) -> None:
+        source = self.root / "synthetic_decimals.csv"
+        large = "9999999999999999999999999999.01"
+        expected_total = "19999999999999999999999999998.02"
+        write_mellat(source, [
+            ["1", "1405/07/01", "10:00:00", "1", "آزمایش", "0", large, large],
+            ["2", "1405/07/02", "10:00:00", "2", "آزمایش", "0", large, expected_total],
+        ])
+        result = convert(source, Context("IRR", "IRR", "Synthetic Journal", decimal_places=2))
+        self.assertEqual(result.credit_total, Decimal(expected_total))
+        self.assertEqual(result.net, Decimal(expected_total))
+        self.assertIn(expected_total, control_report(result))
+        self.assertIn(f"2026-09-24,آزمایش,{large}\n", output_csv(result))
+        with self.assertRaisesRegex(StatementError, "decimal places"):
+            convert(source, Context("IRR", "IRR", "Synthetic Journal", decimal_places=0))
+
+        from bank2odoo.validation.financial import exact_add, exact_scaled, exact_sub, exact_sum
+        self.assertEqual(exact_sub(Decimal("1"), Decimal("0.0000000000000000000000000001")),
+                         Decimal("0.9999999999999999999999999999"))
+        self.assertEqual(exact_add(Decimal("1e28"), Decimal("1")), Decimal("10000000000000000000000000001"))
+        self.assertEqual(exact_sum((Decimal("1e28"), Decimal("-1e28"), Decimal("0.01"))),
+                         Decimal("0.01"))
+        self.assertEqual(exact_scaled(Decimal("10.000"), Decimal("0.1"), 0), Decimal("1"))
+        with self.assertRaisesRegex(StatementError, "decimal places"):
+            exact_scaled(Decimal("1"), Decimal("0.1"), 0)
+        with self.assertRaisesRegex(StatementError, "Cannot represent"):
+            exact_add(Decimal("1e+999999999999999999"), Decimal("1"))
+
     def test_melli_true_ole_xls_reverse_both_signs_and_associated_fee(self) -> None:
         original = self.root / "legacy.data"  # prove content, not extension
         rows = [
