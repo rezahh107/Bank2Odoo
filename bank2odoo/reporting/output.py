@@ -8,7 +8,7 @@ import tempfile
 import os
 
 from bank2odoo.core.engine import Conversion
-from bank2odoo.validation.financial import StatementError
+from bank2odoo.validation.financial import StatementError, exact_sum
 
 
 def output_csv(result: Conversion) -> str:
@@ -35,7 +35,7 @@ def control_report(result: Conversion) -> str:
         f"Period (observed rows): {min(m.date for m in result.rows)} .. {max(m.date for m in result.rows)}",
         f"Source rows: {len(result.rows)}; debit rows: {debit_count}; credit rows: {credit_count}",
         f"Debit total ({result.source_unit}): {result.debit_total}; credit total: {result.credit_total}; net: {result.net}",
-        f"Converted net ({result.target_unit}): {sum((m.converted for m in result.rows), start=0)}",
+        f"Converted net ({result.target_unit}): {exact_sum(m.converted for m in result.rows)}",
         f"Source row order: {result.ordering}; Output order: unchanged source order",
         f"Balance check: {result.balance_status}",
         "Inferred opening/closing (source units; not independently attested): " +
