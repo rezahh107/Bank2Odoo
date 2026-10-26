@@ -193,6 +193,15 @@ class EngineEndToEndTests(unittest.TestCase):
         self.assertIn("not already exist", again.stderr)
         self.assertEqual(out.read_text("utf-8"), "Date,Label,Amount\n2026-09-23,نمونه,50\n")
 
+    def test_private_output_boundary_rejects_public_checkout(self) -> None:
+        source = self.root / "one.csv"
+        write_mellat(source, [["1", "1405/07/01", "10:00:00", "1", "نمونه", "0", "50", "50"]])
+        result = convert(source, Context("IRR", "IRR", "S"))
+        with self.assertRaisesRegex(StatementError, "outside the public source checkout"):
+            save_candidate(result, ROOT / "synthetic_candidate.csv", ROOT / "synthetic_control.txt")
+        self.assertFalse((ROOT / "synthetic_candidate.csv").exists())
+        self.assertFalse((ROOT / "synthetic_control.txt").exists())
+
     def test_atomic_write_rollback_when_second_link_fails(self) -> None:
         from unittest.mock import patch
         source = self.root / "one.csv"
