@@ -1,0 +1,41 @@
+# Python / uv environment and generated tooling files
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage*
+htmlcov/
+build/
+dist/
+
+# All bank statements, imports, exports and private control reports belong outside Git.
+# This intentionally also ignores CSV/XLS test fixtures unless explicitly reviewed.
+private/
+data/
+input/
+inputs/
+output/
+outputs/
+reports/
+exports/
+tmp/
+temp/
+*.csv
+*.tsv
+*.xls
+*.xlsx
+*.xlsm
+*.xlsb
+*.ods
+*.pdf
+*.zip
+*.7z
+*.sqlite*
+*.db
+*.log
+.env
+.env.*
+!.env.example
