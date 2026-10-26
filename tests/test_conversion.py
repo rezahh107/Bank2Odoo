@@ -152,6 +152,36 @@ class EngineEndToEndTests(unittest.TestCase):
         with self.assertRaisesRegex(StatementError, "balance mismatch"):
             convert(source, Context("IRR", "IRR", "Synthetic Journal"))
 
+    def test_low_context_melli_signed_value_and_inverse_unit_factor(self) -> None:
+        from decimal import localcontext
+        huge = "99999999999999999999999999999999"
+        source = self.root / "synthetic_large_melli.xls"
+        write_melli(source, [
+            ["2", "1405/07/02", "10:00:00", "برداشت", huge, "100",
+             "", "برداشت بزرگ", "", "0"],
+            ["1", "1405/07/01", "10:00:00", "واریز", huge, "101",
+             "", "واریز بزرگ", "", huge],
+        ])
+        with localcontext() as ctx:
+            ctx.prec = 2
+            result = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+            private_report = control_report(result)
+        self.assertEqual(result.rows[0].signed, Decimal("-" + huge))
+        self.assertEqual(result.rows[1].signed, Decimal(huge))
+        self.assertEqual(result.debit_total, Decimal(huge))
+        self.assertEqual(result.credit_total, Decimal(huge))
+        self.assertEqual(result.net, Decimal("0"))
+        self.assertEqual(result.balance_status, "PASS: 1 consecutive balance transitions")
+        self.assertIn("Converted net (IRR): 0", private_report)
+
+        # The inverse approved unit direction must also preserve every digit.
+        from bank2odoo.validation.financial import exact_scaled
+        source_amount = Decimal("99999999999999999999999999999990")
+        expected = Decimal("9999999999999999999999999999999")
+        with localcontext() as ctx:
+            ctx.prec = 2
+            self.assertEqual(exact_scaled(source_amount, Decimal("0.1"), 0), expected)
+
     def test_fractional_precision_and_unit_factor_boundaries(self) -> None:
         source = self.root / "synthetic_decimals.csv"
         large = "9999999999999999999999999999.01"
