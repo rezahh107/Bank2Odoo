@@ -216,6 +216,38 @@ class RealConverterFrozenOracleAcceptance(unittest.TestCase):
                 self.assertFalse((self.root/"candidate.csv").exists())
                 self.assertFalse((self.root/"PRIVATE-report.txt").exists())
 
+    def test_tampered_actual_trace_identity_is_rejected_for_both_banks(self):
+        for bank in ("melli", "mellat"):
+            with self.subTest(bank=bank):
+                source, output, private, _ = self.production_run(bank)
+                lines = private.read_text(encoding="utf-8").splitlines()
+                first_trace = next(i for i, line in enumerate(lines) if line.startswith("{"))
+                entry = json.loads(lines[first_trace])
+                physical_column = 9 if bank == "melli" else 12
+                key = next(k for k in entry["original_columns"] if k.endswith(f" [{physical_column}]"))
+                entry["original_columns"][key] = "FAKE-SOURCE-ID"
+                lines[first_trace] = json.dumps(entry, ensure_ascii=False, sort_keys=True)
+                private.write_text("\n".join(lines) + "\n", encoding="utf-8")
+                evidence = actual_evidence_projection(bank, private.read_text(encoding="utf-8"))
+                projected = self.root / "synthetic-evidence.json"
+                projected.write_text(json.dumps(evidence, ensure_ascii=False), encoding="utf-8")
+                with self.assertRaisesRegex(ContractMismatch, "trace source_id at 1"):
+                    check_result(bank, output, projected, source)
+
+    def test_missing_original_source_identity_is_not_manufactured(self):
+        for bank in ("melli", "mellat"):
+            with self.subTest(bank=bank):
+                _, _, private, _ = self.production_run(bank)
+                lines = private.read_text(encoding="utf-8").splitlines()
+                first_trace = next(i for i, line in enumerate(lines) if line.startswith("{"))
+                entry = json.loads(lines[first_trace])
+                physical_column = 9 if bank == "melli" else 12
+                key = next(k for k in entry["original_columns"] if k.endswith(f" [{physical_column}]"))
+                del entry["original_columns"][key]
+                lines[first_trace] = json.dumps(entry, ensure_ascii=False, sort_keys=True)
+                with self.assertRaisesRegex(EvidenceUnavailable, "source column"):
+                    actual_evidence_projection(bank, "\n".join(lines) + "\n")
+
     def test_missing_real_report_evidence_does_not_gain_synthetic_status(self):
         for bank in ("melli", "mellat"):
             with self.subTest(bank=bank):
