@@ -33,42 +33,48 @@ class ReferenceQualification(unittest.TestCase):
                 self.assertEqual(Decimal(ref['opening_balance']) + Decimal(ref['net_movement']),
                                  Decimal(ref['closing_balance']))
 
+    def assert_melli_readback(self, path, case):
+        self.assertEqual(path.read_bytes()[:8], bytes.fromhex('D0CF11E0A1B11AE1'))
+        cells = inspect_biff8(path)  # Independently decoded physical BIFF8 cells.
+        self.assertEqual([cells[4, i] for i in range(14)], list(MELLI_HEADERS))
+        self.assertEqual(len([key for key in cells if key[1] == 3 and 5 <= key[0] <= 34]), 30)
+        for idx, entry in enumerate(case['rows']):
+            row = idx + 5  # Zero-based physical row.
+            self.assertEqual(cells[row, 1], entry['date'])
+            self.assertEqual(cells[row, 2], entry['time'])
+            self.assertEqual(cells[row, 3], 'برداشت' if entry['direction'] == 'debit' else 'واریز')
+            self.assertEqual(cells[row, 4], int(entry['amount']))
+            self.assertEqual(cells[row, 5], entry['reference'])
+            self.assertEqual(cells[row, 7], entry['description'])
+            self.assertEqual(cells[row, 9], int(entry['balance']))
+
     def test_binary_melli_is_parseable_ole_biff8_not_disguised_csv(self):
         with tempfile.TemporaryDirectory() as temp:
             path = render_melli(ledgers()['melli'], Path(temp)/'synthetic.xls')
-            self.assertEqual(path.read_bytes()[:8], bytes.fromhex('D0CF11E0A1B11AE1'))
-            cells = inspect_biff8(path)  # Independent readback, not generator's in-memory rows.
-            self.assertEqual([cells[4, i] for i in range(14)], list(MELLI_HEADERS))
-            self.assertEqual(len([key for key in cells if key[1] == 3 and 5 <= key[0] <= 34]), 30)
-            case = ledgers()['melli']
-            for idx, entry in enumerate(case['rows']):
-                row = idx + 5  # Zero-based physical row.
-                self.assertEqual(cells[row, 1], entry['date'])
-                self.assertEqual(cells[row, 2], entry['time'])
-                self.assertEqual(cells[row, 3], 'برداشت' if entry['direction'] == 'debit' else 'واریز')
-                self.assertEqual(cells[row, 4], int(entry['amount']))
-                self.assertEqual(cells[row, 5], entry['reference'])
-                self.assertEqual(cells[row, 7], entry['description'])
-                self.assertEqual(cells[row, 9], int(entry['balance']))
+            self.assert_melli_readback(path, ledgers()['melli'])
+
+    def assert_mellat_readback(self, path, case):
+        self.assertTrue(path.read_bytes().startswith(b'\xef\xbb\xbf'))
+        with path.open(encoding='utf-8-sig', newline='') as handle:
+            lines = list(csv.reader(handle))
+        self.assertEqual(len(lines), 61)  # 2 non-data rows + header + 58 movements
+        self.assertEqual(tuple(lines[2]), MELLAT_HEADERS)
+        for idx, (source, actual) in enumerate(zip(case['rows'], lines[3:]), 1):
+            self.assertEqual(len(actual), 12)
+            self.assertEqual(actual[1], source['date'])
+            self.assertEqual(actual[3], source['serial'])
+            self.assertTrue(actual[3].startswith('000'))
+            self.assertEqual(actual[4], source['description'])
+            self.assertEqual(actual[5], source['amount'] if source['direction']=='debit' else '0')
+            self.assertEqual(actual[6], source['amount'] if source['direction']=='credit' else '0')
+            self.assertEqual(actual[7], source['balance'])
+
 
     def test_mellat_utf8_bom_readback_and_cp1256_edge_case(self):
         with tempfile.TemporaryDirectory() as temp:
             temp = Path(temp)
             path = render_mellat(ledgers()['mellat'], temp/'synthetic.csv')
-            self.assertTrue(path.read_bytes().startswith(b'\xef\xbb\xbf'))
-            with path.open(encoding='utf-8-sig', newline='') as handle:
-                lines = list(csv.reader(handle))
-            self.assertEqual(len(lines), 61)  # 2 non-data rows + header + 58 movements
-            self.assertEqual(tuple(lines[2]), MELLAT_HEADERS)
-            for source, actual in zip(ledgers()['mellat']['rows'], lines[3:]):
-                self.assertEqual(len(actual), 12)
-                self.assertEqual(actual[1], source['date'])
-                self.assertEqual(actual[3], source['serial'])
-                self.assertTrue(actual[3].startswith('000'))
-                self.assertEqual(actual[4], source['description'])
-                self.assertEqual(actual[5], source['amount'] if source['direction']=='debit' else '0')
-                self.assertEqual(actual[6], source['amount'] if source['direction']=='credit' else '0')
-                self.assertEqual(actual[7], source['balance'])
+            self.assert_mellat_readback(path, ledgers()['mellat'])
             bom = render_small_utf8_bom(temp/'utf8.csv')
             cp = render_small_cp1256(temp/'cp.csv')
             with bom.open(encoding='utf-8-sig', newline='') as handle:
@@ -78,6 +84,29 @@ class ReferenceQualification(unittest.TestCase):
             self.assertEqual(len(cp_rows[0]), 12)
             self.assertEqual(cp_rows[1][3], '0000025')
             self.assertIn('كارمزد', cp_rows[1][4])
+
+    def test_melli_generator_identity_corruption_is_detected(self):
+        original = ledgers()['melli']
+        for field, context in (('id', 'Melli source ID row 1'), ('serial', 'Melli serial row 1')):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temp:
+                corrupted = copy.deepcopy(original)
+                corrupted['rows'][0][field] += '-ALTERED'
+                path = render_melli(corrupted, Path(temp)/'corrupted.xls')
+                # Oracle remains the unchanged source ledger, not the generator's input.
+                with self.assertRaisesRegex(AssertionError, context):
+                    self.assert_melli_readback(path, original)
+
+    def test_mellat_generator_identity_corruption_is_detected(self):
+        original = ledgers()['mellat']
+        for field, context in (('reference', 'Mellat reference row 1'), ('id', 'Mellat source ID row 1')):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temp:
+                corrupted = copy.deepcopy(original)
+                corrupted['rows'][0][field] += '-ALTERED'
+                path = render_mellat(corrupted, Path(temp)/'corrupted.csv')
+                # Only generator-side input changes; frozen oracle and output remain intact.
+                with self.assertRaisesRegex(AssertionError, context):
+                    self.assert_mellat_readback(path, original)
+
 
     def test_ledger_source_mutations_rejected(self):
         for bank in ('melli', 'mellat'):
