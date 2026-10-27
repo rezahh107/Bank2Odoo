@@ -36,6 +36,7 @@ jobs:
       - name: Run automated verification
         env:
           QT_QPA_PLATFORM: offscreen
+          PYTHONFAULTHANDLER: "1"  # Retain native/Python fatal diagnostics in Actions logs.
         run: uv run --locked python -m unittest discover -s tests -v
       - name: Smoke-run preserved headless entrypoint
         run: uv run --locked python -m bank2odoo
