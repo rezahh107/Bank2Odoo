@@ -46,7 +46,9 @@ class ReferenceQualification(unittest.TestCase):
             self.assertEqual(cells[row, 4], int(entry['amount']))
             self.assertEqual(cells[row, 5], entry['reference'])
             self.assertEqual(cells[row, 7], entry['description'])
+            self.assertEqual(cells[row, 8], entry['id'], f'Melli source ID row {idx + 1}')
             self.assertEqual(cells[row, 9], int(entry['balance']))
+            self.assertEqual(cells[row, 12], entry['serial'], f'Melli serial row {idx + 1}')
 
     def test_binary_melli_is_parseable_ole_biff8_not_disguised_csv(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -68,6 +70,8 @@ class ReferenceQualification(unittest.TestCase):
             self.assertEqual(actual[5], source['amount'] if source['direction']=='debit' else '0')
             self.assertEqual(actual[6], source['amount'] if source['direction']=='credit' else '0')
             self.assertEqual(actual[7], source['balance'])
+            self.assertEqual(actual[10], source['reference'], f'Mellat reference row {idx}')
+            self.assertEqual(actual[11], source['id'], f'Mellat source ID row {idx}')
 
 
     def test_mellat_utf8_bom_readback_and_cp1256_edge_case(self):
