@@ -286,6 +286,18 @@ class EngineEndToEndTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(StatementError):
                 amount(value)
 
+    def test_unknown_melli_footer_remains_a_hard_error(self) -> None:
+        # The Phase 2 fixture's explicit 'پایان گزارش' marker is supported,
+        # but an arbitrary data-bearing row is never silently skipped.
+        source = self.root / "unrecognized_footer.xls"
+        write_melli(source, [
+            ["1", "1405/07/01", "10:00:00", "واریز", "50", "TEST-001",
+             "", "واریز ساختگی", "", "50"],
+            ["گزارش نامشخص", "", "", "", "", "", "", "", "", ""],
+        ])
+        with self.assertRaisesRegex(StatementError, "unidentified footer"):
+            convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+
     def test_melli_missing_header_and_corrupt_xls_fail(self) -> None:
         source = self.root / "bad.xls"
         write_melli(source, [["1", "1405/07/01", "10:00:00", "واریز", "50", "", "", "نمونه", "", "50"]], broken_header=True)
