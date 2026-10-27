@@ -286,6 +286,80 @@ class EngineEndToEndTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(StatementError):
                 amount(value)
 
+    def test_footer_prefix_does_not_hide_final_melli_movement(self) -> None:
+        # Newest first: dropping oldest row still leaves a valid-looking
+        # 1-transition chain among the two retained movements.
+        source = self.root / "melli_footer_bypass.xls"
+        write_melli(source, [
+            ["3", "1405/07/03", "11:00:00", "واریز", "15", "FICT-3",
+             "", "واریز آخر ساختگی", "", "145"],
+            ["2", "1405/07/02", "10:00:00", "برداشت", "20", "FICT-2",
+             "", "برداشت ساختگی", "", "130"],
+            ["جمع کل 1", "1405/07/01", "09:00:00", "واریز", "50", "FICT-1",
+             "", "واریز پنهان ساختگی", "", "150"],
+        ])
+        try:
+            result = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+        except StatementError as exc:
+            self.assertRegex(str(exc), "Ambiguous financial-bearing footer")
+        else:
+            self.fail(
+                "Melli silently omitted final financial movement: "
+                f"source=3, output={len(result.rows)}, "
+                f"balance={result.balance_status}, net={result.net}"
+            )
+        self.assertFalse((self.root / "melli_candidate.csv").exists())
+
+    def test_footer_prefix_does_not_hide_final_mellat_movement(self) -> None:
+        # Oldest first: omitting latest movement can also leave a false
+        # positive 1-transition balance check on the retained prefix.
+        source = self.root / "mellat_footer_bypass.csv"
+        write_mellat(source, [
+            ["1", "1405/07/01", "09:00:00", "0001", "واریز ساختگی",
+             "0", "50", "150"],
+            ["2", "1405/07/02", "10:00:00", "0002", "برداشت ساختگی",
+             "20", "0", "130"],
+            ["مجموع 3", "1405/07/03", "11:00:00", "0003", "واریز پنهان ساختگی",
+             "0", "15", "145"],
+        ])
+        try:
+            result = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+        except StatementError as exc:
+            self.assertRegex(str(exc), "Ambiguous financial-bearing footer")
+        else:
+            self.fail(
+                "Mellat silently omitted final financial movement: "
+                f"source=3, output={len(result.rows)}, "
+                f"balance={result.balance_status}, net={result.net}"
+            )
+        self.assertFalse((self.root / "mellat_candidate.csv").exists())
+
+    def test_recognized_pure_footers_remain_supported_for_both_banks(self) -> None:
+        melli = self.root / "melli_pure_footer.xls"
+        write_melli(melli, [
+            ["2", "1405/07/02", "10:00:00", "برداشت", "20", "FICT-2",
+             "", "برداشت ساختگی", "", "130"],
+            ["1", "1405/07/01", "09:00:00", "واریز", "50", "FICT-1",
+             "", "واریز ساختگی", "", "150"],
+            ["پایان گزارش آزمایشی"],
+        ])
+        mellat = self.root / "mellat_pure_footer.csv"
+        write_mellat(mellat, [
+            ["1", "1405/07/01", "09:00:00", "0001", "واریز ساختگی",
+             "0", "50", "150"],
+            ["2", "1405/07/02", "10:00:00", "0002", "برداشت ساختگی",
+             "20", "0", "130"],
+            ["جمع کل"],
+        ])
+        for bank, source in (("melli", melli), ("mellat", mellat)):
+            with self.subTest(bank=bank):
+                result = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+                self.assertEqual(len(result.rows), 2)
+                self.assertEqual(result.balance_status, "PASS: 1 consecutive balance transitions")
+                self.assertEqual(result.net, Decimal("30"))
+                self.assertEqual((result.opening, result.closing),
+                                 (Decimal("100"), Decimal("130")))
+
     def test_unknown_melli_footer_remains_a_hard_error(self) -> None:
         # The Phase 2 fixture's explicit 'پایان گزارش' marker is supported,
         # but an arbitrary data-bearing row is never silently skipped.
