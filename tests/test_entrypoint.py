@@ -38,3 +38,8 @@ class EntrypointSmokeTests(unittest.TestCase):
              "assert 'PySide6' not in sys.modules"],
             cwd=ROOT, capture_output=True, text=True, check=False)
         self.assertEqual(probe.returncode, 0, probe.stderr)
+
+    def test_windows_launcher_points_to_gui_and_offline_run(self) -> None:
+        launcher = (ROOT / "Run.bat").read_text(encoding="utf-8")
+        self.assertIn("uv run --offline --locked python -m bank2odoo.ui", launcher)
+        self.assertIn("uv sync --locked", launcher)

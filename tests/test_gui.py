@@ -17,6 +17,8 @@ from PySide6.QtWidgets import QApplication
 from bank2odoo.ui.window import MainWindow, _ConvertJob, human_error
 from bank2odoo.core.engine import Context
 from threading import Event
+from unittest.mock import patch
+from bank2odoo.core.engine import convert as actual_convert
 
 HEADER = [
     "ردیف", "تاریخ", "زمان", "شماره سریال", "شرح", "مبلغ گردش بدهکار",
@@ -249,6 +251,28 @@ class AccountantUiTests(unittest.TestCase):
         worker.execute()
         self.assertEqual(observed, ["stopped"])
         self.assertIsNone(self.window.result)
+
+    def test_user_stop_during_worker_discards_result(self):
+        self.window.set_source(self.source)
+        self._approve()
+        entered, released = Event(), Event()
+
+        def delayed(path, context):
+            entered.set()
+            if not released.wait(6):
+                raise RuntimeError("test release not signalled")
+            return actual_convert(path, context)
+
+        with patch("bank2odoo.ui.window.convert", side_effect=delayed):
+            self.window.start_conversion()
+            self.assertTrue(entered.wait(6), "conversion worker never entered")
+            self.assertTrue(self.window.cancel_button.isEnabled())
+            self.window.cancel_conversion()
+            released.set()
+            self._wait_conversion()
+        self.assertIsNone(self.window.result)
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertIn("توقف", self.window.status.text())
 
     def test_error_summary_does_not_dump_source_fields(self):
         detail = "Invalid/ambiguous numeric format: 'customer-private-value'"

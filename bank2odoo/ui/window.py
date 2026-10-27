@@ -185,9 +185,13 @@ class MainWindow(QMainWindow):
         self.factor_help = QLabel("واحدها را انتخاب کنید؛ ضریب هرگز از فایل بانک حدس زده نمی‌شود.")
         self.factor_help.setWordWrap(True)
         form.addRow("", self.factor_help)
-        self.approved = QCheckBox(
-            "واحدهای هر دو طرف، ژورنال، دقت اعشار و ضریب لازم را شخصاً بررسی و تأیید کرده‌ام."
+        approval_note = QLabel(
+            "واحد پول هر دو طرف، ژورنال مقصد، دقت اعشار و در صورت نیاز ضریب تبدیل "
+            "را با اطلاعات واقعی حسابداری تطبیق دهید؛ این اطلاعات از بانک حدس زده نمی‌شوند."
         )
+        approval_note.setWordWrap(True)
+        form.addRow("", approval_note)
+        self.approved = QCheckBox("همه اطلاعات مالی بالا را بررسی و تأیید کرده‌ام.")
         self.approved.toggled.connect(self._approval_changed)
         form.addRow(self.approved)
         root.addWidget(context_box)

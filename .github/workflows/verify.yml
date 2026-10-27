@@ -37,38 +37,6 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: uv run --locked python -m unittest discover -s tests -v
-      - name: Temporary native Windows UI capture for visual review
-        shell: pwsh
-        env:
-          QT_QPA_PLATFORM: windows
-        run: |
-          @'
-          import base64
-          from PySide6.QtWidgets import QApplication
-          from PySide6.QtCore import QBuffer, QIODevice
-          from PySide6.QtGui import QFont, QFontDatabase, QFontInfo, QFontMetrics
-          from bank2odoo.ui.window import MainWindow
-          app = QApplication([])
-          names = QFontDatabase.families()
-          chosen = "Vazirmatn" if "Vazirmatn" in names else "Tahoma"
-          app.setFont(QFont(chosen, 10))
-          font = app.font()
-          print("FONTPROBE:selected=" + chosen + ";actual=" + QFontInfo(font).family()
-                + ";persian=" + str(QFontMetrics(font).inFontUcs4(ord("س")))
-                + ";latin=" + str(QFontMetrics(font).inFontUcs4(ord("A"))))
-          win = MainWindow()
-          win.resize(850, 850)
-          win.show()
-          app.processEvents()
-          buffer = QBuffer()
-          buffer.open(QIODevice.OpenModeFlag.WriteOnly)
-          assert win.grab().save(buffer, "PNG")
-          data = base64.b64encode(bytes(buffer.data())).decode("ascii")
-          for i in range(0, len(data), 4000):
-              print("UICAPTURE_PART:" + data[i:i+4000])
-          win.close()
-          '@ | Set-Content -Path ui_capture.py -Encoding utf8
-          uv run --locked python ui_capture.py
       - name: Smoke-run preserved headless entrypoint
         run: uv run --locked python -m bank2odoo
       - name: Check GUI module import
