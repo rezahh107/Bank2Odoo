@@ -46,8 +46,16 @@ jobs:
           import base64
           from PySide6.QtWidgets import QApplication
           from PySide6.QtCore import QBuffer, QIODevice
+          from PySide6.QtGui import QFont, QFontDatabase, QFontInfo, QFontMetrics
           from bank2odoo.ui.window import MainWindow
           app = QApplication([])
+          names = QFontDatabase.families()
+          chosen = "Vazirmatn" if "Vazirmatn" in names else "Tahoma"
+          app.setFont(QFont(chosen, 10))
+          font = app.font()
+          print("FONTPROBE:selected=" + chosen + ";actual=" + QFontInfo(font).family()
+                + ";persian=" + str(QFontMetrics(font).inFontUcs4(ord("س")))
+                + ";latin=" + str(QFontMetrics(font).inFontUcs4(ord("A"))))
           win = MainWindow()
           win.resize(850, 850)
           win.show()
