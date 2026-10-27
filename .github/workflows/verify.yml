@@ -31,12 +31,6 @@ jobs:
           version: "0.10.0"
       - name: Install Python
         run: uv python install 3.13
-      - name: Temporary lock generation (remove after lockfile committed)
-        shell: pwsh
-        run: |
-          uv lock
-          if ($LASTEXITCODE -ne 0) { throw "uv lock failed" }
-          Write-Host ("LOCKBASE64:" + [Convert]::ToBase64String([IO.File]::ReadAllBytes("uv.lock")))
       - name: Sync exact locked environment
         run: uv sync --locked
       - name: Run automated verification

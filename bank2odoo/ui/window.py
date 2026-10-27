@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (
 from bank2odoo.banks.reader import read_statement
 from bank2odoo.core.engine import Context, Conversion, convert
 from bank2odoo.reporting.output import save_candidate
-from bank2odoo.validation.financial import StatementError
+from bank2odoo.validation.financial import StatementError, exact_sum
 
 
 BANK_LABELS = {"melli": "بانک ملی — XLS قدیمی", "mellat": "بانک ملت — CSV"}
@@ -420,6 +420,9 @@ class MainWindow(QMainWindow):
 
     @Slot(object)
     def _success(self, result: Conversion) -> None:
+        if self._stop is not None and self._stop.is_set():
+            self._cancelled()
+            return
         self.result = result
         good = result.balance_status.startswith("PASS")
         check = ("منطبق در انتقال‌های قابل‌آزمون؛ هنوز تأیید حسابدار نیست."
@@ -429,6 +432,7 @@ class MainWindow(QMainWindow):
             f"برداشت: {format(result.debit_total, 'f')} {result.source_unit} | "
             f"واریز: {format(result.credit_total, 'f')} {result.source_unit}\n"
             f"خالص: {format(result.net, 'f')} {result.source_unit} | "
+            f"خالص مقصد: {format(exact_sum(m.converted for m in result.rows), 'f')} {result.target_unit} | "
             f"کنترل مانده: {check}\n"
             f"موارد نیازمند بررسی: {len(result.issues)}"
             + ("\n" + "\n".join("• " + issue_label(x) for x in result.issues[:4])

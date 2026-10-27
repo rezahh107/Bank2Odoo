@@ -29,5 +29,12 @@ class EntrypointSmokeTests(unittest.TestCase):
         self.assertIn("requires --input", result.stderr)
 
     def test_app_layers_import_without_gui(self) -> None:
-        from bank2odoo import banks, core, reporting, ui, validation  # noqa: F401
-        self.assertNotIn("PySide6", sys.modules)
+        # Assert import isolation in a fresh interpreter, independent of the
+        # order in which unrelated GUI test modules were imported by unittest.
+        probe = subprocess.run(
+            [sys.executable, "-c",
+             "import sys; from bank2odoo import banks, core, reporting, ui, validation; "
+             "from bank2odoo.core.engine import convert; "
+             "assert 'PySide6' not in sys.modules"],
+            cwd=ROOT, capture_output=True, text=True, check=False)
+        self.assertEqual(probe.returncode, 0, probe.stderr)
