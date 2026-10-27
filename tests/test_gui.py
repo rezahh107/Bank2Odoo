@@ -158,6 +158,51 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(str(result.rows[0].converted), "1000")
         self.assertEqual(result.factor, 10)
 
+    def test_melli_legacy_xls_ui_to_private_pair(self):
+        import xlwt  # Existing test-only BIFF8 writer; no real bank data.
+
+        path = self.private / "fictional_melli.xls"
+        workbook = xlwt.Workbook(encoding="utf-8")
+        sheet = workbook.add_sheet("Fictional")
+        headers = ["ردیف", "تاریخ", "زمان", "نوع", "مبلغ", "شماره پیگیری",
+                   "اطلاعات تکمیلی", "شرح", "توضیحات", "مانده"]
+        for column, label in enumerate(headers):
+            sheet.write(0, column, label)
+        movements = [
+            ["2", "1405/07/02", "11:00:00", "برداشت", "25", "F-2", "",
+             "کارمزد ساختگی", "", "75"],
+            ["1", "1405/07/01", "10:00:00", "واریز", "100", "F-1", "",
+             "واریز ساختگی", "", "100"],
+        ]
+        for row_index, movement in enumerate(movements, 1):
+            for column, value in enumerate(movement):
+                sheet.write(row_index, column, value)
+        workbook.save(str(path))
+
+        self.window.set_source(path)
+        self.assertIn("بانک ملی", self.window.detected.text())
+        self.assertIn("2 گردش", self.window.detected.text())
+        self._approve()
+        self.window.start_conversion()
+        self._wait_conversion()
+        result = self.window.result
+        self.assertIsNotNone(result)
+        self.assertEqual(result.bank, "melli")
+        self.assertTrue(result.balance_status.startswith("PASS"))
+        self.assertEqual(len(result.rows), 2)
+        self.window.output_directory.setText(str(self.private))
+        self.window.save_files()
+        outputs = list(self.private.glob("Bank2Odoo_*"))
+        self.assertEqual(len(outputs), 2)
+        csv_path = next(item for item in outputs if item.name.endswith("_candidate.csv"))
+        report_path = next(item for item in outputs if item.name.endswith("_control.txt"))
+        self.assertEqual(csv_path.read_text(encoding="utf-8"),
+                         "Date,Label,Amount\n"
+                         "2026-09-24,کارمزد ساختگی,-25\n"
+                         "2026-09-23,واریز ساختگی,100\n")
+        self.assertIn("Source rows: 2", report_path.read_text(encoding="utf-8"))
+        self.assertIn("دو فایل ایجاد شدند", self.window.saved_paths.text())
+
     def test_success_pass_exact_csv_private_report_and_no_overwrite(self):
         result = self._convert()
         self.assertEqual(result.balance_status, "PASS: 1 consecutive balance transitions")

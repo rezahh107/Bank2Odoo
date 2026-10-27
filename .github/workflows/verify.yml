@@ -39,7 +39,7 @@ jobs:
         run: uv run --locked python -m unittest discover -s tests -v
       - name: Smoke-run preserved headless entrypoint
         run: uv run --locked python -m bank2odoo
-      - name: Check GUI module import
+      - name: Offline Qt window creation smoke
         env:
           QT_QPA_PLATFORM: offscreen
-        run: uv run --locked python -c "from bank2odoo.ui.window import MainWindow; print('Qt module import OK')"
+        run: uv run --offline --locked python -c "from PySide6.QtWidgets import QApplication; from bank2odoo.ui.window import MainWindow; app=QApplication([]); w=MainWindow(); assert 'Bank2Odoo' in w.windowTitle(); w.close(); print('offline Qt window OK')"
