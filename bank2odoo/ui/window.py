@@ -488,8 +488,17 @@ class MainWindow(QMainWindow):
     def _thread_finished(self) -> None:
         """All background work has exited before publishing any visible outcome."""
         state = self._job_state
-        if state is None or self.sender() is not self._thread:
+        thread = self._thread
+        if state is None or thread is None or self.sender() is not thread:
             return  # A late signal from another worker cannot publish an outcome.
+        # Qt emits finished() before all thread-local cleanup has completed.
+        # Do not drop the Python ownership references or allow the next job
+        # until the native thread has fully stopped (Qt's documented wait()).
+        if not thread.wait(5000):
+            self._set_message(
+                "خطا: پردازش پس‌زمینه هنوز کاملاً پایان نیافته است؛ عملیات جدید آغاز نشود."
+            )
+            return  # Fail closed: keep the job references alive and UI busy.
         kind, value, error = state["kind"], state["value"], state["error"]
         stopped = self._stop is not None and self._stop.is_set()
         self._thread, self._worker, self._stop, self._job_state = None, None, None, None
