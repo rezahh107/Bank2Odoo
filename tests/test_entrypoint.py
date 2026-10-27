@@ -22,7 +22,7 @@ class EntrypointSmokeTests(unittest.TestCase):
     def test_help_reports_separate_gui_and_preserves_conversion_switches(self) -> None:
         result = invoke("--help")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("python -m bank2odoo.ui", result.stdout)
+        self.assertIn("python -m bank2odoo.ui", " ".join(result.stdout.split()))
         for field in ("--input", "--output", "--report", "--source-unit",
                       "--target-unit", "--journal", "--decimal-places",
                       "--approved-factor"):
