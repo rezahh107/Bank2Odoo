@@ -62,6 +62,29 @@ CSV/report and compare to independently specified expectations. `xlwt` is used
 **only by tests** as a writer of the historical XLS format; actual conversion
 uses `xlrd` and calendar conversion uses `persiantools`.
 
+### Frozen Phase 1 oracle / actual Phase 2 synthetic acceptance
+
+`tests/test_converter_oracle.py` generates the **unchanged** 30-movement Melli
+BIFF8 XLS and 58-movement Mellat CSV, invokes the production `convert()` and
+`save_candidate()` functions, then compares the saved three-column CSV and
+the actual private textual/JSON-line report against the frozen Phase 1 checker.
+The synthetic test-only adapter extracts financial totals, source identity,
+physical rows, dates, balances and original columns from the **actual report**,
+not from the expected files. It checks the literal output CSV bytes separately.
+
+Only synthetic-specific tags (fictional approval, unconfirmed journal warnings)
+come from test context. Fee/correction tags are derived from the clearly marked
+fictional source descriptions; they do **not** prove the product implements a
+general bank-transaction classifier, accountant approval or confirmed
+fee/correction associations. A missing report field cannot be fabricated
+from the frozen oracle; evidence unavailability and mismatches are distinct.
+The production accountant report remains human-readable and unmodified.
+
+The generated Melli file has an explicit `پایان گزارش` footer. Its support
+was added narrowly to the bank reader; unexpected non-transaction text still
+fails closed. These synthetic tests establish neither private bank-file
+acceptance nor Windows accountant-device/Odoo integration.
+
 The tracked-file privacy guard remains active; never commit real statements,
 identifiers, generated financial CSVs, private Golden or control reports.
 The Git guard checks paths and extensions, **not contents**; manually review
@@ -70,7 +93,7 @@ all public changes.
 ## Source policy and evidence limits
 
 Authoritative, private Owner documents (do not copy their private financial
-content into GitHub): Bank2Odoo GOAL_AUTHORITY v1.1.2 and NESTEC Bank
+content into GitHub): Bank2Odoo GOAL_AUTHORITY v1.1.5 and NESTEC Bank
 Melli/Mellat CSV Conversion Guide v1.0.1. Their published behavior contract is
 `Date,Label,Amount` only, exact Decimal amounts, validated Jalali conversion,
 per-row trace and explicit review-only status.
