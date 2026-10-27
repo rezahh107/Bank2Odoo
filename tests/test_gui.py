@@ -548,7 +548,7 @@ class AccountantUiTests(unittest.TestCase):
     def test_initial_failed_join_then_success_preserves_qt_object(self):
         self._convert()
         self.window.output_directory.setText(str(self.private))
-        calls, outcomes, deleted = [], [], []
+        calls, outcomes, deleted, worker_deleted = [], [], [], []
         original = self.window._wait_for_thread
         self.window.save_done.connect(lambda: outcomes.append("save"))
 
@@ -562,10 +562,13 @@ class AccountantUiTests(unittest.TestCase):
 
         with patch.object(self.window, "_wait_for_thread", side_effect=joined):
             self.window.save_files()
-            thread = self.window._thread
+            thread, worker = self.window._thread, self.window._worker
             thread.destroyed.connect(lambda: deleted.append(True))
+            worker.destroyed.connect(lambda: worker_deleted.append(True))
             self._wait_operation(self.window.save_done)
         self.assertEqual(calls, [5000, 0])
+        self.assertFalse(isValid(worker), "Worker deferred deletion did not finish")
+        self.assertEqual(worker_deleted, [True])
         self.assertEqual(outcomes, ["save"])
         self.assertTrue(self.window._saved)
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
