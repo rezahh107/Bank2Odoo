@@ -83,7 +83,7 @@ def _extract(table: list[tuple[int, list[str]]], bank: str, sheet: str) -> tuple
         if not any(str(v).strip() for v in cells):
             continue
         first = normalized_header(next((v for v in cells if str(v).strip()), ""))
-        if first.startswith(("جمع", "مجموع", "کل گردش")):
+        if first.startswith(("جمع", "مجموع", "کل گردش", "پایان گزارش")):
             seen_footer = True
             continue
         if seen_footer:
