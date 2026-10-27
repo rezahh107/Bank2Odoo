@@ -8,8 +8,7 @@ import sys
 from bank2odoo.core.engine import Context, convert
 from bank2odoo.reporting.output import save_candidate
 from bank2odoo.validation.financial import StatementError
-
-VERSION = "0.2.0"
+from bank2odoo.version import VERSION
 
 
 def main(argv: list[str] | None = None) -> int:
