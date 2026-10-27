@@ -1,16 +1,31 @@
 # Bank2Odoo
 
-**Status:** Working headless **review-candidate** converter for the *documented*
-Bank Melli legacy XLS and Bank Mellat CSV shapes. A Persian accountant desktop
-GUI, real private Golden acceptance, and accountant Windows acceptance are **not
-implemented/proven**. No Odoo integration or financial approval is performed.
+**Status:** Working headless conversion engine plus a Persian PySide6 Widgets
+desktop interface for preparing **review candidates** from the documented Bank
+Melli legacy XLS and Bank Mellat CSV formats. Synthetic GUI/engine tests do not
+prove private-bank Golden acceptance or usability on an accountant's Windows
+machine. No Odoo integration or financial approval is performed.
 
 This is an offline, local, single-user tool for preparing a minimal Odoo 19
 Bank Transactions CSV with exactly `Date,Label,Amount`, **plus a separate private
 control report**. It is not an automated accounting categorizer and never
 imports/reconciles any transaction in Odoo.
 
-## One command (from checkout root)
+## Accountant desktop application (Windows)
+
+One-time technician setup (Internet required for installing prerequisites):
+
+1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and run `uv python install 3.13`.
+2. In the downloaded Bank2Odoo folder, run `uv sync --locked` once while online.
+3. Double-click **Run.bat**. Normal launching/conversion uses `uv run --offline --locked`; no Odoo or Internet connection is required once setup is complete.
+
+In the Persian window select an actual Melli XLS or Mellat CSV, confirm the **source and target units, journal, currency precision and (if units differ) approved factor**, then select **اعتبارسنجی و تبدیل**. Review the count, totals, balance status and flagged uncertainties. Choose a **private folder outside this checkout**, then click **ذخیره CSV و گزارش کنترل**. Both files must be new: the program refuses overwriting and does not independently approve any Odoo import.
+
+A `PASS` balance check is limited to observed consecutive balances; `NOT_PROVEN` means a complete proof is unavailable, not necessarily an error. A generated candidate still requires accountant review, independent approval and checking for past imports before any manual Odoo import. Technical diagnostics are optional and hidden by default. Closing a busy window requires waiting for the current operation; the stop request discards its result after the active phase.
+
+This is **not** a standalone EXE. If Run.bat says prerequisites are missing, ask the technician to perform the one-time setup again. Do not store actual statements, output CSVs or private reports in the public source repository.
+
+## Developer CLI (from checkout root)
 
 After installing `uv` and Python 3.13 (initial setup requires connectivity):
 
@@ -45,9 +60,9 @@ accountant approval, absence of previously imported duplicates, or safety of
 live Odoo import. Before import, confirm source/journal/account, currency,
 period completeness, prior entries, existing Bank Transactions and receipts.
 
-`Run.bat` remains a console launcher displaying explicit GUI-unavailable
-status; it is not an accountant-facing GUI. The Python engine can later be
-called directly from PySide6 without using a CLI subprocess.
+`Run.bat` starts the Persian Qt interface directly. The developer CLI remains
+available at `python -m bank2odoo` and the GUI at `python -m bank2odoo.ui`.
+The GUI calls the core functions directly, never a CLI subprocess.
 
 ## Verification
 
@@ -56,7 +71,9 @@ uv run --locked python -m unittest discover -s tests -v
 uv run --locked python -m bank2odoo
 ```
 
-CI runs on `windows-latest`; synthetic tests write genuine binary BIFF8 XLS and
+CI runs on `windows-latest`, including offscreen Qt Widgets interaction tests;
+offscreen Qt does **not** prove real Windows interactive use or a human UX review.
+Synthetic tests write genuine binary BIFF8 XLS and
 CSV in private temporary folders, exercise the production pipeline, serialize
 CSV/report and compare to independently specified expectations. `xlwt` is used
 **only by tests** as a writer of the historical XLS format; actual conversion
@@ -93,7 +110,7 @@ all public changes.
 ## Source policy and evidence limits
 
 Authoritative, private Owner documents (do not copy their private financial
-content into GitHub): Bank2Odoo GOAL_AUTHORITY v1.1.5 and NESTEC Bank
+content into GitHub): Bank2Odoo GOAL_AUTHORITY v1.1.6 and NESTEC Bank
 Melli/Mellat CSV Conversion Guide v1.0.1. Their published behavior contract is
 `Date,Label,Amount` only, exact Decimal amounts, validated Jalali conversion,
 per-row trace and explicit review-only status.

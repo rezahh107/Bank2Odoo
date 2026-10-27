@@ -1,0 +1,260 @@
+"""Offscreen Qt interaction + real financial engine + paired-save regression.
+
+Uses fictional statements only. This is not an accountant Windows acceptance test.
+"""
+import csv
+import os
+import tempfile
+import unittest
+from pathlib import Path
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+from PySide6.QtCore import QEventLoop, Qt, QTimer
+from PySide6.QtTest import QTest
+from PySide6.QtWidgets import QApplication
+
+from bank2odoo.ui.window import MainWindow, _ConvertJob, human_error
+from bank2odoo.core.engine import Context
+from threading import Event
+
+HEADER = [
+    "ردیف", "تاریخ", "زمان", "شماره سریال", "شرح", "مبلغ گردش بدهکار",
+    "مبلغ گردش بستانکار", "مانده", "واریز کننده/ذینفع",
+]
+
+
+def statement(path: Path, *, not_proven: bool = False, duplicate: bool = False) -> None:
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["Fictional test data — not a bank statement"])
+        writer.writerow(HEADER)
+        if duplicate:
+            writer.writerow(["1", "1405/07/01", "10:00", "10", "هزینه تست", "25", "0", ""])
+            writer.writerow(["2", "1405/07/01", "10:00", "10", "هزینه تست", "25", "0", ""])
+        else:
+            writer.writerow(["1", "1405/07/01", "10:00", "A1", "واریز آزمایشی", "0", "100", "100"])
+            writer.writerow(["2", "1405/07/02", "11:00", "A2", "کارمزد آزمایشی", "25", "0",
+                             "" if not_proven else "75"])
+
+
+class AccountantUiTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.app = QApplication.instance() or QApplication([])
+
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.private = Path(self.temp.name)
+        self.source = self.private / "fictional.csv"
+        statement(self.source)
+        self.window = MainWindow()
+        self.window.show()
+        self.addCleanup(self.window.close)
+        self.app.processEvents()
+
+    def _approve(self, source="IRR", target="IRR", factor=None) -> None:
+        self.window.source_unit.setCurrentIndex(
+            self.window.source_unit.findData(source)
+        )
+        self.window.target_unit.setCurrentIndex(
+            self.window.target_unit.findData(target)
+        )
+        self.window.journal.setText("ژورنال فرضی")
+        self.window.precision.setValue(0)
+        if factor is not None:
+            self.window.factor.setText(factor)
+        self.window.approved.setChecked(True)
+
+    def _wait_conversion(self) -> None:
+        if self.window._thread is not None:
+            loop = QEventLoop()
+            timeout = QTimer()
+            timeout.setSingleShot(True)
+            timeout.timeout.connect(loop.quit)
+            self.window.conversion_done.connect(loop.quit)
+            timeout.start(12000)
+            loop.exec()
+            self.assertTrue(timeout.isActive(), "Qt conversion worker timed out")
+        # The terminal result signal can precede QThread.finished by one event turn.
+        for _ in range(100):
+            self.app.processEvents()
+            if self.window._thread is None:
+                break
+            QTest.qWait(10)
+        self.assertIsNone(self.window._thread, "worker did not clean up")
+
+    def _convert(self):
+        self.window.set_source(self.source)
+        self._approve()
+        self.window.start_conversion()
+        self._wait_conversion()
+        self.assertIsNotNone(self.window.result)
+        return self.window.result
+
+    def test_visible_persian_workflow_and_directionality(self):
+        self.assertEqual(self.window.layoutDirection(), Qt.LayoutDirection.RightToLeft)
+        self.assertIn("Odoo", self.window.status.parent().window().windowTitle() or "Odoo")
+        self.assertEqual(self.window.path_field.layoutDirection(), Qt.LayoutDirection.LeftToRight)
+        self.assertEqual(self.window.output_directory.layoutDirection(), Qt.LayoutDirection.LeftToRight)
+        self.assertTrue(self.window.select_button.isEnabled())
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertTrue(self.window.convert_button.text())
+        self.assertTrue(self.window.approved.text())
+        self.window.select_button.setFocus()
+        self.assertTrue(self.window.select_button.hasFocus())
+        QTest.keyClick(self.window.select_button, Qt.Key.Key_Tab)
+        self.assertIsNotNone(self.app.focusWidget())
+
+    def test_detection_by_content_not_filename_and_unsupported_file(self):
+        disguised = self.private / "not_really_a_bank.xls"
+        statement(disguised)
+        self.window.set_source(disguised)
+        self.assertIn("بانک ملت", self.window.detected.text())
+        self.assertEqual(self.window.source, disguised)
+        wrong = self.private / "bad.csv"
+        wrong.write_text("name,total\nfoo,1\n", encoding="utf-8")
+        self.window.set_source(wrong)
+        self.assertIsNone(self.window.source)
+        self.assertIn("شناسایی نشد", self.window.detected.text())
+        self.assertFalse(self.window.save_button.isEnabled())
+
+    def test_conversion_blocks_missing_context_or_approval(self):
+        self.window.start_conversion()
+        self.assertIsNone(self.window._thread)
+        self.window.set_source(self.source)
+        self.window.start_conversion()
+        self.assertIsNone(self.window._thread)
+        self._approve()
+        self.window.approved.setChecked(False)
+        self.window.start_conversion()
+        self.assertIsNone(self.window._thread)
+        self.window.approved.setChecked(True)
+        self.window.journal.clear()  # invalidates previous approval
+        self.assertFalse(self.window.approved.isChecked())
+        self.window.start_conversion()
+        self.assertIsNone(self.window._thread)
+
+    def test_cross_unit_requires_explicit_valid_factor(self):
+        self.window.set_source(self.source)
+        self._approve(source="TOMAN", target="IRR")
+        self.assertTrue(self.window.factor.isEnabled())
+        self.window.start_conversion()
+        self.assertIsNone(self.window._thread)
+        self.assertIsNone(self.window.result)
+        self.window.factor.setText("11")
+        self.window.approved.setChecked(True)
+        self.window.start_conversion()
+        self.assertIsNone(self.window._thread)
+        self.window.factor.setText("10")
+        self.window.approved.setChecked(True)
+        self.window.start_conversion()
+        self._wait_conversion()
+        result = self.window.result
+        self.assertIsNotNone(result)
+        self.assertEqual(str(result.rows[0].converted), "1000")
+        self.assertEqual(result.factor, 10)
+
+    def test_success_pass_exact_csv_private_report_and_no_overwrite(self):
+        result = self._convert()
+        self.assertEqual(result.balance_status, "PASS: 1 consecutive balance transitions")
+        self.assertEqual(len(result.rows), 2)
+        self.assertIn("منطبق", self.window.summary.text())
+        self.assertIn("75", self.window.summary.text())
+        self.assertIn("نامزد بررسی", self.window.status.text())
+        self.window.output_directory.setText(str(self.private))
+        self.window.save_files()
+        paths = list(self.private.glob("Bank2Odoo_*"))
+        self.assertEqual(len(paths), 2)
+        csv_path = next(x for x in paths if x.suffix == ".csv")
+        report_path = next(x for x in paths if x.suffix == ".txt")
+        self.assertEqual(csv_path.read_text(encoding="utf-8"),
+                         "Date,Label,Amount\n"
+                         "2026-09-23,واریز آزمایشی,100\n"
+                         "2026-09-24,کارمزد آزمایشی,-25\n")
+        report = report_path.read_text(encoding="utf-8")
+        self.assertIn("PRIVATE accountant control report", report)
+        self.assertIn('"csv_row": 2', report)
+        self.assertIn("REVIEW CANDIDATE ONLY", report)
+        self.assertIn(str(csv_path), self.window.saved_paths.text())
+        self.assertIn(str(report_path), self.window.saved_paths.text())
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.window.save_files()
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
+
+    def test_not_proven_is_not_failure_and_duplicate_is_retained(self):
+        statement(self.source, not_proven=True)
+        result = self._convert()
+        self.assertTrue(result.balance_status.startswith("NOT_PROVEN"))
+        self.assertIn("احراز نشده", self.window.summary.text())
+        self.assertNotIn("خطا:", self.window.status.text())
+        statement(self.source, duplicate=True)
+        self.window.set_source(self.source)
+        self._approve()
+        self.window.start_conversion()
+        self._wait_conversion()
+        self.assertEqual(len(self.window.result.rows), 2)
+        self.assertTrue(any("duplicate" in x.lower() for x in self.window.result.issues))
+        self.assertIn("حذف نشده", self.window.summary.text())
+
+    def test_change_after_conversion_invalidates_candidate(self):
+        self._convert()
+        self.assertTrue(self.window.save_button.isEnabled())
+        self.window.journal.setText("ژورنال تغییرکرده")
+        self.assertFalse(self.window.approved.isChecked())
+        self.assertIsNone(self.window.result)
+        self.assertFalse(self.window.save_button.isEnabled())
+
+    def test_save_invalid_directory_and_collision_fail_cleanly(self):
+        self._convert()
+        self.window.save_files()
+        self.assertIn("پوشه خصوصی", self.window.status.text())
+        not_folder = self.private / "missing"
+        self.window.output_directory.setText(str(not_folder))
+        self.window.save_files()
+        self.assertIn("خطای ذخیره", self.window.status.text())
+        self.assertFalse(list(self.private.glob("Bank2Odoo_*")))
+        # Manually pre-existing private name is not replaced and partner not created.
+        self.window.output_directory.setText(str(self.private))
+        prefix = f"Bank2Odoo_{self.source.stem}_{self.window.result.sha256[:10]}"
+        report = self.private / f"{prefix}_control.txt"
+        report.write_text("keep", encoding="utf-8")
+        self.window.save_files()
+        self.assertEqual(report.read_text(encoding="utf-8"), "keep")
+        self.assertFalse((self.private / f"{prefix}_candidate.csv").exists())
+        self.assertIn("هم‌نام", self.window.status.text())
+
+    def test_failed_conversion_does_not_enable_save(self):
+        self.window.set_source(self.source)
+        self._approve()
+        # The file changed after content detection; actual convert re-reads and rejects.
+        self.source.write_text("invalid", encoding="utf-8")
+        self.window.start_conversion()
+        self._wait_conversion()
+        self.assertIsNone(self.window.result)
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertIn("خطا", self.window.status.text())
+        self.assertTrue(self.window.details_button.isCheckable())
+        self.window.details_button.setChecked(True)
+        self.assertTrue(self.window.details.isVisible())
+
+    def test_cancelled_worker_never_emits_a_result(self):
+        stop = Event()
+        stop.set()
+        worker = _ConvertJob(self.source, Context("IRR", "IRR", "Synthetic"), stop)
+        observed = []
+        worker.stopped.connect(lambda: observed.append("stopped"))
+        worker.succeeded.connect(lambda _: observed.append("saved"))
+        worker.execute()
+        self.assertEqual(observed, ["stopped"])
+        self.assertIsNone(self.window.result)
+
+    def test_error_summary_does_not_dump_source_fields(self):
+        detail = "Invalid/ambiguous numeric format: 'customer-private-value'"
+        self.assertNotIn("customer-private-value", human_error(detail))
+        self.assertIn("مانده", human_error("Consecutive balance mismatch at source rows 5/6"))
+
+
+if __name__ == "__main__":
+    unittest.main()
