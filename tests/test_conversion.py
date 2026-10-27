@@ -360,6 +360,56 @@ class EngineEndToEndTests(unittest.TestCase):
                 self.assertEqual((result.opening, result.closing),
                                  (Decimal("100"), Decimal("130")))
 
+    def test_footer_summary_with_other_populated_cells_requires_review(self) -> None:
+        # A recognizable title plus apparent totals is not a *pure* marker.
+        # Reject it instead of classifying monetary values as ignorable text.
+        melli = self.root / "melli_ambiguous_summary.xls"
+        write_melli(melli, [
+            ["2", "1405/07/02", "10:00:00", "برداشت", "20", "FICT-2",
+             "", "برداشت ساختگی", "", "130"],
+            ["1", "1405/07/01", "09:00:00", "واریز", "50", "FICT-1",
+             "", "واریز ساختگی", "", "150"],
+            ["مجموع گردش", "", "", "", "70", "", "", "", "", ""],
+        ])
+        mellat = self.root / "mellat_ambiguous_summary.csv"
+        write_mellat(mellat, [
+            ["1", "1405/07/01", "09:00:00", "0001", "واریز ساختگی",
+             "0", "50", "150"],
+            ["2", "1405/07/02", "10:00:00", "0002", "برداشت ساختگی",
+             "20", "0", "130"],
+            ["جمع کل", "", "", "", "", "20", "50", ""],
+        ])
+        for bank, source in (("melli", melli), ("mellat", mellat)):
+            with self.subTest(bank=bank):
+                with self.assertRaisesRegex(StatementError, "Ambiguous financial-bearing footer"):
+                    convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+
+    def test_transactions_after_a_pure_footer_fail_for_both_banks(self) -> None:
+        melli = self.root / "melli_after_footer.xls"
+        write_melli(melli, [
+            ["2", "1405/07/02", "10:00:00", "برداشت", "20", "FICT-2",
+             "", "برداشت ساختگی", "", "130"],
+            ["1", "1405/07/01", "09:00:00", "واریز", "50", "FICT-1",
+             "", "واریز ساختگی", "", "150"],
+            ["پایان گزارش آزمایشی"],
+            ["4", "1405/07/03", "11:00:00", "واریز", "15", "FICT-4",
+             "", "داده بعد از Footer", "", "145"],
+        ])
+        mellat = self.root / "mellat_after_footer.csv"
+        write_mellat(mellat, [
+            ["1", "1405/07/01", "09:00:00", "0001", "واریز ساختگی",
+             "0", "50", "150"],
+            ["2", "1405/07/02", "10:00:00", "0002", "برداشت ساختگی",
+             "20", "0", "130"],
+            ["جمع کل"],
+            ["4", "1405/07/03", "11:00:00", "0004", "داده بعد از Footer",
+             "0", "15", "145"],
+        ])
+        for bank, source in (("melli", melli), ("mellat", mellat)):
+            with self.subTest(bank=bank):
+                with self.assertRaisesRegex(StatementError, "Unexpected data after total/footer"):
+                    convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+
     def test_unknown_melli_footer_remains_a_hard_error(self) -> None:
         # The Phase 2 fixture's explicit 'پایان گزارش' marker is supported,
         # but an arbitrary data-bearing row is never silently skipped.
