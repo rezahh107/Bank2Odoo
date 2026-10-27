@@ -168,7 +168,7 @@ class RealConverterFrozenOracleAcceptance(unittest.TestCase):
         # Explicit FICTIONAL IRR→IRR factor 1; synthetic journal label is not approval.
         result = convert(source, Context("IRR", "IRR", "UNCONFIRMED",
                                          approved_factor=Decimal("1")))
-        output, private = self.root / "candidate.csv", self.root / "PRIVATE-report.txt"
+        output, private = self.root / f"{bank}_candidate.csv", self.root / f"{bank}_PRIVATE-report.txt"
         save_candidate(result, output, private)  # actual safe atomic publication
         return source, output, private, result
 
@@ -213,8 +213,8 @@ class RealConverterFrozenOracleAcceptance(unittest.TestCase):
                     render_mellat(mutated, source)
                 with self.assertRaisesRegex(StatementError, "balance mismatch"):
                     convert(source, Context("IRR", "IRR", "UNCONFIRMED", approved_factor=Decimal("1")))
-                self.assertFalse((self.root/"candidate.csv").exists())
-                self.assertFalse((self.root/"PRIVATE-report.txt").exists())
+                self.assertFalse((self.root/f"{bank}_candidate.csv").exists())
+                self.assertFalse((self.root/f"{bank}_PRIVATE-report.txt").exists())
 
     def test_tampered_actual_trace_identity_is_rejected_for_both_banks(self):
         for bank in ("melli", "mellat"):
