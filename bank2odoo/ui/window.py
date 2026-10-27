@@ -5,6 +5,7 @@ No bank parsing, monetary decisions or CSV serialization live in this module.
 from __future__ import annotations
 
 from decimal import Decimal, InvalidOperation
+from hashlib import sha256
 from pathlib import Path
 from threading import Event
 
@@ -64,45 +65,64 @@ def issue_label(issue: str) -> str:
     return "موردی برای بررسی حسابدار در گزارش کنترل ثبت شده است."
 
 
-class _ConvertJob(QObject):
-    succeeded = Signal(object)
-    failed = Signal(str)
-    stopped = Signal()
-    cancel_requested = Signal()
+class _Job(QObject):
+    """One filesystem/engine operation; only the GUI thread publishes its outcome."""
 
-    def __init__(self, path: Path, context: Context, stop: Event) -> None:
+    finished = Signal()
+
+    def __init__(self, kind: str, state: dict, *, path: Path | None = None,
+                 context: Context | None = None, result: Conversion | None = None,
+                 csv_path: Path | None = None, report_path: Path | None = None,
+                 stop: Event | None = None) -> None:
         super().__init__()
-        self.path, self.context, self.stop = path, context, stop
+        self.kind, self.state = kind, state
+        self.path, self.context, self.result = path, context, result
+        self.csv_path, self.report_path, self.stop = csv_path, report_path, stop
 
     @Slot()
     def execute(self) -> None:
-        if self.stop.is_set():
-            self.stopped.emit()
-            return
         try:
-            result = convert(self.path, self.context)
-        except Exception as exc:
-            if self.stop.is_set():
-                self.stopped.emit()
+            if self.kind == "detect":
+                assert self.path is not None
+                raw = self.path.read_bytes()
+                source = read_statement(self.path, raw)
+                self.state["value"] = (source, sha256(raw).hexdigest())
+            elif self.kind == "convert":
+                assert self.path is not None and self.context is not None
+                if self.stop is not None and self.stop.is_set():
+                    self.state["cancelled"] = True
+                else:
+                    converted = convert(self.path, self.context)
+                    self.state["value"] = converted
+            elif self.kind == "save":
+                assert self.result is not None and self.csv_path is not None
+                assert self.report_path is not None
+                # A paired save is non-cancellable; it owns its cleanup/commit.
+                save_candidate(self.result, self.csv_path, self.report_path)
+                self.state["value"] = (self.csv_path, self.report_path)
             else:
-                self.failed.emit(f"{type(exc).__name__}: {exc}")
-            return
-        if self.stop.is_set():
-            self.stopped.emit()
-        else:
-            self.succeeded.emit(result)
-
+                raise RuntimeError("Unsupported GUI background operation")
+        except Exception as exc:
+            self.state["error"] = f"{type(exc).__name__}: {exc}"
+        finally:
+            self.finished.emit()
 
 class MainWindow(QMainWindow):
     conversion_done = Signal()
+    detection_done = Signal()
+    save_done = Signal()
 
     def __init__(self) -> None:
         super().__init__()
         self.source: Path | None = None
         self.result: Conversion | None = None
         self._thread: QThread | None = None
-        self._worker: _ConvertJob | None = None
+        self._worker: _Job | None = None
         self._stop: Event | None = None
+        self._job_state: dict | None = None
+        self._selected_digest: str | None = None
+        self._approved_digest: str | None = None
+        self._saved = False
         self._last_detail = ""
         self.setWindowTitle("Bank2Odoo | تبدیل گزارش بانک")
         self.resize(920, 830)
@@ -295,18 +315,27 @@ class MainWindow(QMainWindow):
 
     def _invalidate(self) -> None:
         self.result = None
+        self._saved = False
         self.save_button.setEnabled(False)
         self.saved_paths.setText("هنوز خروجی جدیدی ذخیره نشده است.")
         self.summary.setText("پس از تأیید زمینه مالی، تبدیل را اجرا کنید.")
 
-    def _context_changed(self, *_args: object) -> None:
+    def _revoke_approval(self) -> None:
+        self._approved_digest = None
         self.approved.blockSignals(True)
         self.approved.setChecked(False)
         self.approved.blockSignals(False)
+
+    def _context_changed(self, *_args: object) -> None:
+        self._revoke_approval()
         self._update_units()
         self._invalidate()
 
-    def _approval_changed(self, _checked: bool) -> None:
+    def _approval_changed(self, checked: bool) -> None:
+        if checked and self.source is None:
+            self._revoke_approval()
+        else:
+            self._approved_digest = self._selected_digest if checked else None
         self._invalidate()
 
     def _update_units(self) -> None:
@@ -334,29 +363,39 @@ class MainWindow(QMainWindow):
     def set_source(self, path: Path) -> None:
         if self._thread is not None:
             return
+        # Re-selecting even the exact same path revokes the old approval.
+        self._revoke_approval()
         self.source = None
+        self._selected_digest = None
         self._invalidate()
         self.path_field.setText(str(path))
         self.detected.setText("در حال بررسی قالب…")
-        try:
-            raw = path.read_bytes()
-            parsed = read_statement(path, raw)
-        except (OSError, StatementError, ValueError) as exc:
-            self.detected.setText("بانک/قالب: شناسایی نشد.")
-            self._set_message("خطا: " + human_error(str(exc)), f"{type(exc).__name__}: {exc}")
-            return
-        self.source = path
-        self.detected.setText(
-            f"شناسایی‌شده: {BANK_LABELS[parsed.bank]} | {len(parsed.rows)} گردش | "
-            f"قالب: {parsed.encoding} / {parsed.separator} (فقط ساختار، نه واحد پول)"
-        )
-        self._set_message("فایل شناسایی شد. اکنون اطلاعات مالی را خودتان تأیید کنید.")
+        self._set_message("در حال خواندن و شناسایی فایل؛ لطفاً پایان بررسی را مشاهده کنید.")
+        self._begin("detect", path=path)
+
+    def _begin(self, kind: str, **kwargs: object) -> None:
+        if self._thread is not None:
+            raise RuntimeError("A file operation is already active")
+        thread = QThread(self)
+        state: dict = {"kind": kind, "path": kwargs.get("path"), "value": None,
+                       "error": None, "cancelled": False}
+        worker = _Job(kind, state, **kwargs)
+        worker.moveToThread(thread)
+        thread.started.connect(worker.execute)
+        worker.finished.connect(thread.quit)
+        thread.finished.connect(self._thread_finished)
+        thread.finished.connect(worker.deleteLater)
+        thread.finished.connect(thread.deleteLater)
+        self._job_state, self._thread, self._worker = state, thread, worker
+        self._set_busy(True)
+        thread.start()
 
     def _context(self) -> Context:
         if self.source is None:
             raise StatementError("No supported input selected")
-        if not self.approved.isChecked():
-            raise StatementError("Financial inputs require explicit accountant confirmation")
+        if (not self.approved.isChecked() or self._selected_digest is None
+                or self._approved_digest != self._selected_digest):
+            raise StatementError("Financial inputs require approval for this exact selected statement")
         left, right = self.source_unit.currentData(), self.target_unit.currentData()
         if left is None or right is None:
             raise StatementError("Explicit supported source/target unit required")
@@ -388,36 +427,24 @@ class MainWindow(QMainWindow):
             return
         assert self.source is not None
         self._stop = Event()
-        thread = QThread(self)
-        worker = _ConvertJob(self.source, context, self._stop)
-        worker.moveToThread(thread)
-        thread.started.connect(worker.execute)
-        worker.succeeded.connect(self._success)
-        worker.failed.connect(self._failed)
-        worker.stopped.connect(self._cancelled)
-        for signal in (worker.succeeded, worker.failed, worker.stopped):
-            signal.connect(thread.quit)
-        thread.finished.connect(worker.deleteLater)
-        thread.finished.connect(self._thread_finished)
-        thread.finished.connect(thread.deleteLater)
-        self._thread, self._worker = thread, worker
-        self._set_busy(True)
         self._set_message("در حال خواندن و کنترل گردش‌ها… درصد پیشرفت قابل اندازه‌گیری نیست.")
-        thread.start()
+        self._begin("convert", path=self.source, context=context, stop=self._stop)
 
     def _set_busy(self, active: bool) -> None:
         self.busy.setVisible(active)
-        self.cancel_button.setEnabled(active)
+        self.cancel_button.setEnabled(active and self._job_state is not None
+                                      and self._job_state["kind"] == "convert")
         for widget in (self.select_button, self.source_unit, self.target_unit, self.journal,
                        self.precision, self.factor, self.approved, self.convert_button,
                        self.directory_button):
             widget.setEnabled(not active)
         if not active:
             self._update_units()
-        self.save_button.setEnabled(not active and self.result is not None)
+        self.save_button.setEnabled(not active and self.result is not None and not self._saved)
 
     def cancel_conversion(self) -> None:
-        if self._stop is not None:
+        if (self._thread is not None and self._job_state is not None
+                and self._job_state["kind"] == "convert" and self._stop is not None):
             self._stop.set()
             self.cancel_button.setEnabled(False)
             self._set_message("درخواست توقف ثبت شد؛ پس از پایان مرحله فعلی هیچ نامزد جدیدی نمایش داده نمی‌شود.")
@@ -445,23 +472,81 @@ class MainWindow(QMainWindow):
         self._set_message("تبدیل انجام شد: نامزد بررسی تهیه شده، اما هنوز ذخیره یا تأیید نشده است.",
                           "Balance: " + result.balance_status + "\n" + "\n".join(result.issues))
         self.save_button.setEnabled(True)
-        self.conversion_done.emit()
 
     @Slot(str)
     def _failed(self, detail: str) -> None:
         self._set_message("خطا: " + human_error(detail), detail)
         self.summary.setText("خروجی تولید نشد؛ فایل نامزد قابل ذخیره نیست.")
-        self.conversion_done.emit()
+ 
 
     @Slot()
     def _cancelled(self) -> None:
         self._set_message("توقف درخواست‌شده انجام شد؛ خروجی جدیدی تولید یا ذخیره نشد.")
-        self.conversion_done.emit()
+
 
     @Slot()
     def _thread_finished(self) -> None:
-        self._thread, self._worker, self._stop = None, None, None
+        """All background work has exited before publishing any visible outcome."""
+        state = self._job_state
+        if state is None or self.sender() is not self._thread:
+            return  # A late signal from another worker cannot publish an outcome.
+        kind, value, error = state["kind"], state["value"], state["error"]
+        stopped = self._stop is not None and self._stop.is_set()
+        self._thread, self._worker, self._stop, self._job_state = None, None, None, None
+        if kind == "detect":
+            if error is not None:
+                self.source = None
+                self._selected_digest = None
+                self.detected.setText("بانک/قالب: شناسایی نشد.")
+                self._set_message("خطا: " + human_error(error), error)
+            else:
+                source, digest = value
+                self.source = state["path"]
+                self._selected_digest = digest
+                self.detected.setText(
+                    f"شناسایی‌شده: {BANK_LABELS[source.bank]} | {len(source.rows)} گردش | "
+                    f"قالب: {source.encoding} / {source.separator} (فقط ساختار، نه واحد پول)"
+                )
+                self._set_message("فایل شناسایی شد. اکنون اطلاعات مالی را خودتان تأیید کنید.")
+        elif kind == "convert":
+            if stopped or state["cancelled"]:
+                self._cancelled()
+            elif error is not None:
+                self._failed(error)
+            elif (self._selected_digest is None
+                  or self._approved_digest != self._selected_digest
+                  or self.source is None or value.sha256 != self._selected_digest):
+                # Content changed between detection and conversion, or
+                # approval no longer belongs to the selected source bytes.
+                self._revoke_approval()
+                self.source = None
+                self._selected_digest = None
+                self._invalidate()
+                self.detected.setText("هویت فایل تغییر کرده؛ شناسایی مجدد ضروری است.")
+                self._set_message(
+                    "فایل پس از شناسایی تغییر کرده است؛ نامزد پذیرفته نشد. "
+                    "فایل را دوباره انتخاب و اطلاعات مالی را دوباره تأیید کنید."
+                )
+            else:
+                self._success(value)
+        elif kind == "save":
+            if error is not None:
+                self.saved_paths.setText("ذخیره کامل نشد؛ فایل‌ها را در پوشه مقصد بررسی کنید.")
+                self._set_message("خطای ذخیره: " + human_error(error, saving=True), error)
+            else:
+                csv_path, report_path = value
+                self._saved = True
+                self.saved_paths.setText(
+                    f"دو فایل ایجاد شدند:\nCSV: {csv_path}\nگزارش کنترل خصوصی: {report_path}"
+                )
+                self._set_message("ذخیره هر دو فایل موفق بود. نامزد هنوز مجوز ورود به Odoo نیست.")
         self._set_busy(False)
+        if kind == "detect":
+            self.detection_done.emit()
+        elif kind == "convert":
+            self.conversion_done.emit()
+        else:
+            self.save_done.emit()
 
     def _browse_directory(self) -> None:
         folder = QFileDialog.getExistingDirectory(self, "پوشه خصوصی برای دو فایل خروجی")
@@ -469,8 +554,10 @@ class MainWindow(QMainWindow):
             self.output_directory.setText(folder)
 
     def save_files(self) -> None:
-        if self.result is None or self._thread is not None:
-            self._set_message("ابتدا تبدیل موفق را تکمیل کنید؛ هیچ خروجی ذخیره نشد.")
+        if self._thread is not None:
+            return
+        if self.result is None or self._saved:
+            self._set_message("ابتدا تبدیل موفق را تکمیل کنید؛ هیچ خروجی تازه‌ای ذخیره نشد.")
             return
         folder_text = self.output_directory.text().strip()
         if not folder_text:
@@ -482,23 +569,14 @@ class MainWindow(QMainWindow):
         prefix = f"Bank2Odoo_{safe_stem or 'statement'}_{self.result.sha256[:10]}"
         csv_path = folder / f"{prefix}_candidate.csv"
         report_path = folder / f"{prefix}_control.txt"
-        try:
-            save_candidate(self.result, csv_path, report_path)
-        except (StatementError, OSError, ValueError) as exc:
-            self.saved_paths.setText("ذخیره کامل نشد؛ فایل‌ها را در پوشه مقصد بررسی کنید.")
-            self._set_message("خطای ذخیره: " + human_error(str(exc), saving=True),
-                              f"{type(exc).__name__}: {exc}")
-            return
-        self.save_button.setEnabled(False)
-        self.saved_paths.setText(
-            f"دو فایل ایجاد شدند:\nCSV: {csv_path}\nگزارش کنترل خصوصی: {report_path}"
-        )
-        self._set_message("ذخیره هر دو فایل موفق بود. نامزد هنوز مجوز ورود به Odoo نیست.")
+        self._set_message("در حال ذخیره هم‌زمان نامزد و گزارش خصوصی؛ تا پایان عملیات پنجره را نبندید.")
+        self._begin("save", result=self.result, csv_path=csv_path, report_path=report_path)
 
     def closeEvent(self, event) -> None:
         if self._thread is not None:
             QMessageBox.information(self, "پردازش در حال اجرا",
-                                    "برای خروج، درخواست توقف بدهید و پایان مرحله جاری را بررسی کنید.")
+                                    "عملیات فایل در حال اجرا است. لطفاً تا پایان آن پنجره را باز نگه دارید.\n"
+                                    "در زمان تبدیل می‌توانید درخواست توقف بدهید؛ ذخیره در میانه قطع نمی‌شود.")
             event.ignore()
             return
         event.accept()

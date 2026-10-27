@@ -1,4 +1,4 @@
-"""Headless developer/accountant-review candidate entrypoint (no desktop GUI)."""
+"""Headless conversion CLI; the separate Persian GUI is at bank2odoo.ui."""
 
 import argparse
 from decimal import Decimal, InvalidOperation
@@ -14,7 +14,8 @@ VERSION = "0.2.0"
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="bank2odoo", description="Bank statement review candidate; NO GUI and NO Odoo import")
+        prog="bank2odoo", description=("Headless bank statement review-candidate CLI; "
+                    "separate Persian GUI: python -m bank2odoo.ui; no Odoo import"))
     parser.add_argument("--version", action="version", version=f"Bank2Odoo {VERSION} (headless candidate engine)")
     parser.add_argument("--input", type=Path)
     parser.add_argument("--output", type=Path, help="New 3-column CSV path (no overwrite)")
@@ -29,7 +30,8 @@ def main(argv: list[str] | None = None) -> int:
     if not all(getattr(args, key) is not None for key in needed):
         if any(getattr(args, key) is not None for key in needed):
             parser.error("Conversion requires --input --output --report --source-unit --target-unit --journal")
-        print("Bank2Odoo headless conversion engine; accountant-facing PySide6 GUI is NOT implemented.\n"
+        print("Bank2Odoo headless conversion CLI. Persian desktop GUI is available separately:\n"
+              "  python -m bank2odoo.ui (or Run.bat on Windows).\n"
               "No bank file processed. Use --help for explicit review-candidate conversion command.")
         return 0
     try:

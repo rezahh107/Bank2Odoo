@@ -1,4 +1,4 @@
-"""Entrypoint smoke: headless engine exists, desktop GUI does not."""
+"""Entrypoint smoke: headless CLI and independently available Persian GUI."""
 from pathlib import Path
 import subprocess
 import sys
@@ -11,12 +11,22 @@ def invoke(*args: str) -> subprocess.CompletedProcess[str]:
                           cwd=ROOT, capture_output=True, text=True, check=False)
 
 class EntrypointSmokeTests(unittest.TestCase):
-    def test_no_args_honestly_reports_gui_unavailable(self) -> None:
+    def test_no_args_honestly_reports_separate_gui(self) -> None:
         result = invoke()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("headless", result.stdout)
-        self.assertIn("GUI is NOT implemented", result.stdout)
+        self.assertIn("python -m bank2odoo.ui", result.stdout)
+        self.assertIn("Run.bat", result.stdout)
         self.assertIn("No bank file processed", result.stdout)
+
+    def test_help_reports_separate_gui_and_preserves_conversion_switches(self) -> None:
+        result = invoke("--help")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("python -m bank2odoo.ui", result.stdout)
+        for field in ("--input", "--output", "--report", "--source-unit",
+                      "--target-unit", "--journal", "--decimal-places",
+                      "--approved-factor"):
+            self.assertIn(field, result.stdout)
 
     def test_version_no_longer_claims_foundation_only(self) -> None:
         result = invoke("--version")
