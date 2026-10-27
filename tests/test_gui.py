@@ -279,6 +279,23 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIsNone(self.window.result)
         self.assertFalse(self.window.save_button.isEnabled())
 
+    def test_repeated_worker_lifecycle_survives_failed_and_successful_saves(self):
+        # Rapid successive real worker threads previously led to occasional
+        # abrupt Windows Qt process termination without a unittest traceback.
+        # Use fictional data only; run conversion and both save outcomes.
+        for attempt in range(12):
+            self._convert()
+            directory = self.private / f"attempt_{attempt}"
+            directory.mkdir()
+            self.window.output_directory.setText(str(directory / "missing"))
+            self._save()
+            self.assertIn("خطای ذخیره", self.window.status.text())
+            self.assertIsNone(self.window._thread)
+            self.window.output_directory.setText(str(directory))
+            self._save()
+            self.assertIsNone(self.window._thread)
+            self.assertEqual(len(list(directory.glob("Bank2Odoo_*"))), 2)
+
     def test_save_invalid_directory_and_collision_fail_cleanly(self):
         self._convert()
         self._save()
