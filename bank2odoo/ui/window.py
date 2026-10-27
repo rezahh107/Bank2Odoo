@@ -9,7 +9,7 @@ from hashlib import sha256
 from pathlib import Path
 from threading import Event
 
-from PySide6.QtCore import QObject, Qt, QThread, Signal, Slot
+from PySide6.QtCore import QObject, Qt, QThread, QTimer, Signal, Slot
 from PySide6.QtGui import QFont, QFontDatabase
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QFileDialog, QFormLayout, QFrame,
@@ -385,7 +385,6 @@ class MainWindow(QMainWindow):
         worker.finished.connect(thread.quit)
         thread.finished.connect(self._thread_finished)
         thread.finished.connect(worker.deleteLater)
-        thread.finished.connect(thread.deleteLater)
         self._job_state, self._thread, self._worker = state, thread, worker
         self._set_busy(True)
         thread.start()
@@ -484,12 +483,38 @@ class MainWindow(QMainWindow):
         self._set_message("توقف درخواست‌شده انجام شد؛ خروجی جدیدی تولید یا ذخیره نشد.")
 
 
+    def _wait_for_thread(self, thread: QThread, timeout_ms: int) -> bool:
+        """Join boundary, kept separate so unsuccessful waits can be tested."""
+        return thread.wait(timeout_ms)
+
     @Slot()
     def _thread_finished(self) -> None:
-        """All background work has exited before publishing any visible outcome."""
+        """Only the matching worker may publish its outcome after a native join."""
         state = self._job_state
-        if state is None or self.sender() is not self._thread:
+        thread = self._thread
+        if state is None or thread is None or self.sender() is not thread:
             return  # A late signal from another worker cannot publish an outcome.
+        self._join_finished_thread(thread, state, 5000)
+
+    def _join_finished_thread(self, thread: QThread, state: dict,
+                              timeout_ms: int) -> None:
+        if self._thread is not thread or self._job_state is not state:
+            return  # A stale timeout cannot complete a newer operation.
+        if not self._wait_for_thread(thread, timeout_ms):
+            self._set_message(
+                "خطا: پایان کامل پردازش هنوز تأیید نشده است؛ عملیات جدید مسدود "
+                "می‌ماند و برنامه به‌صورت خودکار دوباره بررسی می‌کند."
+            )
+            # Retry without blocking the GUI. Keep ownership until a real join;
+            # an indefinitely unsuccessful join remains safely blocked.
+            QTimer.singleShot(
+                250, lambda: self._join_finished_thread(thread, state, 0)
+            )
+            return
+        # The QThread lives in the GUI thread. Unlike the worker's standard
+        # finished -> deleteLater connection, its C++ deletion must not be
+        # scheduled until Qt confirms native thread termination.
+        thread.deleteLater()
         kind, value, error = state["kind"], state["value"], state["error"]
         stopped = self._stop is not None and self._stop.is_set()
         self._thread, self._worker, self._stop, self._job_state = None, None, None, None

@@ -12,6 +12,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QEventLoop, Qt, QTimer, QThread
 from PySide6.QtTest import QTest
+from shiboken6 import isValid
 from PySide6.QtWidgets import QApplication
 
 from bank2odoo.ui.window import MainWindow, _Job, human_error
@@ -279,6 +280,23 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIsNone(self.window.result)
         self.assertFalse(self.window.save_button.isEnabled())
 
+    def test_repeated_worker_lifecycle_survives_failed_and_successful_saves(self):
+        # Rapid successive real worker threads previously led to occasional
+        # abrupt Windows Qt process termination without a unittest traceback.
+        # Use fictional data only; run conversion and both save outcomes.
+        for attempt in range(12):
+            self._convert()
+            directory = self.private / f"attempt_{attempt}"
+            directory.mkdir()
+            self.window.output_directory.setText(str(directory / "missing"))
+            self._save()
+            self.assertIn("خطای ذخیره", self.window.status.text())
+            self.assertIsNone(self.window._thread)
+            self.window.output_directory.setText(str(directory))
+            self._save()
+            self.assertIsNone(self.window._thread)
+            self.assertEqual(len(list(directory.glob("Bank2Odoo_*"))), 2)
+
     def test_save_invalid_directory_and_collision_fail_cleanly(self):
         self._convert()
         self._save()
@@ -501,6 +519,195 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(text, self.window.status.text())
         self.assertIsNone(self.window._thread)
         self.assertTrue(self.window.save_button.isEnabled())
+
+    def _await_join_attempts(self, calls: list[int], count: int) -> None:
+        for _ in range(160):
+            if len(calls) >= count:
+                return
+            QTest.qWait(10)
+        self.fail(f"Expected {count} Qt join attempts, saw {calls}")
+
+    def test_thread_join_immediate_success_and_single_publication(self):
+        self._convert()
+        self.window.output_directory.setText(str(self.private))
+        joins, outcomes = [], []
+        original = self.window._wait_for_thread
+
+        def joined(thread, timeout_ms):
+            joins.append(timeout_ms)
+            return original(thread, timeout_ms)
+
+        self.window.save_done.connect(lambda: outcomes.append("save"))
+        with patch.object(self.window, "_wait_for_thread", side_effect=joined):
+            self._save()
+        self.assertEqual(joins, [5000])
+        self.assertEqual(outcomes, ["save"])
+        self.assertIsNone(self.window._thread)
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
+
+    def test_initial_failed_join_then_success_preserves_qt_object(self):
+        self._convert()
+        self.window.output_directory.setText(str(self.private))
+        calls, outcomes, deleted, worker_deleted = [], [], [], []
+        original = self.window._wait_for_thread
+        self.window.save_done.connect(lambda: outcomes.append("save"))
+
+        def joined(thread, timeout_ms):
+            calls.append(timeout_ms)
+            if len(calls) == 1:
+                self.assertTrue(isValid(thread))
+                self.assertFalse(deleted)
+                return False
+            return original(thread, timeout_ms)
+
+        with patch.object(self.window, "_wait_for_thread", side_effect=joined):
+            self.window.save_files()
+            thread, worker = self.window._thread, self.window._worker
+            thread.destroyed.connect(lambda: deleted.append(True))
+            worker.destroyed.connect(lambda: worker_deleted.append(True))
+            self._wait_operation(self.window.save_done)
+        self.assertEqual(calls, [5000, 0])
+        self.assertFalse(isValid(worker), "Worker deferred deletion did not finish")
+        self.assertEqual(worker_deleted, [True])
+        self.assertEqual(outcomes, ["save"])
+        self.assertTrue(self.window._saved)
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
+        self._await_join_attempts(deleted, 1)
+
+    def test_multiple_failed_joins_complete_conversion_once(self):
+        self._select(self.source)
+        self._approve()
+        calls, outcomes = [], []
+        original = self.window._wait_for_thread
+        self.window.conversion_done.connect(lambda: outcomes.append("convert"))
+
+        def joined(thread, timeout_ms):
+            calls.append(timeout_ms)
+            if len(calls) <= 3:
+                self.assertTrue(isValid(thread))
+                return False
+            return original(thread, timeout_ms)
+
+        with patch.object(self.window, "_wait_for_thread", side_effect=joined):
+            self.window.start_conversion()
+            self._wait_conversion()
+        self.assertEqual(calls, [5000, 0, 0, 0])
+        self.assertEqual(outcomes, ["convert"])
+        self.assertIsNotNone(self.window.result)
+        self.assertTrue(self.window.save_button.isEnabled())
+
+    def test_persistent_failed_join_blocks_then_recovers_without_double_save(self):
+        self._convert()
+        self.window.output_directory.setText(str(self.private))
+        calls, outcomes, deleted = [], [], []
+        allow_join = [False]
+        original = self.window._wait_for_thread
+        self.window.save_done.connect(lambda: outcomes.append("save"))
+
+        def joined(thread, timeout_ms):
+            calls.append(timeout_ms)
+            return original(thread, timeout_ms) if allow_join[0] else False
+
+        with patch.object(self.window, "_wait_for_thread", side_effect=joined):
+            self.window.save_files()
+            thread = self.window._thread
+            thread.destroyed.connect(lambda: deleted.append(True))
+            try:
+                self._await_join_attempts(calls, 3)
+                self.assertEqual(calls[0], 5000)
+                self.assertTrue(all(ms == 0 for ms in calls[1:]))
+                self.assertTrue(isValid(thread), "QThread deleted before successful join")
+                self.assertEqual(deleted, [])
+                self.assertIs(self.window._thread, thread)
+                self.assertFalse(self.window._saved)
+                self.assertEqual(outcomes, [])
+                self.assertFalse(self.window.save_button.isEnabled())
+                self.assertIn("مسدود", self.window.status.text())
+                self.window.save_files()
+                self.window.start_conversion()
+                self.assertIs(self.window._thread, thread)
+                with patch("bank2odoo.ui.window.QMessageBox.information"):
+                    self.assertFalse(self.window.close())
+                self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
+            finally:
+                allow_join[0] = True
+                self._wait_operation(self.window.save_done)
+        self.assertEqual(outcomes, ["save"])
+        self.assertTrue(self.window._saved)
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
+        self._await_join_attempts(deleted, 1)
+
+    def test_stale_retry_cannot_finish_new_worker_or_publish_again(self):
+        self._convert()
+        self.window.output_directory.setText(str(self.private))
+        outcomes = []
+        self.window.save_done.connect(lambda: outcomes.append("save"))
+        old_thread, old_state = None, None
+        original = self.window._wait_for_thread
+        calls = []
+
+        def joined(thread, timeout_ms):
+            calls.append(timeout_ms)
+            return False if len(calls) == 1 else original(thread, timeout_ms)
+
+        with patch.object(self.window, "_wait_for_thread", side_effect=joined):
+            self.window.save_files()
+            old_thread, old_state = self.window._thread, self.window._job_state
+            self._wait_operation(self.window.save_done)
+        self.assertEqual(outcomes, ["save"])
+        entered, released = Event(), Event()
+
+        def delayed(path, raw):
+            entered.set()
+            if not released.wait(6):
+                raise RuntimeError("synthetic detection timeout")
+            return actual_read_statement(path, raw)
+
+        other = self.private / "different_fictional.csv"
+        statement(other)
+        with patch("bank2odoo.ui.window.read_statement", side_effect=delayed):
+            self.window.set_source(other)
+            try:
+                self.assertTrue(entered.wait(6))
+                current_thread, current_state = self.window._thread, self.window._job_state
+                with patch.object(self.window, "_wait_for_thread") as wait:
+                    self.window._join_finished_thread(old_thread, old_state, 0)
+                    self.window._thread_finished()  # no matching Qt signal sender
+                    wait.assert_not_called()
+                self.assertIs(self.window._thread, current_thread)
+                self.assertIs(self.window._job_state, current_state)
+                self.assertEqual(outcomes, ["save"])
+            finally:
+                released.set()
+            self._wait_operation(self.window.detection_done)
+        self.assertEqual(outcomes, ["save"])
+
+    def test_failed_and_successful_paired_save_after_join_timeouts(self):
+        self._convert()
+        calls = []
+        original = self.window._wait_for_thread
+
+        def joined(thread, timeout_ms):
+            calls.append(timeout_ms)
+            return False if len(calls) % 2 == 1 else original(thread, timeout_ms)
+
+        self.window.output_directory.setText(str(self.private / "missing"))
+        with patch.object(self.window, "_wait_for_thread", side_effect=joined):
+            self._save()
+            self.assertEqual(calls, [5000, 0])
+            self.assertIn("خطای ذخیره", self.window.status.text())
+            self.assertFalse(self.window._saved)
+            self.assertEqual(list(self.private.glob("Bank2Odoo_*")), [])
+            self.window.output_directory.setText(str(self.private))
+            self._save()
+        self.assertEqual(calls, [5000, 0, 5000, 0])
+        self.assertTrue(self.window._saved)
+        self.assertIn("دو فایل ایجاد شدند", self.window.saved_paths.text())
+        paths = list(self.private.glob("Bank2Odoo_*"))
+        self.assertEqual(len(paths), 2)
+        before = {path.name: path.read_bytes() for path in paths}
+        self._save()  # An already-saved candidate must not overwrite the pair.
+        self.assertEqual(before, {path.name: path.read_bytes() for path in paths})
 
     def test_error_summary_does_not_dump_source_fields(self):
         detail = "Invalid/ambiguous numeric format: 'customer-private-value'"
