@@ -246,6 +246,8 @@ class AccountantUiTests(unittest.TestCase):
                          "2026-09-24,کارمزد آزمایشی,-25\n")
         report = report_path.read_text(encoding="utf-8")
         self.assertIn("PRIVATE accountant control report", report)
+        from bank2odoo.cli import VERSION
+        self.assertIn(f"Producing application version: Bank2Odoo {VERSION}\n", report)
         self.assertIn('"csv_row": 2', report)
         self.assertIn("REVIEW CANDIDATE ONLY", report)
         self.assertIn(str(csv_path), self.window.saved_paths.text())
