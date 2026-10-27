@@ -82,8 +82,17 @@ def _extract(table: list[tuple[int, list[str]]], bank: str, sheet: str) -> tuple
     for physical, cells in table[header_idx + 1:]:
         if not any(str(v).strip() for v in cells):
             continue
-        first = normalized_header(next((v for v in cells if str(v).strip()), ""))
+        populated = [str(value).strip() for value in cells if str(value).strip()]
+        first = normalized_header(populated[0])
         if first.startswith(("جمع", "مجموع", "کل گردش", "پایان گزارش")):
+            # A real footer is a standalone marker. Additional populated
+            # columns may contain a bank movement or financial totals; neither
+            # may be silently removed based only on the marker's prefix.
+            if len(populated) != 1:
+                raise StatementError(
+                    f"Ambiguous financial-bearing footer at {sheet}:{physical}; "
+                    "review the populated source fields"
+                )
             seen_footer = True
             continue
         if seen_footer:
