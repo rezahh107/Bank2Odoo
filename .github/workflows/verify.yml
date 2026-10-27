@@ -1,4 +1,4 @@
-name: Bank2Odoo headless engine verification
+name: Bank2Odoo headless + Persian Qt verification
 
 on:
   pull_request:
@@ -34,6 +34,12 @@ jobs:
       - name: Sync exact locked environment
         run: uv sync --locked
       - name: Run automated verification
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: uv run --locked python -m unittest discover -s tests -v
-      - name: Smoke-run real entrypoint
+      - name: Smoke-run preserved headless entrypoint
         run: uv run --locked python -m bank2odoo
+      - name: Offline Qt window creation smoke
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: uv run --offline --locked python -c "from PySide6.QtWidgets import QApplication; from bank2odoo.ui.window import MainWindow; app=QApplication([]); w=MainWindow(); assert 'Bank2Odoo' in w.windowTitle(); w.close(); print('offline Qt window OK')"

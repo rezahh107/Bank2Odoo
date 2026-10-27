@@ -9,6 +9,7 @@ import os
 
 from bank2odoo.core.engine import Conversion
 from bank2odoo.validation.financial import StatementError, exact_sum
+from bank2odoo.version import VERSION
 
 
 def output_csv(result: Conversion) -> str:
@@ -25,6 +26,7 @@ def control_report(result: Conversion) -> str:
     credit_count = len(result.rows) - debit_count
     lines = [
         "# Bank2Odoo — PRIVATE accountant control report",
+        f"Producing application version: Bank2Odoo {VERSION}",
         "STATUS: REVIEW CANDIDATE ONLY — NOT authorized for live Odoo import",
         "No Odoo connection, journal validation, duplicate-import check, or accountant approval performed.",
         f"Source filename: {result.filename}",

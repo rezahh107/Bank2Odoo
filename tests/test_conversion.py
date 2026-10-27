@@ -463,6 +463,32 @@ class EngineEndToEndTests(unittest.TestCase):
         self.assertIn("1.25", output_csv(result))
         self.assertIn("NOT_PROVEN", result.balance_status)
 
+    def test_report_producing_version_matches_metadata_and_cli(self) -> None:
+        import tomllib
+        from bank2odoo.cli import VERSION
+
+        metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+        self.assertEqual(VERSION, metadata["project"]["version"])
+        cli = subprocess.run([sys.executable, "-m", "bank2odoo", "--version"],
+                             cwd=ROOT, capture_output=True, text=True, check=False)
+        self.assertEqual(cli.returncode, 0, cli.stderr)
+        self.assertIn(f"Bank2Odoo {VERSION} (headless candidate engine)", cli.stdout)
+
+        source = self.root / "version_fictional.csv"
+        write_mellat(source, [
+            ["1", "1405/07/01", "10:00:00", "001", "واریز فرضی",
+             "0", "50", "50"],
+        ])
+        result = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+        version_line = f"Producing application version: Bank2Odoo {VERSION}"
+        self.assertIn(version_line + "\n", control_report(result))
+        output_path = self.root / "version_candidate.csv"
+        report_path = self.root / "version_control.txt"
+        save_candidate(result, output_path, report_path)
+        self.assertIn(version_line + "\n", report_path.read_text(encoding="utf-8"))
+        self.assertEqual(output_path.read_text(encoding="utf-8"),
+                         "Date,Label,Amount\n2026-09-23,واریز فرضی,50\n")
+
     def test_cli_real_conversion_and_failure_safe(self) -> None:
         source = self.root / "in.csv"
         write_mellat(source, [["1", "1405/07/01", "10:00:00", "1", "نمونه", "0", "50", "50"]])
