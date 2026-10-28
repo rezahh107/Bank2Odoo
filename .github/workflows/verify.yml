@@ -71,6 +71,7 @@ jobs:
         shell: pwsh
         run: |
           git fetch --no-tags --depth=1 origin 2ef2db1726ecf460eab231c4f5ac4a30413348ce
+          git fetch --no-tags --depth=1 origin c4c5fdb28ab07a3389b1e395a59ed27e456d7da7
           @'
           import importlib.util
           import os
@@ -128,8 +129,21 @@ jobs:
               app.setPalette(palette_module.synthetic_palette(dark=is_dark))
               app.processEvents()
               if is_dark:
-                  # Demonstrate the pre-repair hardcoded surface against dark text.
-                  capture(module.MainWindow(), "defect-dark")
+                  # Inspect the exact original PRI-FND-001 starting Head, not
+                  # the older pre-modernization main window.
+                  bad_source = subprocess.check_output([
+                      "git", "show",
+                      "c4c5fdb28ab07a3389b1e395a59ed27e456d7da7:bank2odoo/ui/window.py",
+                  ])
+                  with tempfile.TemporaryDirectory() as tmp:
+                      original_file = Path(tmp) / "defect_window.py"
+                      original_file.write_bytes(bad_source)
+                      previous_spec = importlib.util.spec_from_file_location(
+                          "defect_window", original_file
+                      )
+                      previous_module = importlib.util.module_from_spec(previous_spec)
+                      previous_spec.loader.exec_module(previous_module)
+                      capture(previous_module.MainWindow(), "defect-dark")
               capture(MainWindow(), f"fixed-{name}")
 
           (output / "EVIDENCE_LIMITS.txt").write_text(
