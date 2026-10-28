@@ -240,6 +240,30 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIn("شناسایی نشد", self.window.detected.text())
         self.assertFalse(self.window.save_button.isEnabled())
 
+    def test_conversion_guides_to_first_missing_input(self):
+        self.window.start_conversion()
+        self.assertIn("گزارش بانکی", self.window.status.text())
+        self.assertIs(self.app.focusWidget(), self.window.select_button)
+
+        self._select(self.source)
+        self.window.start_conversion()
+        self.assertIn("واحد پول فایل بانک", self.window.status.text())
+        self.assertIs(self.app.focusWidget(), self.window.source_unit)
+
+        self.window.source_unit.setCurrentIndex(self.window.source_unit.findData("IRR"))
+        self.window.start_conversion()
+        self.assertIn("واحد پول ژورنال مقصد", self.window.status.text())
+
+        self.window.target_unit.setCurrentIndex(self.window.target_unit.findData("IRR"))
+        self.window.start_conversion()
+        self.assertIn("نام ژورنال", self.window.status.text())
+
+        self.window.journal.setText("ژورنال آزمایشی")
+        self.window.start_conversion()
+        self.assertIn("تأیید صریح", self.window.status.text())
+        self.assertIs(self.app.focusWidget(), self.window.approved)
+        self.assertIsNone(self.window._thread)
+
     def test_conversion_blocks_missing_context_or_approval(self):
         self.window.start_conversion()
         self.assertIsNone(self.window._thread)
