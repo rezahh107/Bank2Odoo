@@ -97,6 +97,13 @@ def issue_label(issue: str) -> str:
     return "موردی برای بررسی حسابدار در گزارش کنترل ثبت شده است."
 
 
+class _FullRowCheckBox(QCheckBox):
+    """Make the entire approved row a mouse target, not only its label glyphs."""
+
+    def hitButton(self, pos) -> bool:
+        return self.rect().contains(pos)
+
+
 class _Job(QObject):
     """One filesystem/engine operation; only the GUI thread publishes its outcome."""
 
@@ -278,7 +285,7 @@ class MainWindow(QMainWindow):
         approval_layout = QVBoxLayout(approval_panel)
         approval_layout.setContentsMargins(16, 8, 16, 12)
         approval_layout.setSpacing(2)
-        self.approved = QCheckBox("اطلاعات مالی بالا را شخصاً بررسی و تأیید کرده‌ام.")
+        self.approved = _FullRowCheckBox("اطلاعات مالی بالا را شخصاً بررسی و تأیید کرده‌ام.")
         self.approved.setMinimumHeight(52)  # Full label and empty space are clickable.
         self.approved.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.approved.setCursor(Qt.CursorShape.PointingHandCursor)
