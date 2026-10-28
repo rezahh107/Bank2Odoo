@@ -186,7 +186,7 @@ class EngineEndToEndTests(unittest.TestCase):
     def test_unicode_label_controls_preserve_persian_and_private_source_trace(self) -> None:
         # This crosses the real Mellat parser, core, CSV writer and atomic save.
         first = 'پرداخت\u200cیار، Visa "A"'
-        second = "کارمزد\u200b\u2066 پل\\nمرحله\\x07نهایی"
+        second = "کارمزد\u200b\u2066 پل\nمرحله\x07نهایی"
         source = self.root / "synthetic_unicode_mellat.csv"
         write_mellat(source, [
             ["1", "1405/07/01", "10:00:00", "0001", first, "0", "100", "100"],
@@ -196,9 +196,9 @@ class EngineEndToEndTests(unittest.TestCase):
         csv_path, report_path = self.root / "unicode.csv", self.root / "unicode_private.txt"
         save_candidate(result, csv_path, report_path)
         expected = (
-            'Date,Label,Amount\\n'
-            '2026-09-23,"پرداخت\u200cیار، Visa ""A""",100\\n'
-            '2026-09-24,کارمزد پل مرحله نهایی,-5\\n'
+            'Date,Label,Amount\n'
+            '2026-09-23,"پرداخت\u200cیار، Visa ""A""",100\n'
+            '2026-09-24,کارمزد پل مرحله نهایی,-5\n'
         )
         self.assertEqual(csv_path.read_bytes(), expected.encode("utf-8"))
         self.assertEqual(len(result.rows), 2)
@@ -249,9 +249,9 @@ class EngineEndToEndTests(unittest.TestCase):
         self.assertIn("Source unit: IRR; target unit: IRR; approved factor: 1", report)
         self.assertIn("Journal (user-entered, UNVERIFIED): Synthetic Journal", report)
         self.assertEqual(csv_path.read_bytes(), (
-            "Date,Label,Amount\\n"
-            "2026-09-23,واریز آزمایشی,1.25\\n"
-            "2026-09-24,کارمزد آزمایشی,-0.25\\n"
+            "Date,Label,Amount\n"
+            "2026-09-23,واریز آزمایشی,1.25\n"
+            "2026-09-24,کارمزد آزمایشی,-0.25\n"
         ).encode("utf-8"))
         with self.assertRaisesRegex(StatementError, "decimal places"):
             convert(source, Context("IRR", "IRR", "Synthetic Journal", decimal_places=0))
