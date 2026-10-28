@@ -1,6 +1,7 @@
 """Bank2Odoo black-box end-to-end tests with independent synthetic expectations."""
 
 import csv
+import json
 from decimal import Decimal
 from io import StringIO
 from pathlib import Path
@@ -181,6 +182,79 @@ class EngineEndToEndTests(unittest.TestCase):
         with localcontext() as ctx:
             ctx.prec = 2
             self.assertEqual(exact_scaled(source_amount, Decimal("0.1"), 0), expected)
+
+    def test_unicode_label_controls_preserve_persian_and_private_source_trace(self) -> None:
+        # This crosses the real Mellat parser, core, CSV writer and atomic save.
+        first = 'پرداخت\u200cیار، Visa "A"'
+        second = "کارمزد\u200b\u2066 پل\\nمرحله\\x07نهایی"
+        source = self.root / "synthetic_unicode_mellat.csv"
+        write_mellat(source, [
+            ["1", "1405/07/01", "10:00:00", "0001", first, "0", "100", "100"],
+            ["2", "1405/07/02", "11:00:00", "0002", second, "5", "0", "95"],
+        ])
+        result = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+        csv_path, report_path = self.root / "unicode.csv", self.root / "unicode_private.txt"
+        save_candidate(result, csv_path, report_path)
+        expected = (
+            'Date,Label,Amount\\n'
+            '2026-09-23,"پرداخت\u200cیار، Visa ""A""",100\\n'
+            '2026-09-24,کارمزد پل مرحله نهایی,-5\\n'
+        )
+        self.assertEqual(csv_path.read_bytes(), expected.encode("utf-8"))
+        self.assertEqual(len(result.rows), 2)
+        self.assertEqual(result.balance_status, "PASS: 1 consecutive balance transitions")
+        self.assertEqual((result.debit_total, result.credit_total, result.net),
+                         (Decimal("5"), Decimal("100"), Decimal("95")))
+        traces = [json.loads(line) for line in report_path.read_text(encoding="utf-8").splitlines()
+                  if line.startswith("{")]
+        self.assertEqual(len(traces), 2)
+        self.assertEqual([x["csv_row"] for x in traces], [2, 3])
+        self.assertEqual(traces[0]["original_columns"]["شرح [5]"], first)
+        self.assertEqual(traces[1]["original_columns"]["شرح [5]"], second)
+        self.assertEqual(traces[1]["dest_label"], "کارمزد پل مرحله نهایی")
+
+    def test_only_invisible_unicode_description_is_rejected(self) -> None:
+        # A visually empty description must not reach an accountant's CSV.
+        source = self.root / "synthetic_invisible_mellat.csv"
+        destination = self.root / "not_created.csv"
+        private = self.root / "not_created_private.txt"
+        for description in ("\u200b\u2066\u2069\u200c\u200d\u202e", "\u200c"):
+            with self.subTest(description=ascii(description)):
+                write_mellat(source, [
+                    ["1", "1405/07/01", "10:00:00", "0001",
+                     description, "0", "100", "100"],
+                ])
+                with self.assertRaisesRegex(StatementError, "Missing meaningful bank description"):
+                    result = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+                    save_candidate(result, destination, private)
+                self.assertFalse(destination.exists())
+                self.assertFalse(private.exists())
+
+    def test_destination_precision_is_recorded_without_rounding(self) -> None:
+        source = self.root / "synthetic_report_precision.csv"
+        write_mellat(source, [
+            ["1", "1405/07/01", "10:00:00", "0001", "واریز آزمایشی",
+             "0", "1.25", "1.25"],
+            ["2", "1405/07/02", "11:00:00", "0002", "کارمزد آزمایشی",
+             "0.25", "0", "1.00"],
+        ])
+        context = Context("IRR", "IRR", "Synthetic Journal", decimal_places=2)
+        result = convert(source, context)
+        csv_path = self.root / "precision.csv"
+        private = self.root / "precision_private.txt"
+        save_candidate(result, csv_path, private)
+        self.assertEqual(result.decimal_places, 2)
+        report = private.read_text(encoding="utf-8")
+        self.assertIn("Destination decimal precision (user-confirmed; Odoo-unverified): 2", report)
+        self.assertIn("Source unit: IRR; target unit: IRR; approved factor: 1", report)
+        self.assertIn("Journal (user-entered, UNVERIFIED): Synthetic Journal", report)
+        self.assertEqual(csv_path.read_bytes(), (
+            "Date,Label,Amount\\n"
+            "2026-09-23,واریز آزمایشی,1.25\\n"
+            "2026-09-24,کارمزد آزمایشی,-0.25\\n"
+        ).encode("utf-8"))
+        with self.assertRaisesRegex(StatementError, "decimal places"):
+            convert(source, Context("IRR", "IRR", "Synthetic Journal", decimal_places=0))
 
     def test_fractional_precision_and_unit_factor_boundaries(self) -> None:
         source = self.root / "synthetic_decimals.csv"
