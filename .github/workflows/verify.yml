@@ -65,6 +65,73 @@ jobs:
           w.close()
           print("Windows QPA widget creation OK (not a human visual review)")
           '@ | uv run --locked python -
+      - name: Capture before/after Windows QPA diagnostic images (blank synthetic UI)
+        env:
+          QT_QPA_PLATFORM: windows
+        shell: pwsh
+        run: |
+          git fetch --no-tags --depth=1 origin 2ef2db1726ecf460eab231c4f5ac4a30413348ce
+          @'
+          import importlib.util
+          import os
+          import subprocess
+          import tempfile
+          from pathlib import Path
+          from PySide6.QtCore import Qt
+          from PySide6.QtGui import QFont, QFontDatabase
+          from PySide6.QtWidgets import QApplication
+          from bank2odoo.ui.window import MainWindow, configure_application
+
+          output = Path(os.environ["RUNNER_TEMP"]) / "bank2odoo-visual"
+          output.mkdir(parents=True, exist_ok=True)
+          app = QApplication([])
+          app.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
+
+          def capture(window, prefix):
+              window.show()
+              app.processEvents()
+              scroll = window.centralWidget()
+              for position, value in (("top", 0), ("bottom", scroll.verticalScrollBar().maximum())):
+                  scroll.verticalScrollBar().setValue(value)
+                  app.processEvents()
+                  pixmap = window.grab()
+                  assert pixmap.width() >= 500 and pixmap.height() >= 450
+                  assert pixmap.save(str(output / f"{prefix}-{position}.png"))
+              window.close()
+              app.processEvents()
+
+          # Original main implementation: run in its original default Qt style,
+          # 10 pt Vazirmatn/Tahoma font, and original global QSS.
+          family = "Vazirmatn" if "Vazirmatn" in QFontDatabase.families() else "Tahoma"
+          app.setFont(QFont(family, 10))
+          source = subprocess.check_output([
+              "git", "show",
+              "2ef2db1726ecf460eab231c4f5ac4a30413348ce:bank2odoo/ui/window.py",
+          ])
+          with tempfile.TemporaryDirectory() as tmp:
+              file = Path(tmp) / "baseline_window.py"
+              file.write_bytes(source)
+              spec = importlib.util.spec_from_file_location("baseline_window", file)
+              module = importlib.util.module_from_spec(spec)
+              spec.loader.exec_module(module)
+              capture(module.MainWindow(), "before")
+          configure_application(app)
+          capture(MainWindow(), "after")
+          (output / "EVIDENCE_LIMITS.txt").write_text(
+              "Windows hosted runner, Qt QPA=windows, blank synthetic UI.\n"
+              "Images show widget paint/layout only; no physical display, "
+              "font-smoothing or 100/125/150 percent DPI acceptance.\n",
+              encoding="utf-8",
+          )
+          print("Captured Windows QPA before/after blank UI:", sorted(x.name for x in output.iterdir()))
+          '@ | uv run --locked python -
+      - name: Upload synthetic before/after UI diagnostic images
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-qt-ui-before-after
+          path: ${{ runner.temp }}/bank2odoo-visual/
+          retention-days: 14
+          if-no-files-found: error
       - name: Offline Qt window creation smoke
         env:
           QT_QPA_PLATFORM: offscreen
