@@ -12,10 +12,24 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QPalette
-from PySide6.QtWidgets import QApplication, QStyleFactory
+from PySide6.QtWidgets import QApplication, QStyle, QStyleFactory
 
 from bank2odoo.ui.window import MainWindow
-from tests.test_gui_palette import synthetic_palette
+
+
+def synthetic_palette(*, dark: bool) -> QPalette:
+    # Byte-for-byte equivalent role/colors to tests/test_gui_palette.py fixture.
+    p = QPalette()
+    colors = (("#1b2029", "#f1f5f9", "#111722", "#f8fafc", "#596678")
+              if dark else
+              ("#f0f3f8", "#202a36", "#ffffff", "#17212e", "#a5b2c3"))
+    for group in (QPalette.ColorGroup.Active, QPalette.ColorGroup.Inactive,
+                  QPalette.ColorGroup.Disabled):
+        for role, value in zip((QPalette.ColorRole.Window, QPalette.ColorRole.WindowText,
+                                QPalette.ColorRole.Base, QPalette.ColorRole.Text,
+                                QPalette.ColorRole.Mid), colors):
+            p.setColor(group, role, QColor(value))
+    return p
 
 
 def full_palette(*, dark: bool, style_palette: QPalette) -> QPalette:
@@ -123,9 +137,9 @@ def main() -> None:
                     "enabled": window.approved.isEnabled(),
                     "focused": window.approved.hasFocus(),
                     "indicator_width_metric": window.approved.style().pixelMetric(
-                        window.approved.style().PixelMetric.PM_IndicatorWidth),
+                        QStyle.PixelMetric.PM_IndicatorWidth),
                     "indicator_height_metric": window.approved.style().pixelMetric(
-                        window.approved.style().PixelMetric.PM_IndicatorHeight),
+                        QStyle.PixelMetric.PM_IndicatorHeight),
                     "panel_palette": palette_report(window.approval_panel.palette()),
                     "app_palette": palette_report(app.palette()),
                     "panel_screenshot": panel_file.name,
