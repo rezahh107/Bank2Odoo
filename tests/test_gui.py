@@ -134,6 +134,30 @@ class AccountantUiTests(unittest.TestCase):
         QTest.keyClick(self.window.select_button, Qt.Key.Key_Tab)
         self.assertIsNotNone(self.app.focusWidget())
 
+    def test_file_picker_copy_and_supported_formats(self):
+        self.assertIn("انتخاب نشده", self.window.path_field.placeholderText())
+        self.assertIn("انتخاب نشده", self.window.output_directory.placeholderText())
+        with patch("bank2odoo.ui.window.QFileDialog.getOpenFileName",
+                   return_value=("", "")) as picker:
+            self.window._browse_source()
+        format_filter = picker.call_args.args[3]
+        self.assertIn("*.xls *.csv", format_filter)
+        self.assertNotIn("*.xlsx", format_filter)
+        self.assertIsNone(self.window.source)
+
+    def test_factor_example_does_not_claim_accountant_approval(self):
+        self.window.source_unit.setCurrentIndex(
+            self.window.source_unit.findData("TOMAN")
+        )
+        self.window.target_unit.setCurrentIndex(
+            self.window.target_unit.findData("IRR")
+        )
+        hint = self.window.factor_help.text()
+        self.assertIn("10", hint)
+        self.assertIn("نمونه محاسباتی", hint)
+        self.assertIn("نه تأیید مالی", hint)
+        self.assertFalse(self.window.approved.isChecked())
+
     def test_fluid_native_widget_layout_and_bidi_text(self):
         self.assertEqual(self.window.styleSheet(), "")
         self.assertEqual(self.window.approved.styleSheet(), "")
