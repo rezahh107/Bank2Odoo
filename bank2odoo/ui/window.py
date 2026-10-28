@@ -555,6 +555,23 @@ class MainWindow(QMainWindow):
         context.factor()
         return context
 
+    def _missing_input_guidance(self) -> tuple[QWidget | None, str | None]:
+        """Point to the first visibly missing input; engine validation stays authoritative."""
+        if self.source is None:
+            return self.select_button, "ابتدا یک گزارش بانکی پشتیبانی‌شده انتخاب کنید."
+        if self.source_unit.currentData() is None:
+            return self.source_unit, "واحد پول فایل بانک را انتخاب کنید."
+        if self.target_unit.currentData() is None:
+            return self.target_unit, "واحد پول ژورنال مقصد را انتخاب کنید."
+        if not self.journal.text().strip():
+            return self.journal, "نام ژورنال بانکی مقصد را وارد کنید."
+        if (self.source_unit.currentData() != self.target_unit.currentData()
+                and not self.factor.text().strip()):
+            return self.factor, "ضریب تبدیل تأییدشده را وارد کنید."
+        if not self.approved.isChecked():
+            return self.approved, "اطلاعات مالی را بررسی کنید و سپس تأیید صریح را فعال کنید."
+        return None, None
+
     def start_conversion(self) -> None:
         if self._thread is not None:
             return
@@ -562,11 +579,12 @@ class MainWindow(QMainWindow):
         try:
             context = self._context()
         except StatementError as exc:
-            self._set_message("تبدیل آغاز نشد: " + (
-                "ابتدا فایل پشتیبانی‌شده و تأیید صریح همه اطلاعات مالی لازم است."
-                if not self.approved.isChecked() or self.source is None
-                else human_error(str(exc))
-            ), str(exc))
+            widget, guidance = self._missing_input_guidance()
+            self._set_message("تبدیل آغاز نشد: " + (guidance or human_error(str(exc))),
+                              str(exc))
+            if widget is not None:
+                self.scroll.ensureWidgetVisible(widget)
+                widget.setFocus()
             return
         assert self.source is not None
         self._stop = Event()
