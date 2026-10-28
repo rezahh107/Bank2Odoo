@@ -162,6 +162,7 @@ jobs:
         env:
           QT_QPA_PLATFORM: windows
           QT_SCALE_FACTOR: '1'
+          PYTHONPATH: .
         run: |
           uv run --locked python tools/checkbox_qpa_diagnostic.py --style windows11
           uv run --locked python tools/checkbox_qpa_diagnostic.py --style Fusion
