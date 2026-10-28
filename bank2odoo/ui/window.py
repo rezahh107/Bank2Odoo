@@ -229,7 +229,7 @@ class MainWindow(QMainWindow):
         self.path_field.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.path_field.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.path_field.setMinimumHeight(40)
-        self.path_field.setPlaceholderText("No file selected")
+        self.path_field.setPlaceholderText("هنوز فایلی انتخاب نشده است")
         self.path_field.setAccessibleName("مسیر فایل انتخاب‌شده")
         source_row.addWidget(self.path_field, 1)
         source_layout.addLayout(source_row)
@@ -366,7 +366,7 @@ class MainWindow(QMainWindow):
         self.output_directory.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.output_directory.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.output_directory.setMinimumHeight(40)
-        self.output_directory.setPlaceholderText("Private output folder")
+        self.output_directory.setPlaceholderText("هنوز پوشه‌ای انتخاب نشده است")
         self.output_directory.setAccessibleName("پوشه خصوصی خروجی")
         self.output_directory.setReadOnly(True)
         output_row.addWidget(self.output_directory, 1)
@@ -493,14 +493,14 @@ class MainWindow(QMainWindow):
         if differs:
             example = "10" if left == "TOMAN" else "0.1"
             self.factor_help.setText(
-                f"واحدها متفاوت‌اند؛ ضریب قابل قبول {example} است. فقط پس از تأیید حسابدار آن را وارد کنید."
+                f"واحدها متفاوت‌اند؛ ضریب {example} فقط یک نمونه محاسباتی است، نه تأیید مالی. ضریب را با مدارک بررسی و وارد کنید."
             )
         else:
             self.factor_help.setText("برای واحدهای یکسان ضریب لازم نیست؛ واحدهای هر دو طرف باید تأیید شوند.")
 
     def _browse_source(self) -> None:
         name, _ = QFileDialog.getOpenFileName(self, "انتخاب صورت‌حساب بانکی", "",
-                                               "Bank statements (*.xls *.csv *.xlsx);;All files (*)")
+                                               "گزارش‌های بانکی پشتیبانی‌شده (*.xls *.csv);;همه فایل‌ها (*)")
         if name:
             self.set_source(Path(name))
 
