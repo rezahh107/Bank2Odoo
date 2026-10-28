@@ -40,6 +40,31 @@ jobs:
         run: uv run --locked python -m unittest discover -s tests -v
       - name: Smoke-run preserved headless entrypoint
         run: uv run --locked python -m bank2odoo
+      - name: Probe native Windows Qt style and real Windows QPA widget construction
+        env:
+          QT_QPA_PLATFORM: windows
+        shell: pwsh
+        run: |
+          @'
+          from PySide6.QtWidgets import QApplication, QStyleFactory
+          from bank2odoo.ui.window import MainWindow, configure_application, preferred_style_key
+          app = QApplication([])
+          keys = QStyleFactory.keys()
+          print("Windows available QStyles:", keys)
+          expected = preferred_style_key(keys, windows=True)
+          configure_application(app)
+          print("Selected Qt style:", app.style().objectName(), "preferred:", expected)
+          if expected is not None:
+              assert app.style().objectName().casefold() == expected.casefold()
+          w = MainWindow()
+          w.show()
+          app.processEvents()
+          assert w.approved.minimumHeight() >= 48
+          assert not w.approved.isChecked()
+          assert not w.styleSheet()
+          w.close()
+          print("Windows QPA widget creation OK (not a human visual review)")
+          '@ | uv run --locked python -
       - name: Offline Qt window creation smoke
         env:
           QT_QPA_PLATFORM: offscreen
