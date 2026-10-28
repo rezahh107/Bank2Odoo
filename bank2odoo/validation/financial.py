@@ -72,8 +72,21 @@ def clock(value: str) -> tuple[int, int, int] | None:
 
 
 def safe_label(value: str) -> str:
-    s = re.sub(r"[\x00-\x1f\x7f-\x9f\u200e\u200f\u202a-\u202e]", " ", value)
-    return re.sub(r"\s+", " ", s).strip().translate(str.maketrans({"ي": "ی", "ك": "ک"}))
+    # Unsafe Unicode controls/formatting must not become invisible CSV labels.
+    # Keep a ZWNJ only inside a word (e.g. Persian "می‌رود"); preserving
+    # a raw leading/trailing joiner would allow a visually blank description.
+    clean = []
+    for index, char in enumerate(value):
+        if (char == "\u200c" and 0 < index < len(value) - 1
+                and value[index - 1].isalpha() and value[index + 1].isalpha()):
+            clean.append(char)
+        elif unicodedata.category(char) in {"Cc", "Cf", "Cs"}:
+            clean.append(" ")  # Never concatenate separated bank words silently.
+        else:
+            clean.append(char)
+    label = re.sub(r"\s+", " ", "".join(clean)).strip()
+    label = label.translate(str.maketrans({"ي": "ی", "ك": "ک"}))
+    return label if any(char.isalnum() for char in label) else ""
 
 
 
