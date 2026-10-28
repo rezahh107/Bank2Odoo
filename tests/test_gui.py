@@ -145,7 +145,7 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIn("تأیید", self.window.approved.accessibleName())
         self.assertEqual(self.window.path_field.layoutDirection(), Qt.LayoutDirection.LeftToRight)
         self.assertEqual(self.window.factor.layoutDirection(), Qt.LayoutDirection.LeftToRight)
-        self.assertEqual(latin("123"), "\\u2066123\\u2069")
+        self.assertEqual([ord(char) for char in latin("123")], [0x2066, 49, 50, 51, 0x2069])
         self.assertLessEqual(self.window.journal.maximumWidth(), 480)
         self.assertLessEqual(self.window.source_unit.maximumWidth(), 390)
         forms = self.window.findChildren(QFormLayout)
