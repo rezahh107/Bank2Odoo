@@ -117,8 +117,25 @@ jobs:
               capture(module.MainWindow(), "before")
           configure_application(app)
           capture(MainWindow(), "after")
+
+          # Real Windows QPA palette diagnostics (no real bank statements).
+          palette_spec = importlib.util.spec_from_file_location(
+              "palette_diagnostics", Path("tests/test_gui_palette.py")
+          )
+          palette_module = importlib.util.module_from_spec(palette_spec)
+          palette_spec.loader.exec_module(palette_module)
+          for name, is_dark in (("light", False), ("dark", True)):
+              app.setPalette(palette_module.synthetic_palette(dark=is_dark))
+              app.processEvents()
+              if is_dark:
+                  # Demonstrate the pre-repair hardcoded surface against dark text.
+                  capture(module.MainWindow(), "defect-dark")
+              capture(MainWindow(), f"fixed-{name}")
+
           (output / "EVIDENCE_LIMITS.txt").write_text(
               "Windows hosted runner, Qt QPA=windows, blank synthetic UI.\n"
+              "fixed-light and fixed-dark show the repaired palette selection.\n"
+              "defect-dark demonstrates the old fixed backgrounds with synthetic dark palette.\n"
               "Images show widget paint/layout only; no physical display, "
               "font-smoothing or 100/125/150 percent DPI acceptance.\n",
               encoding="utf-8",
