@@ -10,8 +10,8 @@ from pathlib import Path
 from threading import Event
 import sys
 
-from PySide6.QtCore import QObject, Qt, QThread, QTimer, Signal, Slot
-from PySide6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QPalette
+from PySide6.QtCore import QEvent, QObject, Qt, QThread, QTimer, Signal, Slot
+from PySide6.QtGui import QFont, QFontDatabase, QFontInfo, QPalette
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QFileDialog, QFormLayout, QFrame,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox,
@@ -174,12 +174,14 @@ class MainWindow(QMainWindow):
         self._approved_digest: str | None = None
         self._saved = False
         self._last_detail = ""
+        self._presentation_ready = False
         self.setWindowTitle("Bank2Odoo | تبدیل گزارش بانک")
         self.resize(940, 830)
         self.setMinimumSize(600, 480)
         self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self._build()
         self._configure_presentation()
+        self._presentation_ready = True
         self._update_units()
         self._set_message("آماده: ابتدا فایل گزارش بانک را انتخاب کنید.")
 
@@ -204,9 +206,7 @@ class MainWindow(QMainWindow):
         notice_panel = QFrame()
         notice_panel.setFrameShape(QFrame.Shape.StyledPanel)
         notice_panel.setAutoFillBackground(True)
-        notice_palette = notice_panel.palette()
-        notice_palette.setColor(QPalette.ColorRole.Window, QColor("#edf4fb"))
-        notice_panel.setPalette(notice_palette)
+        self.notice_panel = notice_panel
         notice_layout = QVBoxLayout(notice_panel)
         notice_layout.setContentsMargins(14, 10, 14, 10)
         warning = QLabel("فقط تهیه نامزد بررسی؛ این برنامه هیچ اطلاعاتی را وارد Odoo نمی‌کند و تأیید حسابداری نمی‌دهد.")
@@ -290,9 +290,7 @@ class MainWindow(QMainWindow):
         approval_panel = QFrame()
         approval_panel.setFrameShape(QFrame.Shape.StyledPanel)
         approval_panel.setAutoFillBackground(True)
-        panel_palette = approval_panel.palette()
-        panel_palette.setColor(QPalette.ColorRole.Window, QColor("#edf4fb"))
-        approval_panel.setPalette(panel_palette)
+        self.approval_panel = approval_panel
         approval_layout = QVBoxLayout(approval_panel)
         approval_layout.setContentsMargins(16, 8, 16, 12)
         approval_layout.setSpacing(2)
@@ -392,17 +390,52 @@ class MainWindow(QMainWindow):
         root.addWidget(save_box)
         root.addStretch(1)
 
+    def _apply_surface_palette(self) -> None:
+        """Pair paint surfaces with their text roles from the current Qt palette."""
+        palette = QApplication.palette()
+        card_bg = palette.color(QPalette.ColorRole.Base)
+        card_fg = palette.color(QPalette.ColorRole.Text)
+        border = palette.color(QPalette.ColorRole.Mid)
+        for card in self.findChildren(QGroupBox):
+            # Qt style sheets do not reliably propagate foreground roles to
+            # children. A widget palette does, so both must use the same pair.
+            card_palette = QPalette(palette)
+            card_palette.setColor(QPalette.ColorRole.Window, card_bg)
+            card_palette.setColor(QPalette.ColorRole.WindowText, card_fg)
+            card.setPalette(card_palette)
+            card.setStyleSheet(f"""
+                QGroupBox {{ background: {card_bg.name()}; color: {card_fg.name()};
+                             border: 1px solid {border.name()};
+                             border-radius: 10px; margin-top: 16px; }}
+                QGroupBox::title {{ subcontrol-origin: margin;
+                                    subcontrol-position: top right;
+                                    padding: 0 8px; color: {card_fg.name()};
+                                    font-weight: 600; }}
+            """)
+
+        # These two nested surfaces use the native Window/WindowText pair,
+        # contrasting with their surrounding Base/Text cards. Controls retain
+        # their own Qt style; no QCheckBox/QComboBox/QPushButton QSS is added.
+        for panel in (self.notice_panel, self.approval_panel):
+            panel.setPalette(QPalette(palette))
+
+        # Status meaning is already spelled out in text. Avoid the old
+        # hardcoded navy/red/green on a potentially dark card background.
+        self.status.setPalette(QPalette(self.status.parentWidget().palette()))
+
+    def changeEvent(self, event) -> None:
+        super().changeEvent(event)
+        if (self._presentation_ready
+                and event.type() in (QEvent.Type.PaletteChange,
+                                     QEvent.Type.ApplicationPaletteChange,
+                                     QEvent.Type.StyleChange)):
+            # Defer until Qt has finished propagating application palette/style
+            # changes; avoid re-polishing a group during its change event.
+            QTimer.singleShot(0, self._apply_surface_palette)
+
     def _configure_presentation(self) -> None:
-        """Small, local card chrome; native style still owns interactive controls."""
-        card_qss = """
-            QGroupBox { background: #FFFFFF; border: 1px solid #DDE4ED;
-                        border-radius: 10px; margin-top: 16px; }
-            QGroupBox::title { subcontrol-origin: margin;
-                               subcontrol-position: top right;
-                               padding: 0 8px; color: #253A53; font-weight: 600; }
-        """
-        for section in self.findChildren(QGroupBox):
-            section.setStyleSheet(card_qss)
+        """Local card chrome with colors derived from the native Qt palette."""
+        self._apply_surface_palette()
         base_font = QFont(self.font())
         base_font.setPointSize(11)
         self.setFont(base_font)
@@ -415,22 +448,12 @@ class MainWindow(QMainWindow):
         for widget in (self.convert_button, self.save_button, self.approved, self.status):
             widget.setFont(action_font)
 
-    def _set_status_tone(self, message: str) -> None:
-        # Text carries the meaning; color only reinforces it.
-        error = message.startswith(("خطا", "تبدیل آغاز نشد", "فایل پس از شناسایی"))
-        success = message.startswith(("تبدیل انجام شد", "ذخیره هر دو فایل موفق"))
-        color = "#9d2424" if error else "#176b46" if success else "#234d72"
-        palette = self.status.palette()
-        palette.setColor(QPalette.ColorRole.WindowText, QColor(color))
-        self.status.setPalette(palette)
-
     def _toggle_details(self, visible: bool) -> None:
         self.details.setVisible(visible)
         self.details_button.setText("پنهان‌کردن جزئیات فنی" if visible else "نمایش جزئیات فنی")
 
     def _set_message(self, message: str, detail: str = "") -> None:
         self.status.setText(message)
-        self._set_status_tone(message)
         self._last_detail = detail
         self.details.setPlainText(detail or "جزئیات بیشتری برای نمایش وجود ندارد.")
 
