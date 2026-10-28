@@ -269,7 +269,7 @@ class AccountantUiTests(unittest.TestCase):
 
         self._select(path)
         self.assertIn("بانک ملی", self.window.detected.text())
-        self.assertIn("2 گردش", self.window.detected.text())
+        self.assertIn(latin(2) + " گردش", self.window.detected.text())
         self._approve()
         self.window.start_conversion()
         self._wait_conversion()
