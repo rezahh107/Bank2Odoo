@@ -213,6 +213,80 @@ class EngineEndToEndTests(unittest.TestCase):
         self.assertEqual(traces[1]["original_columns"]["شرح [5]"], second)
         self.assertEqual(traces[1]["dest_label"], "کارمزد پل مرحله نهایی")
 
+    def test_hangul_fillers_only_rejected_by_actual_mellat_pipeline(self) -> None:
+        # Lo/isalnum is not evidence of visible meaning for these four codepoints.
+        fillers = ("\u115f", "\u1160", "\u3164", "\uffa0")
+        descriptions = [
+            (f"U+{ord(filler):04X}", filler)
+            for filler in fillers
+        ] + [
+            ("filler_then_ZWNJ", "\u115f\u200c"),
+            ("ZWNJ_then_filler", "\u200c\uffa0"),
+            ("filler_ZWNJ_filler", "\u3164\u200c\u1160"),
+            ("all_fillers", "".join(fillers)),
+        ]
+        for index, (name, description) in enumerate(descriptions):
+            with self.subTest(name=name):
+                source = self.root / f"invisible_{index}.csv"
+                csv_path = self.root / f"invisible_{index}_candidate.csv"
+                report_path = self.root / f"invisible_{index}_private.txt"
+                write_mellat(source, [
+                    ["1", "1405/07/01", "10:00:00", "0001",
+                     description, "0", "100", "100"],
+                ])
+                with self.assertRaisesRegex(StatementError, "Missing meaningful bank description"):
+                    result = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+                    save_candidate(result, csv_path, report_path)
+                self.assertFalse(csv_path.exists())
+                self.assertFalse(report_path.exists())
+
+    def test_filler_next_to_zwnj_separates_words_preserving_source_trace(self) -> None:
+        original = "کارمزد\u115f\u200c\u1160 پل"
+        preserved = 'می\u200cرود، Visa "A"'
+        source = self.root / "mixed_filler.csv"
+        write_mellat(source, [
+            ["1", "1405/07/01", "10:00:00", "0001", preserved, "0", "100", "100"],
+            ["2", "1405/07/02", "11:00:00", "0002", original, "5", "0", "95"],
+        ])
+        result = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+        csv_path, report_path = self.root / "filler.csv", self.root / "filler_private.txt"
+        save_candidate(result, csv_path, report_path)
+        self.assertEqual(
+            csv_path.read_bytes(),
+            ('Date,Label,Amount\n'
+             '2026-09-23,"می\u200cرود، Visa ""A""",100\n'
+             '2026-09-24,کارمزد پل,-5\n').encode("utf-8"),
+        )
+        self.assertEqual(len(result.rows), 2)
+        self.assertEqual((result.debit_total, result.credit_total, result.net),
+                         (Decimal("5"), Decimal("100"), Decimal("95")))
+        self.assertEqual(result.balance_status, "PASS: 1 consecutive balance transitions")
+        traces = [json.loads(line) for line in report_path.read_text(encoding="utf-8").splitlines()
+                  if line.startswith("{")]
+        self.assertEqual([record["csv_row"] for record in traces], [2, 3])
+        self.assertEqual(traces[0]["original_columns"]["شرح [5]"], preserved)
+        self.assertEqual(traces[1]["original_columns"]["شرح [5]"], original)
+        self.assertEqual([record["dest_label"] for record in traces], [preserved, "کارمزد پل"])
+
+    def test_default_precision_provenance_does_not_claim_confirmation(self) -> None:
+        source = self.root / "implicit_precision.csv"
+        write_mellat(source, [
+            ["1", "1405/07/01", "10:00:00", "0001",
+             "واریز فرضی", "0", "100", "100"],
+        ])
+        # Default 0 is applied; it is not evidence of accountant confirmation.
+        result = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+        self.assertEqual(result.decimal_places, 0)
+        csv_path, report_path = self.root / "implicit.csv", self.root / "implicit_private.txt"
+        save_candidate(result, csv_path, report_path)
+        report = report_path.read_text(encoding="utf-8")
+        self.assertIn("Destination decimal precision (applied; Odoo-unverified): 0", report)
+        self.assertNotIn("user-confirmed", report)
+        self.assertEqual(csv_path.read_bytes(), (
+            "Date,Label,Amount\n"
+            "2026-09-23,واریز فرضی,100\n"
+        ).encode("utf-8"))
+
     def test_only_invisible_unicode_description_is_rejected(self) -> None:
         # A visually empty description must not reach an accountant's CSV.
         source = self.root / "synthetic_invisible_mellat.csv"
@@ -244,7 +318,8 @@ class EngineEndToEndTests(unittest.TestCase):
         save_candidate(result, csv_path, private)
         self.assertEqual(result.decimal_places, 2)
         report = private.read_text(encoding="utf-8")
-        self.assertIn("Destination decimal precision (user-confirmed; Odoo-unverified): 2", report)
+        self.assertIn("Destination decimal precision (applied; Odoo-unverified): 2", report)
+        self.assertNotIn("user-confirmed", report)
         self.assertIn("Source unit: IRR; target unit: IRR; approved factor: 1", report)
         self.assertIn("Journal (user-entered, UNVERIFIED): Synthetic Journal", report)
         self.assertEqual(csv_path.read_bytes(), (
