@@ -73,6 +73,7 @@ class Conversion:
     closing: Decimal | None
     ordering: str
     issues: tuple[str, ...]
+    decimal_places: int = 0  # Backward-compatible report provenance.
 
 
 def _movement(row: SourceRow, bank: str, context: Context, factor: Decimal) -> Movement:
@@ -187,4 +188,4 @@ def convert(path: Path, context: Context) -> Conversion:
     return Conversion(source.bank, path.name, sha256(raw).hexdigest(), source.encoding,
                       source.separator, movements, factor, context.source_unit, context.target_unit,
                       context.journal, debits, credits, exact_sub(credits, debits), balance_status,
-                      opening, closing, ordering, tuple(issues))
+                      opening, closing, ordering, tuple(issues), context.decimal_places)

@@ -72,8 +72,24 @@ def clock(value: str) -> tuple[int, int, int] | None:
 
 
 def safe_label(value: str) -> str:
-    s = re.sub(r"[\x00-\x1f\x7f-\x9f\u200e\u200f\u202a-\u202e]", " ", value)
-    return re.sub(r"\s+", " ", s).strip().translate(str.maketrans({"ي": "ی", "ك": "ک"}))
+    # Unsafe Unicode controls/formatting must not become invisible CSV labels.
+    # Four alphabetic Hangul fillers are visually blank despite isalnum().
+    fillers = "\u115f\u1160\u3164\uffa0"
+    # Keep a ZWNJ only inside a real word (e.g. Persian "می‌رود"), never
+    # alongside a filler pretending to be an alphabetic neighbor.
+    clean = []
+    for index, char in enumerate(value):
+        if (char == "\u200c" and 0 < index < len(value) - 1
+                and value[index - 1].isalpha() and value[index - 1] not in fillers
+                and value[index + 1].isalpha() and value[index + 1] not in fillers):
+            clean.append(char)
+        elif char in fillers or unicodedata.category(char) in {"Cc", "Cf", "Cs"}:
+            clean.append(" ")  # Never concatenate separated bank words silently.
+        else:
+            clean.append(char)
+    label = re.sub(r"\s+", " ", "".join(clean)).strip()
+    label = label.translate(str.maketrans({"ي": "ی", "ك": "ک"}))
+    return label if any(char.isalnum() for char in label) else ""
 
 
 

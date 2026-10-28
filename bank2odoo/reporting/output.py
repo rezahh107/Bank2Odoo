@@ -34,6 +34,7 @@ def control_report(result: Conversion) -> str:
         f"Bank: {result.bank}; Source format: {result.encoding}; Separator: {result.separator}",
         f"Journal (user-entered, UNVERIFIED): {result.journal}",
         f"Source unit: {result.source_unit}; target unit: {result.target_unit}; approved factor: {result.factor}",
+        f"Destination decimal precision (applied; Odoo-unverified): {result.decimal_places}",
         f"Period (observed rows): {min(m.date for m in result.rows)} .. {max(m.date for m in result.rows)}",
         f"Source rows: {len(result.rows)}; debit rows: {debit_count}; credit rows: {credit_count}",
         f"Debit total ({result.source_unit}): {result.debit_total}; credit total: {result.credit_total}; net: {result.net}",
