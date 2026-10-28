@@ -8,14 +8,15 @@ from decimal import Decimal, InvalidOperation
 from hashlib import sha256
 from pathlib import Path
 from threading import Event
+import sys
 
 from PySide6.QtCore import QObject, Qt, QThread, QTimer, Signal, Slot
-from PySide6.QtGui import QFont, QFontDatabase
+from PySide6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QPalette
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QFileDialog, QFormLayout, QFrame,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox,
     QPlainTextEdit, QProgressBar, QPushButton, QScrollArea, QSpinBox,
-    QVBoxLayout, QWidget,
+    QStyleFactory, QVBoxLayout, QWidget,
 )
 
 from bank2odoo.banks.reader import read_statement
@@ -25,6 +26,37 @@ from bank2odoo.validation.financial import StatementError, exact_sum
 
 
 BANK_LABELS = {"melli": "بانک ملی — XLS قدیمی", "mellat": "بانک ملت — CSV"}
+def preferred_style_key(styles: list[str], *, windows: bool) -> str | None:
+    """Use Fluent widgets only when the installed Qt platform plugin exposes them."""
+    if not windows:
+        return None  # Preserve the system default on other platforms.
+    available = {name.casefold(): name for name in styles}
+    return available.get("windows11") or available.get("fusion")
+
+
+def configure_application(app: QApplication) -> None:
+    """Native controls first; do not mask them with a global widget stylesheet."""
+    key = preferred_style_key(QStyleFactory.keys(), windows=sys.platform == "win32")
+    if key is not None:
+        style = QStyleFactory.create(key)
+        if style is not None:
+            app.setStyle(style)
+    families = {family.casefold(): family for family in QFontDatabase.families()}
+    # Reuse an installed Persian typeface. Bundling is unnecessary without
+    # evidence of a missing family and a vetted redistributable font artifact.
+    family = (families.get("vazirmatn") or families.get("tahoma")
+              or app.font().family())
+    app.setFont(QFont(family, 11))
+    resolved = QFontInfo(app.font()).family()
+    print(f"Bank2Odoo Qt style: {app.style().objectName()}; "
+          f"font: {resolved}; available styles: {', '.join(QStyleFactory.keys())}")
+
+
+def latin(text: object) -> str:
+    """Isolate LTR amounts and filenames inside RTL explanatory text."""
+    return "\u2066" + str(text) + "\u2069"
+
+
 GENERAL_REVIEW = (
     "این فایل فقط نامزد بررسی است؛ پیش از ورود جداگانه در Odoo، بانک، "
     "واحد پول، ژورنال، دوره، مانده‌ها و تراکنش‌های قبلی را بررسی کنید."
@@ -125,11 +157,11 @@ class MainWindow(QMainWindow):
         self._saved = False
         self._last_detail = ""
         self.setWindowTitle("Bank2Odoo | تبدیل گزارش بانک")
-        self.resize(920, 830)
-        self.setMinimumSize(590, 460)
+        self.resize(940, 830)
+        self.setMinimumSize(600, 480)
         self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self._build()
-        self._style()
+        self._configure_presentation()
         self._update_units()
         self._set_message("آماده: ابتدا فایل گزارش بانک را انتخاب کنید.")
 
@@ -137,33 +169,48 @@ class MainWindow(QMainWindow):
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll = scroll
         self.setCentralWidget(scroll)
         body = QWidget()
         scroll.setWidget(body)
         root = QVBoxLayout(body)
-        root.setContentsMargins(22, 22, 22, 26)
-        root.setSpacing(15)
+        root.setContentsMargins(26, 24, 26, 28)
+        root.setSpacing(19)
 
-        title = QLabel("Bank2Odoo  |  تهیه فایل گردش بانک")
-        title.setObjectName("title")
-        root.addWidget(title)
-        lead = QLabel("تبدیل گزارش بانک ملی یا ملت به CSV سه‌ستونی Odoo، همراه با گزارش کنترل خصوصی.")
+        self.heading = QLabel("آماده‌سازی گردش بانک برای Odoo")
+        root.addWidget(self.heading)
+        lead = QLabel("Bank2Odoo  |  انتخاب فایل ← تأیید مالی ← تبدیل ← بررسی ← ذخیره")
         lead.setWordWrap(True)
         root.addWidget(lead)
-        warning = QLabel("توجه: این برنامه هیچ اطلاعاتی را وارد Odoo نمی‌کند و خروجی آن تأیید حسابداری نیست.")
-        warning.setObjectName("notice")
+        notice_panel = QFrame()
+        notice_panel.setFrameShape(QFrame.Shape.StyledPanel)
+        notice_panel.setAutoFillBackground(True)
+        notice_palette = notice_panel.palette()
+        notice_palette.setColor(QPalette.ColorRole.Window, QColor("#edf4fb"))
+        notice_panel.setPalette(notice_palette)
+        notice_layout = QVBoxLayout(notice_panel)
+        notice_layout.setContentsMargins(14, 10, 14, 10)
+        warning = QLabel("فقط تهیه نامزد بررسی؛ این برنامه هیچ اطلاعاتی را وارد Odoo نمی‌کند و تأیید حسابداری نمی‌دهد.")
         warning.setWordWrap(True)
-        root.addWidget(warning)
+        notice_layout.addWidget(warning)
+        root.addWidget(notice_panel)
 
         source_box = QGroupBox("۱. انتخاب گزارش بانکی")
         source_layout = QVBoxLayout(source_box)
+        source_layout.setContentsMargins(18, 28, 18, 18)
+        source_layout.setSpacing(12)
         source_row = QHBoxLayout()
+        source_row.setSpacing(12)
         self.select_button = QPushButton("انتخاب فایل…")
+        self.select_button.setMinimumHeight(40)
         self.select_button.clicked.connect(self._browse_source)
         source_row.addWidget(self.select_button)
         self.path_field = QLineEdit()
         self.path_field.setReadOnly(True)
         self.path_field.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.path_field.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.path_field.setMinimumHeight(40)
         self.path_field.setPlaceholderText("No file selected")
         self.path_field.setAccessibleName("مسیر فایل انتخاب‌شده")
         source_row.addWidget(self.path_field, 1)
@@ -173,9 +220,17 @@ class MainWindow(QMainWindow):
         source_layout.addWidget(self.detected)
         root.addWidget(source_box)
 
-        context_box = QGroupBox("۲. اطلاعات مالی — فقط با تأیید حسابدار")
-        form = QFormLayout(context_box)
-        form.setSpacing(11)
+        context_box = QGroupBox("۲. اطلاعات مالی — با مسئولیت حسابدار")
+        context_layout = QVBoxLayout(context_box)
+        context_layout.setContentsMargins(18, 28, 18, 18)
+        context_layout.setSpacing(13)
+        form = QFormLayout()
+        form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
+        form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        form.setHorizontalSpacing(18)
+        form.setVerticalSpacing(12)
+        context_layout.addLayout(form)
         self.source_unit = QComboBox()
         self.target_unit = QComboBox()
         for combo in (self.source_unit, self.target_unit):
@@ -183,21 +238,30 @@ class MainWindow(QMainWindow):
             combo.addItem("ریال (IRR)", "IRR")
             combo.addItem("تومان (TOMAN)", "TOMAN")
             combo.setAccessibleName("واحد پول")
+            combo.setMinimumHeight(38)
+            combo.setMaximumWidth(390)
             combo.currentIndexChanged.connect(self._context_changed)
         form.addRow("واحد پول فایل بانک:", self.source_unit)
         form.addRow("واحد پول ژورنال مقصد:", self.target_unit)
         self.journal = QLineEdit()
+        self.journal.setMinimumHeight(38)
+        self.journal.setMaximumWidth(480)
         self.journal.setPlaceholderText("نام ژورنال بانکی انتخاب‌شده در Odoo")
         self.journal.setAccessibleName("ژورنال بانکی")
         self.journal.textChanged.connect(self._context_changed)
         form.addRow("نام ژورنال بانکی:", self.journal)
         self.precision = QSpinBox()
         self.precision.setRange(0, 9)
+        self.precision.setMinimumHeight(38)
+        self.precision.setMaximumWidth(150)
         self.precision.setToolTip("دقت اعشاری واقعی ارز ژورنال را با حسابدار تأیید کنید. گردکردن انجام نمی‌شود.")
         self.precision.valueChanged.connect(self._context_changed)
         form.addRow("اعشار ارز مقصد (۰ تا ۹):", self.precision)
         self.factor = QLineEdit()
         self.factor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.factor.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.factor.setMinimumHeight(38)
+        self.factor.setMaximumWidth(260)
         self.factor.setPlaceholderText("برای واحدهای متفاوت ضریب را وارد کنید")
         self.factor.setAccessibleName("ضریب تبدیل تأییدشده")
         self.factor.textChanged.connect(self._context_changed)
@@ -205,25 +269,43 @@ class MainWindow(QMainWindow):
         self.factor_help = QLabel("واحدها را انتخاب کنید؛ ضریب هرگز از فایل بانک حدس زده نمی‌شود.")
         self.factor_help.setWordWrap(True)
         form.addRow("", self.factor_help)
-        approval_note = QLabel(
-            "واحد پول هر دو طرف، ژورنال مقصد، دقت اعشار و در صورت نیاز ضریب تبدیل "
-            "را با اطلاعات واقعی حسابداری تطبیق دهید؛ این اطلاعات از بانک حدس زده نمی‌شوند."
-        )
-        approval_note.setWordWrap(True)
-        form.addRow("", approval_note)
-        self.approved = QCheckBox("همه اطلاعات مالی بالا را بررسی و تأیید کرده‌ام.")
+        approval_panel = QFrame()
+        approval_panel.setFrameShape(QFrame.Shape.StyledPanel)
+        approval_panel.setAutoFillBackground(True)
+        panel_palette = approval_panel.palette()
+        panel_palette.setColor(QPalette.ColorRole.Window, QColor("#edf4fb"))
+        approval_panel.setPalette(panel_palette)
+        approval_layout = QVBoxLayout(approval_panel)
+        approval_layout.setContentsMargins(16, 8, 16, 12)
+        approval_layout.setSpacing(2)
+        self.approved = QCheckBox("اطلاعات مالی بالا را شخصاً بررسی و تأیید کرده‌ام.")
+        self.approved.setMinimumHeight(52)  # Full label and empty space are clickable.
+        self.approved.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.approved.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.approved.setAccessibleName("تأیید صریح اطلاعات مالی")
+        self.approved.setToolTip("با کلیک یا کلید فاصله تأیید کنید؛ تغییر اطلاعات آن را لغو می‌کند.")
         self.approved.toggled.connect(self._approval_changed)
-        form.addRow(self.approved)
+        approval_layout.addWidget(self.approved)
+        approval_hint = QLabel(
+            "بانک، واحدهای مبدأ و مقصد، ژورنال، دقت اعشار و ضریب احتمالی را با مدارک واقعی تطبیق دهید."
+        )
+        approval_hint.setWordWrap(True)
+        approval_layout.addWidget(approval_hint)
+        context_layout.addWidget(approval_panel)
         root.addWidget(context_box)
 
         review_box = QGroupBox("۳. تبدیل و بررسی نتیجه")
         review_layout = QVBoxLayout(review_box)
+        review_layout.setContentsMargins(18, 28, 18, 18)
+        review_layout.setSpacing(12)
         actions = QHBoxLayout()
+        actions.setSpacing(12)
         self.convert_button = QPushButton("اعتبارسنجی و تبدیل")
-        self.convert_button.setObjectName("primary")
+        self.convert_button.setMinimumHeight(44)
         self.convert_button.clicked.connect(self.start_conversion)
         actions.addWidget(self.convert_button)
         self.cancel_button = QPushButton("درخواست توقف")
+        self.cancel_button.setMinimumHeight(40)
         self.cancel_button.clicked.connect(self.cancel_conversion)
         self.cancel_button.setEnabled(False)
         actions.addWidget(self.cancel_button)
@@ -240,6 +322,8 @@ class MainWindow(QMainWindow):
         review_layout.addWidget(self.status)
         self.summary = QLabel("هنوز خروجی برای بررسی تولید نشده است.")
         self.summary.setWordWrap(True)
+        self.summary.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.summary.setMinimumHeight(42)
         review_layout.addWidget(self.summary)
         self.details_button = QPushButton("نمایش جزئیات فنی")
         self.details_button.setCheckable(True)
@@ -256,18 +340,25 @@ class MainWindow(QMainWindow):
 
         save_box = QGroupBox("۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی")
         save_layout = QVBoxLayout(save_box)
+        save_layout.setContentsMargins(18, 28, 18, 18)
+        save_layout.setSpacing(12)
         output_row = QHBoxLayout()
+        output_row.setSpacing(12)
         self.output_directory = QLineEdit()
         self.output_directory.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.output_directory.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.output_directory.setMinimumHeight(40)
         self.output_directory.setPlaceholderText("Private output folder")
         self.output_directory.setAccessibleName("پوشه خصوصی خروجی")
         self.output_directory.setReadOnly(True)
         output_row.addWidget(self.output_directory, 1)
         self.directory_button = QPushButton("انتخاب پوشه…")
+        self.directory_button.setMinimumHeight(40)
         self.directory_button.clicked.connect(self._browse_directory)
         output_row.addWidget(self.directory_button)
         save_layout.addLayout(output_row)
         self.save_button = QPushButton("ذخیره CSV و گزارش کنترل")
+        self.save_button.setMinimumHeight(44)
         self.save_button.clicked.connect(self.save_files)
         self.save_button.setEnabled(False)
         save_layout.addWidget(self.save_button, alignment=Qt.AlignmentFlag.AlignRight)
@@ -281,28 +372,28 @@ class MainWindow(QMainWindow):
         root.addWidget(save_box)
         root.addStretch(1)
 
-    def _style(self) -> None:
-        self.setStyleSheet("""
-            QMainWindow, QScrollArea, QWidget { background: #F6F8FB; color: #1F2937; }
-            QLabel#title { font-size: 21px; font-weight: 700; color: #243B53; }
-            QLabel#notice { background: #EAF1F7; border: 1px solid #A8BFD4;
-                            padding: 10px; border-radius: 6px; color: #243B53; }
-            QGroupBox { background: white; border: 1px solid #CBD5E1; border-radius: 8px;
-                        margin-top: 13px; padding: 15px 11px 11px; font-weight: 600; }
-            QGroupBox::title { subcontrol-origin: margin; right: 15px; padding: 0 6px;
-                               color: #243B53; }
-            QLineEdit, QComboBox, QSpinBox, QPlainTextEdit {
-                background: white; border: 1px solid #94A3B8; border-radius: 5px;
-                padding: 6px; min-height: 22px; color: #1F2937;
-            }
-            QPushButton { padding: 8px 13px; background: #E8EEF4; border: 1px solid #9BAEC0;
-                          border-radius: 5px; font-weight: 500; }
-            QPushButton#primary { background: #244F75; color: white; border-color: #244F75; }
-            QPushButton:disabled { color: #677485; background: #E6E8EB; border-color: #CBD5E1; }
-            QPushButton:focus, QLineEdit:focus, QComboBox:focus,
-            QSpinBox:focus, QCheckBox:focus { border: 2px solid #2563EB; }
-            QLabel#status { font-weight: 600; padding: 6px 0; }
-        """)
+    def _configure_presentation(self) -> None:
+        """Visual hierarchy through fonts and layouts, not a global QSS skin."""
+        base_font = QFont(self.font())
+        base_font.setPointSize(11)
+        self.setFont(base_font)
+        title_font = QFont(base_font)
+        title_font.setPointSize(18)
+        title_font.setWeight(QFont.Weight.DemiBold)
+        self.heading.setFont(title_font)
+        action_font = QFont(base_font)
+        action_font.setWeight(QFont.Weight.DemiBold)
+        for widget in (self.convert_button, self.save_button, self.approved, self.status):
+            widget.setFont(action_font)
+
+    def _set_status_tone(self, message: str) -> None:
+        # Text carries the meaning; color only reinforces it.
+        error = message.startswith(("خطا", "تبدیل آغاز نشد", "فایل پس از شناسایی"))
+        success = message.startswith(("تبدیل انجام شد", "ذخیره هر دو فایل موفق"))
+        color = "#9d2424" if error else "#176b46" if success else "#234d72"
+        palette = self.status.palette()
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(color))
+        self.status.setPalette(palette)
 
     def _toggle_details(self, visible: bool) -> None:
         self.details.setVisible(visible)
@@ -310,6 +401,7 @@ class MainWindow(QMainWindow):
 
     def _set_message(self, message: str, detail: str = "") -> None:
         self.status.setText(message)
+        self._set_status_tone(message)
         self._last_detail = detail
         self.details.setPlainText(detail or "جزئیات بیشتری برای نمایش وجود ندارد.")
 
@@ -458,13 +550,13 @@ class MainWindow(QMainWindow):
         check = ("منطبق در انتقال‌های قابل‌آزمون؛ هنوز تأیید حسابدار نیست."
                  if good else "احراز نشده؛ لزوماً مغایرت نیست. بررسی حسابدار لازم است.")
         self.summary.setText(
-            f"بانک: {BANK_LABELS[result.bank]} | تعداد: {len(result.rows)} گردش\n"
-            f"برداشت: {format(result.debit_total, 'f')} {result.source_unit} | "
-            f"واریز: {format(result.credit_total, 'f')} {result.source_unit}\n"
-            f"خالص: {format(result.net, 'f')} {result.source_unit} | "
-            f"خالص مقصد: {format(exact_sum(m.converted for m in result.rows), 'f')} {result.target_unit} | "
+            f"بانک: {BANK_LABELS[result.bank]}  |  تعداد: {latin(len(result.rows))} گردش\n"
+            f"برداشت: {latin(format(result.debit_total, 'f'))} {result.source_unit}  |  "
+            f"واریز: {latin(format(result.credit_total, 'f'))} {result.source_unit}\n"
+            f"خالص: {latin(format(result.net, 'f'))} {result.source_unit}  |  "
+            f"خالص مقصد: {latin(format(exact_sum(m.converted for m in result.rows), 'f'))} {result.target_unit}\n"
             f"کنترل مانده: {check}\n"
-            f"موارد نیازمند بررسی: {len(result.issues)}"
+            f"موارد نیازمند بررسی: {latin(len(result.issues))}"
             + ("\n" + "\n".join("• " + issue_label(x) for x in result.issues[:4])
                if result.issues else "")
         )
@@ -529,8 +621,8 @@ class MainWindow(QMainWindow):
                 self.source = state["path"]
                 self._selected_digest = digest
                 self.detected.setText(
-                    f"شناسایی‌شده: {BANK_LABELS[source.bank]} | {len(source.rows)} گردش | "
-                    f"قالب: {source.encoding} / {source.separator} (فقط ساختار، نه واحد پول)"
+                    f"شناسایی‌شده: {BANK_LABELS[source.bank]} | {latin(len(source.rows))} گردش | "
+                    f"قالب: {latin(source.encoding)} / {latin(source.separator)} (فقط ساختار، نه واحد پول)"
                 )
                 self._set_message("فایل شناسایی شد. اکنون اطلاعات مالی را خودتان تأیید کنید.")
         elif kind == "convert":
@@ -562,7 +654,7 @@ class MainWindow(QMainWindow):
                 csv_path, report_path = value
                 self._saved = True
                 self.saved_paths.setText(
-                    f"دو فایل ایجاد شدند:\nCSV: {csv_path}\nگزارش کنترل خصوصی: {report_path}"
+                    f"دو فایل ایجاد شدند:\nCSV: {latin(csv_path)}\nگزارش کنترل خصوصی: {latin(report_path)}"
                 )
                 self._set_message("ذخیره هر دو فایل موفق بود. نامزد هنوز مجوز ورود به Odoo نیست.")
         self._set_busy(False)
@@ -610,9 +702,7 @@ class MainWindow(QMainWindow):
 def run() -> int:
     app = QApplication.instance() or QApplication([])
     app.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
-    families = QFontDatabase.families()
-    chosen = "Vazirmatn" if "Vazirmatn" in families else "Tahoma"
-    app.setFont(QFont(chosen, 10))
+    configure_application(app)
     window = MainWindow()
     window.show()
     return app.exec()
