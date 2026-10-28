@@ -109,6 +109,32 @@ class PaletteContrastTests(unittest.TestCase):
             window.deleteLater()
             self.app.processEvents()
 
+    def test_palette_change_rethemes_existing_window(self):
+        """An already open window follows Qt when the application palette changes."""
+        self.app.setPalette(synthetic_palette(dark=False))
+        window = MainWindow()
+        window.show()
+        self.app.processEvents()
+        try:
+            self.app.setPalette(synthetic_palette(dark=True))
+            for _ in range(5):
+                self.app.processEvents()  # deliver deferred changeEvent updates
+            dark = self.app.palette()
+            card = window.findChildren(QGroupBox)[0]
+            self.assertEqual(card.palette().color(QPalette.ColorRole.Window),
+                             dark.color(QPalette.ColorRole.Base))
+            self.assertIn(dark.color(QPalette.ColorRole.Text).name(),
+                          card.styleSheet().lower())
+            self.assertEqual(window.approved.parentWidget().palette().color(
+                QPalette.ColorRole.Window), dark.color(QPalette.ColorRole.Window))
+            self.assertEqual(window.status.palette().color(QPalette.ColorRole.WindowText),
+                             dark.color(QPalette.ColorRole.Text))
+            self.assertFalse(window.approved.isChecked())
+        finally:
+            window.close()
+            window.deleteLater()
+            self.app.processEvents()
+
     def test_light_palette_surfaces(self):
         self._check_palette(dark=False)
 
