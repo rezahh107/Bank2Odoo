@@ -166,6 +166,20 @@ jobs:
         run: |
           uv run --locked python tools/checkbox_qpa_diagnostic.py --style windows11
           uv run --locked python tools/checkbox_qpa_diagnostic.py --style Fusion
+      - name: Probe native Qt light and dark color-scheme hints without synthetic palettes
+        if: ${{ github.ref_name == 'ec/pr7-checkbox-qpa-qualification-20261028' }}
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          QT_SCALE_FACTOR: '1'
+          PYTHONPATH: .
+        run: |
+          uv run --locked python tools/checkbox_color_scheme_qpa.py --style windows11 --scheme Unknown
+          uv run --locked python tools/checkbox_color_scheme_qpa.py --style windows11 --scheme Dark
+          uv run --locked python tools/checkbox_color_scheme_qpa.py --style windows11 --scheme Light
+          uv run --locked python tools/checkbox_color_scheme_qpa.py --style Fusion --scheme Unknown
+          uv run --locked python tools/checkbox_color_scheme_qpa.py --style Fusion --scheme Dark
+          uv run --locked python tools/checkbox_color_scheme_qpa.py --style Fusion --scheme Light
       - name: Upload synthetic before/after UI diagnostic images
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
