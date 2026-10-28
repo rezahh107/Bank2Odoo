@@ -25,6 +25,34 @@ A `PASS` balance check is limited to observed consecutive balances; `NOT_PROVEN`
 
 This is **not** a standalone EXE. If Run.bat says prerequisites are missing, ask the technician to perform the one-time setup again. Do not store actual statements, output CSVs or private reports in the public source repository.
 
+## Qt Widgets visual modernization (Windows 11 direction)
+
+The accountant workflow remains the same: file selection → automatic content-based
+bank detection → financial context and **explicit, initially unchecked** approval →
+conversion/review → private paired save. The window now uses separated, readable
+sections, bounded field widths, row wrapping on smaller windows, LTR isolation for
+Latin amounts/paths, distinct native action sizes and an independent 52 px-high
+clickable approval control. The complete prior global QSS skin was removed so native
+combos, focus, check indicators, buttons and disabled states are drawn by Qt style.
+
+At launch, `QStyleFactory.keys()` is inspected on Windows. If the installed
+PySide6-Essentials 6.11.2 Qt exposes `windows11`, Qt is configured to use that
+native platform style. Otherwise the built-in `Fusion` style is the predictable
+fallback; non-Windows environments retain their system style. Launch diagnostics
+print the available styles, chosen effective style and resolved font. This is
+*capability detection*, not a claim that Windows 11 native style renders correctly
+on every machine. The Windows CI native-QPA probe can check availability and widget
+construction, but **cannot replace human viewing on the actual Windows 11 display**.
+
+Installed Vazirmatn is preferred at 11 pt, then Tahoma or the system font.
+The app does not bundle a font: the Owner already observed Vazirmatn installed,
+and the available evidence does not isolate a font rasterization defect. Larger
+headings, stronger primary actions and better spacing address the separate visual
+hierarchy problem. Verify Persian glyphs and 100%/125%/150% display scaling on
+the target Windows workstation before treating visual acceptance as complete.
+No financial validation, approval rule, SHA binding, serialization or threading
+contract was changed.
+
 ## Developer CLI (from checkout root)
 
 After installing `uv` and Python 3.13 (initial setup requires connectivity):
@@ -110,7 +138,7 @@ all public changes.
 ## Source policy and evidence limits
 
 Authoritative, private Owner documents (do not copy their private financial
-content into GitHub): Bank2Odoo GOAL_AUTHORITY v1.1.7 and NESTEC Bank
+content into GitHub): Bank2Odoo GOAL_AUTHORITY v1.1.13 and NESTEC Bank
 Melli/Mellat CSV Conversion Guide v1.0.1. Their published behavior contract is
 `Date,Label,Amount` only, exact Decimal amounts, validated Jalali conversion,
 per-row trace and explicit review-only status.

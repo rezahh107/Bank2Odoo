@@ -13,9 +13,9 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import QEventLoop, Qt, QTimer, QThread
 from PySide6.QtTest import QTest
 from shiboken6 import isValid
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QFormLayout, QGroupBox, QStyle, QStyleFactory
 
-from bank2odoo.ui.window import MainWindow, _Job, human_error
+from bank2odoo.ui.window import MainWindow, _Job, human_error, preferred_style_key, latin
 from bank2odoo.core.engine import Context
 from threading import Event
 from hashlib import sha256
@@ -134,6 +134,75 @@ class AccountantUiTests(unittest.TestCase):
         QTest.keyClick(self.window.select_button, Qt.Key.Key_Tab)
         self.assertIsNotNone(self.app.focusWidget())
 
+    def test_fluid_native_widget_layout_and_bidi_text(self):
+        self.assertEqual(self.window.styleSheet(), "")
+        self.assertEqual(self.window.approved.styleSheet(), "")
+        self.assertEqual(self.window.source_unit.styleSheet(), "")
+        self.assertEqual(len(self.window.findChildren(QGroupBox)), 4)
+        self.assertEqual(self.window.approved.minimumHeight(), 52)
+        self.assertGreaterEqual(
+            self.window.approved.style().pixelMetric(QStyle.PixelMetric.PM_IndicatorWidth), 22
+        )
+        self.assertGreaterEqual(
+            self.window.approved.style().pixelMetric(QStyle.PixelMetric.PM_IndicatorHeight), 22
+        )
+        self.assertFalse(self.window.approved.isChecked())
+        self.assertEqual(self.window.approved.focusPolicy(), Qt.FocusPolicy.StrongFocus)
+        self.assertIn("تأیید", self.window.approved.accessibleName())
+        self.assertEqual(self.window.path_field.layoutDirection(), Qt.LayoutDirection.LeftToRight)
+        self.assertEqual(self.window.factor.layoutDirection(), Qt.LayoutDirection.LeftToRight)
+        self.assertEqual([ord(char) for char in latin("123")], [0x2066, 49, 50, 51, 0x2069])
+        self.assertLessEqual(self.window.journal.maximumWidth(), 480)
+        self.assertLessEqual(self.window.source_unit.maximumWidth(), 390)
+        forms = self.window.findChildren(QFormLayout)
+        self.assertEqual(len(forms), 1)
+        self.assertEqual(forms[0].rowWrapPolicy(), QFormLayout.RowWrapPolicy.WrapLongRows)
+        for width, height in ((940, 830), (650, 520), (600, 480)):
+            self.window.resize(width, height)
+            self.app.processEvents()
+            for widget in (self.window.approved, self.window.save_button):
+                self.window.scroll.ensureWidgetVisible(widget)
+                self.app.processEvents()
+                viewport = self.window.scroll.viewport()
+                target = widget.mapTo(viewport, widget.rect().center())
+                self.assertTrue(viewport.rect().contains(target),
+                                "Critical control should be scroll-reachable at this size")
+
+    def test_confirmation_mouse_keyboard_disabled_and_revocation(self):
+        self._select(self.source)
+        self.window.source_unit.setCurrentIndex(self.window.source_unit.findData("IRR"))
+        self.window.target_unit.setCurrentIndex(self.window.target_unit.findData("IRR"))
+        self.window.journal.setText("ژورنال آزمایشی")
+        self.assertFalse(self.window.approved.isChecked())
+        self.window.scroll.ensureWidgetVisible(self.window.approved)
+        self.app.processEvents()
+        QTest.mouseClick(self.window.approved, Qt.MouseButton.LeftButton)
+        self.assertTrue(self.window.approved.isChecked())
+        self.assertEqual(self.window._approved_digest, self.window._selected_digest)
+        self.window.approved.setFocus()
+        self.assertTrue(self.window.approved.hasFocus())
+        QTest.keyClick(self.window.approved, Qt.Key.Key_Space)
+        self.assertFalse(self.window.approved.isChecked())
+        self.assertIsNone(self.window._approved_digest)
+        self.window.approved.setEnabled(False)
+        QTest.mouseClick(self.window.approved, Qt.MouseButton.LeftButton)
+        self.assertFalse(self.window.approved.isChecked())
+        self.window.approved.setEnabled(True)
+        QTest.keyClick(self.window.approved, Qt.Key.Key_Space)
+        self.assertTrue(self.window.approved.isChecked())
+        self.window.precision.setValue(2)
+        self.assertFalse(self.window.approved.isChecked())
+        self.assertIsNone(self.window._approved_digest)
+
+    def test_style_policy_prefers_fluent_only_if_available(self):
+        styles = QStyleFactory.keys()
+        self.assertTrue(styles, "Qt must expose at least one style")
+        self.assertEqual(preferred_style_key(["Fusion", "windows11"], windows=True),
+                         "windows11")
+        self.assertEqual(preferred_style_key(["Fusion", "windows"], windows=True),
+                         "Fusion")
+        self.assertIsNone(preferred_style_key(["Fusion", "windows11"], windows=False))
+
     def test_detection_by_content_not_filename_and_unsupported_file(self):
         disguised = self.private / "not_really_a_bank.xls"
         statement(disguised)
@@ -206,7 +275,7 @@ class AccountantUiTests(unittest.TestCase):
 
         self._select(path)
         self.assertIn("بانک ملی", self.window.detected.text())
-        self.assertIn("2 گردش", self.window.detected.text())
+        self.assertIn(latin(2) + " گردش", self.window.detected.text())
         self._approve()
         self.window.start_conversion()
         self._wait_conversion()
