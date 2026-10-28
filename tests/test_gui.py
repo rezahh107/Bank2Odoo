@@ -13,7 +13,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import QEventLoop, Qt, QTimer, QThread
 from PySide6.QtTest import QTest
 from shiboken6 import isValid
-from PySide6.QtWidgets import QApplication, QFormLayout, QGroupBox, QStyleFactory
+from PySide6.QtWidgets import QApplication, QFormLayout, QGroupBox, QStyle, QStyleFactory
 
 from bank2odoo.ui.window import MainWindow, _Job, human_error, preferred_style_key, latin
 from bank2odoo.core.engine import Context
@@ -140,6 +140,12 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(self.window.source_unit.styleSheet(), "")
         self.assertEqual(len(self.window.findChildren(QGroupBox)), 4)
         self.assertEqual(self.window.approved.minimumHeight(), 52)
+        self.assertGreaterEqual(
+            self.window.approved.style().pixelMetric(QStyle.PixelMetric.PM_IndicatorWidth), 22
+        )
+        self.assertGreaterEqual(
+            self.window.approved.style().pixelMetric(QStyle.PixelMetric.PM_IndicatorHeight), 22
+        )
         self.assertFalse(self.window.approved.isChecked())
         self.assertEqual(self.window.approved.focusPolicy(), Qt.FocusPolicy.StrongFocus)
         self.assertIn("تأیید", self.window.approved.accessibleName())
