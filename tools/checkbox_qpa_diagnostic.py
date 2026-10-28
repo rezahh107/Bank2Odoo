@@ -113,7 +113,11 @@ def main() -> None:
             app.processEvents()
             for state in ("unchecked", "checked", "focus", "disabled"):
                 window.approved.setEnabled(True)
+                # Diagnostic-only paint state: production intentionally revokes
+                # financial approval when no actual source is selected.
+                window.approved.blockSignals(True)
                 window.approved.setChecked(state == "checked")
+                window.approved.blockSignals(False)
                 if state == "focus":
                     window.approved.setFocus()
                 else:
@@ -152,18 +156,77 @@ def main() -> None:
             window.deleteLater()
             app.processEvents()
 
+    # Targeted ancestor-QSS discrimination: keep the same actual production
+    # widget and dark colors, but toggle only its card ancestor's local QSS.
+    # Also compare a bare, unstyled QCheckBox in a dark native QFrame.
+    from PySide6.QtWidgets import QCheckBox, QFrame, QGroupBox, QVBoxLayout
+    isolation = []
+    for case_name, dark_palette in (
+            ("default", original_palette),
+            ("dark-partial", synthetic_palette(dark=True)),
+            ("dark-complete", full_palette(dark=True, style_palette=original_palette))):
+        app.setPalette(QPalette(dark_palette))
+        app.processEvents()
+        for mode in ("production-card-qss", "card-qss-cleared", "bare-check"):
+            for checked in (False, True):
+                if mode == "bare-check":
+                    host = QFrame()
+                    host.setPalette(QPalette(app.palette()))
+                    host.setAutoFillBackground(True)
+                    layout = QVBoxLayout(host)
+                    check = QCheckBox("اطلاعات مالی بالا را شخصاً بررسی و تأیید کرده‌ام.")
+                    layout.addWidget(check)
+                    host.show()
+                    check.setChecked(checked)
+                    app.processEvents()
+                    surface = host
+                else:
+                    host = MainWindow()
+                    host.show()
+                    if mode == "card-qss-cleared":
+                        for card in host.findChildren(QGroupBox):
+                            card.setStyleSheet("")
+                    host.approved.blockSignals(True)
+                    host.approved.setChecked(checked)
+                    host.approved.blockSignals(False)
+                    host.scroll.ensureWidgetVisible(host.approved)
+                    app.processEvents()
+                    check = host.approved
+                    surface = host.approval_panel
+                slug = (f"{matching.lower()}-qss-{case_name}-{mode}-"
+                        f"{'checked' if checked else 'unchecked'}")
+                filename = slug + ".png"
+                if not surface.grab().save(str(output / filename)):
+                    raise RuntimeError("Could not capture " + filename)
+                entry = {
+                    "case": slug, "style": matching, "palette": case_name,
+                    "mode": mode, "checked": check.isChecked(),
+                    "style_class": check.style().metaObject().className(),
+                    "style_object": check.style().objectName(),
+                    "ancestor_stylesheet": (
+                        bool(host.findChildren(QGroupBox)[1].styleSheet())
+                        if mode != "bare-check" else False),
+                    "screenshot": filename,
+                }
+                isolation.append(entry)
+                print("QSS_CASE", json.dumps(entry, ensure_ascii=False))
+                host.close()
+                host.deleteLater()
+                app.processEvents()
+
     report = {
         "limits": [
             "GitHub-hosted Windows native QPA; not accountant's physical display",
             "Synthetic dark/light palettes are not Windows OS personalization themes",
             "QT_SCALE_FACTOR is not a substitute for physical 100/125/150 percent DPI",
             "Results must be interpreted with pixel rendering and native-style limits",
+            "Checked painting is forced with signals blocked (no actual accountant approval)",
             "No financial engine, Odoo, bank data or production code was changed",
         ],
         "available_styles": available, "style": matching,
         "os": os.name, "qpa": os.environ.get("QT_QPA_PLATFORM"),
         "qt_scale_factor": os.environ.get("QT_SCALE_FACTOR"),
-        "cases": records,
+        "cases": records, "qss_isolation": isolation,
     }
     (output / f"{matching.lower()}-matrix.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
