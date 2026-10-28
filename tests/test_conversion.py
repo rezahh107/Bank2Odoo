@@ -225,8 +225,7 @@ class EngineEndToEndTests(unittest.TestCase):
                      description, "0", "100", "100"],
                 ])
                 with self.assertRaisesRegex(StatementError, "Missing meaningful bank description"):
-                    result = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
-                    save_candidate(result, destination, private)
+                    convert(source, Context("IRR", "IRR", "Synthetic Journal"))
                 self.assertFalse(destination.exists())
                 self.assertFalse(private.exists())
 
