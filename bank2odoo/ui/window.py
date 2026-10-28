@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QFileDialog, QFormLayout, QFrame,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox,
     QPlainTextEdit, QProgressBar, QPushButton, QScrollArea, QSpinBox,
-    QStyleFactory, QVBoxLayout, QWidget,
+    QProxyStyle, QStyle, QStyleFactory, QVBoxLayout, QWidget,
 )
 
 from bank2odoo.banks.reader import read_statement
@@ -95,6 +95,17 @@ def issue_label(issue: str) -> str:
     if "balance" in issue.lower() or "order" in issue.lower():
         return "شواهد موجود برای اثبات کامل ترتیب یا مانده کافی نیست."
     return "موردی برای بررسی حسابدار در گزارش کنترل ثبت شده است."
+
+
+class _ApprovalIndicatorStyle(QProxyStyle):
+    """Enlarge only the native checkbox metric; keep platform painting and focus."""
+
+    def pixelMetric(self, metric, option=None, widget=None):
+        native = super().pixelMetric(metric, option, widget)
+        if metric in (QStyle.PixelMetric.PM_IndicatorWidth,
+                      QStyle.PixelMetric.PM_IndicatorHeight):
+            return max(native, 22)
+        return native
 
 
 class _FullRowCheckBox(QCheckBox):
@@ -286,6 +297,8 @@ class MainWindow(QMainWindow):
         approval_layout.setContentsMargins(16, 8, 16, 12)
         approval_layout.setSpacing(2)
         self.approved = _FullRowCheckBox("اطلاعات مالی بالا را شخصاً بررسی و تأیید کرده‌ام.")
+        self._approval_indicator_style = _ApprovalIndicatorStyle(self.approved.style().objectName())
+        self.approved.setStyle(self._approval_indicator_style)
         self.approved.setMinimumHeight(52)  # Full label and empty space are clickable.
         self.approved.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.approved.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -380,7 +393,16 @@ class MainWindow(QMainWindow):
         root.addStretch(1)
 
     def _configure_presentation(self) -> None:
-        """Visual hierarchy through fonts and layouts, not a global QSS skin."""
+        """Small, local card chrome; native style still owns interactive controls."""
+        card_qss = """
+            QGroupBox { background: #FFFFFF; border: 1px solid #DDE4ED;
+                        border-radius: 10px; margin-top: 16px; }
+            QGroupBox::title { subcontrol-origin: margin;
+                               subcontrol-position: top right;
+                               padding: 0 8px; color: #253A53; font-weight: 600; }
+        """
+        for section in self.findChildren(QGroupBox):
+            section.setStyleSheet(card_qss)
         base_font = QFont(self.font())
         base_font.setPointSize(11)
         self.setFont(base_font)
