@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from PySide6 import __version__ as PYSIDE_VERSION
-from PySide6.QtCore import QCoreApplication, QEvent, QPoint, Qt, qVersion
+from PySide6.QtCore import QCoreApplication, QPoint, Qt, qVersion
 from PySide6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QGuiApplication, QImage, QPainter, QPen, QPalette, QPixmap, QPolygonF
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import (
@@ -339,12 +339,11 @@ def ensure_hover(host, widget, baseline, checked):
         return snap, mode, focus
     # Deliberate simulation fallback, never confuse it with a real pointer.
     widget.setAttribute(Qt.WidgetAttribute.WA_UnderMouse, True)
-    QCoreApplication.sendEvent(widget, QEvent(QEvent.Type.Enter))
     QCoreApplication.processEvents()
     QTest.qWait(55)
     fallback = widget.grab()
     if difference(fallback, baseline)["changed"]:
-        return fallback, "WA_UnderMouse + synthetic Enter (fallback)", focus
+        return fallback, "WA_UnderMouse (simulated fallback)", focus
     return snap, "QTest.mouseMove + fallback ineffective", focus
 
 
