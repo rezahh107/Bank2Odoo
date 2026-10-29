@@ -14,7 +14,7 @@ from pathlib import Path
 
 from PySide6 import __version__ as PYSIDE_VERSION
 from PySide6.QtCore import QCoreApplication, QEvent, QPoint, Qt, qVersion
-from PySide6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QGuiApplication, QImage, QPainter, QPen, QPalette, QPixmap
+from PySide6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QGuiApplication, QImage, QPainter, QPen, QPalette, QPixmap, QPolygonF
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QFrame, QHBoxLayout, QLabel, QPushButton,
@@ -196,7 +196,7 @@ def make_check_asset(output, theme):
     pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
     painter.setPen(pen)
     from PySide6.QtCore import QPointF
-    painter.drawPolyline([QPointF(3, 9), QPointF(7.4, 13), QPointF(15, 4)])
+    painter.drawPolyline(QPolygonF([QPointF(3, 9), QPointF(7.4, 13), QPointF(15, 4)]))
     painter.end()
     if not img.save(str(path)):
         raise RuntimeError("Cannot write checkbox tick asset")
