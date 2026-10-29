@@ -169,6 +169,7 @@ jobs:
         env:
           QT_QPA_PLATFORM: windows
           QT_SCALE_FACTOR: "1"
+          PYTHONIOENCODING: utf-8
           PYTHONPATH: .
         run: uv run --locked python tools/pr8_guidance_visibility_qpa.py
       - name: Upload PR8 guidance diagnostic screenshots and JSON
