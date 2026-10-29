@@ -1,0 +1,71 @@
+name: Qt styling mechanism probe (diagnostic; no product changes)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [diag/qt-style-probe]
+
+permissions:
+  contents: read
+
+jobs:
+  style-probe:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [windows-latest, windows-2025]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Check out triggering commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+      - name: Verify source revision
+        shell: pwsh
+        env:
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          $actual = (git rev-parse HEAD).Trim()
+          if ($actual -ne $env:EXPECTED_HEAD) {
+            throw "Checkout mismatch: expected $env:EXPECTED_HEAD; got $actual"
+          }
+      - name: Print Windows OS and graphics environment
+        shell: pwsh
+        run: |
+          Get-CimInstance Win32_OperatingSystem |
+            Select-Object Caption,Version,BuildNumber,OSArchitecture |
+            Format-List
+          Write-Host "Runner image: $env:ImageOS"
+          Write-Host "Runner name: $env:RUNNER_NAME"
+          Write-Host "QT_QPA_PLATFORM: windows"
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.10.0"
+      - name: Install pinned project Python
+        run: uv python install 3.13
+      - name: Install locked PySide6 environment
+        run: uv sync --locked
+      - name: Capture native runner scaling
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONFAULTHANDLER: "1"
+        run: |
+          uv run --locked python tools/qt_style_probe/probe.py --output "$env:RUNNER_TEMP/qt-style-probe/native" --scale-tag "runner-native"
+      - name: Capture explicitly synthetic scaling 150 percent
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          QT_SCALE_FACTOR: "1.5"
+          PYTHONFAULTHANDLER: "1"
+        run: |
+          uv run --locked python tools/qt_style_probe/probe.py --output "$env:RUNNER_TEMP/qt-style-probe/synthetic-150" --scale-tag "QT_SCALE_FACTOR=1.5 (synthetic)"
+      - name: Upload probe screenshots and measurements (including failures)
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: qt-style-probe-${{ matrix.runner }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/qt-style-probe/
+          retention-days: 14
+          if-no-files-found: warn
