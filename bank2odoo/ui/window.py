@@ -229,7 +229,7 @@ class MainWindow(QMainWindow):
         self.path_field.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.path_field.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.path_field.setMinimumHeight(40)
-        self.path_field.setPlaceholderText("No file selected")
+        self.path_field.setPlaceholderText("هنوز فایلی انتخاب نشده است")
         self.path_field.setAccessibleName("مسیر فایل انتخاب‌شده")
         source_row.addWidget(self.path_field, 1)
         source_layout.addLayout(source_row)
@@ -366,7 +366,7 @@ class MainWindow(QMainWindow):
         self.output_directory.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.output_directory.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.output_directory.setMinimumHeight(40)
-        self.output_directory.setPlaceholderText("Private output folder")
+        self.output_directory.setPlaceholderText("هنوز پوشه‌ای انتخاب نشده است")
         self.output_directory.setAccessibleName("پوشه خصوصی خروجی")
         self.output_directory.setReadOnly(True)
         output_row.addWidget(self.output_directory, 1)
@@ -493,14 +493,14 @@ class MainWindow(QMainWindow):
         if differs:
             example = "10" if left == "TOMAN" else "0.1"
             self.factor_help.setText(
-                f"واحدها متفاوت‌اند؛ ضریب قابل قبول {example} است. فقط پس از تأیید حسابدار آن را وارد کنید."
+                f"واحدها متفاوت‌اند؛ ضریب {example} فقط یک نمونه محاسباتی است، نه تأیید مالی. ضریب را با مدارک بررسی و وارد کنید."
             )
         else:
             self.factor_help.setText("برای واحدهای یکسان ضریب لازم نیست؛ واحدهای هر دو طرف باید تأیید شوند.")
 
     def _browse_source(self) -> None:
         name, _ = QFileDialog.getOpenFileName(self, "انتخاب صورت‌حساب بانکی", "",
-                                               "Bank statements (*.xls *.csv *.xlsx);;All files (*)")
+                                               "گزارش‌های بانکی پشتیبانی‌شده (*.xls *.csv);;همه فایل‌ها (*)")
         if name:
             self.set_source(Path(name))
 
@@ -555,6 +555,23 @@ class MainWindow(QMainWindow):
         context.factor()
         return context
 
+    def _missing_input_guidance(self) -> tuple[QWidget | None, str | None]:
+        """Point to the first visibly missing input; engine validation stays authoritative."""
+        if self.source is None:
+            return self.select_button, "ابتدا یک گزارش بانکی پشتیبانی‌شده انتخاب کنید."
+        if self.source_unit.currentData() is None:
+            return self.source_unit, "واحد پول فایل بانک را انتخاب کنید."
+        if self.target_unit.currentData() is None:
+            return self.target_unit, "واحد پول ژورنال مقصد را انتخاب کنید."
+        if not self.journal.text().strip():
+            return self.journal, "نام ژورنال بانکی مقصد را وارد کنید."
+        if (self.source_unit.currentData() != self.target_unit.currentData()
+                and not self.factor.text().strip()):
+            return self.factor, "ضریب تبدیل تأییدشده را وارد کنید."
+        if not self.approved.isChecked():
+            return self.approved, "اطلاعات مالی را بررسی کنید و سپس تأیید صریح را فعال کنید."
+        return None, None
+
     def start_conversion(self) -> None:
         if self._thread is not None:
             return
@@ -562,11 +579,12 @@ class MainWindow(QMainWindow):
         try:
             context = self._context()
         except StatementError as exc:
-            self._set_message("تبدیل آغاز نشد: " + (
-                "ابتدا فایل پشتیبانی‌شده و تأیید صریح همه اطلاعات مالی لازم است."
-                if not self.approved.isChecked() or self.source is None
-                else human_error(str(exc))
-            ), str(exc))
+            widget, guidance = self._missing_input_guidance()
+            self._set_message("تبدیل آغاز نشد: " + (guidance or human_error(str(exc))),
+                              str(exc))
+            if widget is not None:
+                self.scroll.ensureWidgetVisible(widget)
+                widget.setFocus()
             return
         assert self.source is not None
         self._stop = Event()

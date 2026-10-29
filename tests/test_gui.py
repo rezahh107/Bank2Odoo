@@ -134,6 +134,30 @@ class AccountantUiTests(unittest.TestCase):
         QTest.keyClick(self.window.select_button, Qt.Key.Key_Tab)
         self.assertIsNotNone(self.app.focusWidget())
 
+    def test_file_picker_copy_and_supported_formats(self):
+        self.assertIn("انتخاب نشده", self.window.path_field.placeholderText())
+        self.assertIn("انتخاب نشده", self.window.output_directory.placeholderText())
+        with patch("bank2odoo.ui.window.QFileDialog.getOpenFileName",
+                   return_value=("", "")) as picker:
+            self.window._browse_source()
+        format_filter = picker.call_args.args[3]
+        self.assertIn("*.xls *.csv", format_filter)
+        self.assertNotIn("*.xlsx", format_filter)
+        self.assertIsNone(self.window.source)
+
+    def test_factor_example_does_not_claim_accountant_approval(self):
+        self.window.source_unit.setCurrentIndex(
+            self.window.source_unit.findData("TOMAN")
+        )
+        self.window.target_unit.setCurrentIndex(
+            self.window.target_unit.findData("IRR")
+        )
+        hint = self.window.factor_help.text()
+        self.assertIn("10", hint)
+        self.assertIn("نمونه محاسباتی", hint)
+        self.assertIn("نه تأیید مالی", hint)
+        self.assertFalse(self.window.approved.isChecked())
+
     def test_fluid_native_widget_layout_and_bidi_text(self):
         self.assertEqual(self.window.styleSheet(), "")
         self.assertEqual(self.window.approved.styleSheet(), "")
@@ -215,6 +239,30 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIsNone(self.window.source)
         self.assertIn("شناسایی نشد", self.window.detected.text())
         self.assertFalse(self.window.save_button.isEnabled())
+
+    def test_conversion_guides_to_first_missing_input(self):
+        self.window.start_conversion()
+        self.assertIn("گزارش بانکی", self.window.status.text())
+        self.assertIs(self.app.focusWidget(), self.window.select_button)
+
+        self._select(self.source)
+        self.window.start_conversion()
+        self.assertIn("واحد پول فایل بانک", self.window.status.text())
+        self.assertIs(self.app.focusWidget(), self.window.source_unit)
+
+        self.window.source_unit.setCurrentIndex(self.window.source_unit.findData("IRR"))
+        self.window.start_conversion()
+        self.assertIn("واحد پول ژورنال مقصد", self.window.status.text())
+
+        self.window.target_unit.setCurrentIndex(self.window.target_unit.findData("IRR"))
+        self.window.start_conversion()
+        self.assertIn("نام ژورنال", self.window.status.text())
+
+        self.window.journal.setText("ژورنال آزمایشی")
+        self.window.start_conversion()
+        self.assertIn("تأیید صریح", self.window.status.text())
+        self.assertIs(self.app.focusWidget(), self.window.approved)
+        self.assertIsNone(self.window._thread)
 
     def test_conversion_blocks_missing_context_or_approval(self):
         self.window.start_conversion()
