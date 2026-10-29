@@ -305,7 +305,14 @@ def render_state(host, widget, state, checked=None):
     method = "normal"
     focus_verified = None
     if state == "hover":
-        QTest.mouseMove(widget, QPoint(widget.width() // 2, widget.height() // 2))
+        if isinstance(widget, QCheckBox):
+            option = QStyleOptionButton()
+            option.initFrom(widget)
+            indicator = widget.style().subElementRect(
+                QStyle.SubElement.SE_CheckBoxIndicator, option, widget)
+            QTest.mouseMove(widget, indicator.center())
+        else:
+            QTest.mouseMove(widget, QPoint(widget.width() // 2, widget.height() // 2))
         method = "QTest.mouseMove"
     elif state == "focus":
         host.activateWindow()
