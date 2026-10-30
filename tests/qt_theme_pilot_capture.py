@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from contextlib import nullcontext
 import importlib.util
 import json
 import os
@@ -16,10 +17,11 @@ import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 from PySide6.QtCore import QEventLoop, Qt, QTimer, qVersion
 from PySide6.QtGui import QFontInfo, QPalette
-from PySide6.QtWidgets import QApplication, QStyle, QStyleOptionButton
+from PySide6.QtWidgets import QApplication, QStyleFactory, QStyle, QStyleOptionButton
 
 from bank2odoo.ui import window as current_ui
 
@@ -201,6 +203,86 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
         app.processEvents()
 
 
+
+def verify_native_restoration(app, root: Path, metadata: dict) -> None:
+    """Audit dynamic Qt-resolved Light/Unknown roles and full-res host captures."""
+    roles = ("Window", "Base", "Text", "Button", "Highlight")
+    groups = ("Active", "Inactive", "Disabled")
+
+    def effective_roles():
+        palette = app.palette()
+        return {
+            group + "." + role: palette.color(
+                getattr(QPalette.ColorGroup, group),
+                getattr(QPalette.ColorRole, role),
+            ).name()
+            for group in groups for role in roles
+        }
+
+    app.styleHints().setColorScheme(Qt.ColorScheme.Light)
+    app.processEvents()
+    metadata["palette_restoration"] = []
+    available = {x.casefold(): x for x in QStyleFactory.keys()}
+    for fallback in (False, True):
+        requested = "fusion" if fallback else "windows11"
+        if requested not in available:
+            metadata["palette_restoration"].append(
+                {"style": requested, "execution": "NOT_EXECUTED",
+                 "reason": "QStyle unavailable"}
+            )
+            continue
+        style_name = available[requested]
+        context = (patch.object(current_ui.QStyleFactory, "keys",
+                                return_value=[style_name])
+                   if fallback else nullcontext())
+        with context:
+            native_style = QStyleFactory.create(style_name)
+            if native_style is None:
+                raise RuntimeError("Unable to construct native Qt style")
+            app.setStyle(native_style)
+            # Test-only fresh baseline: an EMPTY Qt palette resolves all
+            # color roles from the current platform/theme and QStyle.
+            app.setPalette(QPalette())
+            current_ui.configure_application(app)
+            pilot = app._bank2odoo_appearance_pilot
+            pilot.apply(_test_scheme=Qt.ColorScheme.Light)
+            native_roles = effective_roles()
+            for exit_scheme in (Qt.ColorScheme.Light, Qt.ColorScheme.Unknown):
+                pilot.apply(_test_scheme=Qt.ColorScheme.Dark)
+                dark_roles = effective_roles()
+                pilot.apply(_test_scheme=exit_scheme)
+                restored = effective_roles()
+                if restored != native_roles:
+                    mismatches = {
+                        key: [value, restored[key]]
+                        for key, value in native_roles.items()
+                        if restored[key] != value
+                    }
+                    raise AssertionError(
+                        f"Native palette not restored for {style_name}/"
+                        f"{exit_scheme.name}: {mismatches}"
+                    )
+                window = current_ui.MainWindow()
+                window.resize(650, 520)
+                window.show()
+                app.processEvents()
+                frames = []
+                label = f"palette_cycle_{requested}_{exit_scheme.name.lower()}"
+                try:
+                    snapshot(app, window, root, label, frames)
+                finally:
+                    window.close()
+                    app.processEvents()
+                metadata["palette_restoration"].append({
+                    "style": style_name, "exit_scheme_test": exit_scheme.name,
+                    "execution": "EXECUTED", "result": "PASS",
+                    "native_roles": native_roles, "dark_roles": dark_roles,
+                    "restored_roles": restored,
+                    "effective_style": app.style().objectName(),
+                    "real_os_transition_verified": False, "frames": frames,
+                })
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
@@ -235,6 +317,7 @@ def main() -> None:
                 for width, height in SIZES:
                     take(app, module, phase, scheme, width, height,
                          args.output, data, metadata["cases"])
+        verify_native_restoration(app, args.output, metadata)
     (args.output / "environment.json").write_text(
         json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
     )
@@ -244,6 +327,7 @@ def main() -> None:
         f"GitHub event SHA (may be PR merge commit): {metadata['github_event_sha']}\n"
         f"Cases: {len(metadata['cases'])}; before/after × light/dark × wide/narrow.\n"
         "Each case saves 8 states × 2 scroll positions at original QWidget.grab resolution.\n"
+        f"Native restoration audit: {len(metadata['palette_restoration'])} Qt style/scheme cases.\n"
         "The NOT_PROVEN financial result is computed with a fictional two-row statement.\n"
         "ColorScheme was set by an application-only TEST override, NOT by the real OS.\n"
         "No actual Windows11 OS theme, 100/125/150% physical DPI, accountant hardware or"
