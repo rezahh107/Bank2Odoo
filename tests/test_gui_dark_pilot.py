@@ -204,6 +204,27 @@ class DarkThemePilotTests(unittest.TestCase):
             self.assertEqual(self.app.style().objectName().casefold(), "fusion")
             self.assertEqual(self._native_color_roles(self.app.palette()), expected)
 
+    def test_native_restore_failure_is_explicit_and_recoverable(self):
+        """Do not silently claim a restored palette if Qt cannot create its style."""
+        available = {name.casefold(): name for name in QStyleFactory.keys()}
+        if "fusion" not in available:
+            self.skipTest("Fusion Qt QStyle unavailable")
+        w = self._window()
+        self._scheme(Qt.ColorScheme.Dark)
+        with patch("bank2odoo.ui.window.sys.platform", "win32"), patch(
+            "bank2odoo.ui.window.QStyleFactory.create", return_value=None
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError, "Cannot restore the native Qt palette"
+            ):
+                self.pilot.apply(_test_scheme=Qt.ColorScheme.Light)
+        self.assertTrue(self.pilot.dark)
+        self.assertTrue(self.pilot._applied)
+        self.assertFalse(self.pilot._applying)
+        self._scheme(Qt.ColorScheme.Light)
+        self.assertFalse(self.pilot.dark)
+        self.assertEqual(w.approved.styleSheet(), "")
+
     def test_native_light_selection_and_scoped_dark_rules(self):
         w = self._window()
         self.assertEqual(w.approved.styleSheet(), "")
