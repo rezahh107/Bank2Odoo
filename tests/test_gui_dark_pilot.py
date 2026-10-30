@@ -198,6 +198,54 @@ class DarkThemePilotTests(unittest.TestCase):
         self.assertIsNone(w.result)
         self.assertFalse(w.save_button.isEnabled())
 
+    def test_app_local_qstylehints_signal_rethemes_without_refresh_loop(self):
+        """Exercise Qt 6.11 colorSchemeChanged asynchronously, not only the test seam."""
+        w = self._window()
+        hints = self.app.styleHints()
+        initial = hints.colorScheme()
+        try:
+            hints.setColorScheme(Qt.ColorScheme.Dark)
+            for _ in range(8):
+                self.app.processEvents()
+            if hints.colorScheme() != Qt.ColorScheme.Dark:
+                self.skipTest("This Qt backend cannot honor test-only colorScheme override")
+            if "Fusion" not in QStyleFactory.keys():
+                self.skipTest("Fusion unavailable")
+            self.assertTrue(self.pilot.dark)
+            self.assertEqual(self.app.style().objectName().casefold(), "fusion")
+            self.assertFalse(w._presentation_refresh_queued)
+            # Switching back through the signal must remove all local dark QSS.
+            hints.setColorScheme(Qt.ColorScheme.Light)
+            for _ in range(8):
+                self.app.processEvents()
+            self.assertFalse(self.pilot.dark)
+            self.assertEqual(w.approved.styleSheet(), "")
+            self.assertEqual(w.convert_button.styleSheet(), "")
+            self.assertFalse(w._presentation_refresh_queued)
+            self.assertFalse(self.pilot._queued)
+        finally:
+            hints.setColorScheme(initial)
+            for _ in range(8):
+                self.app.processEvents()
+
+    def test_presentation_switch_during_synthetic_busy_keeps_controls_locked(self):
+        """Simulated UI-only busy, not a physical worker cancellation test."""
+        w = self._window()
+        self._validated_approval(w)
+        digest = w._approved_digest
+        w._set_busy(True)
+        self.assertFalse(w.approved.isEnabled())
+        self.assertFalse(w.convert_button.isEnabled())
+        for scheme in (Qt.ColorScheme.Dark, Qt.ColorScheme.Light):
+            self._scheme(scheme)
+            self.assertFalse(w.approved.isEnabled())
+            self.assertFalse(w.convert_button.isEnabled())
+            self.assertEqual(w._approved_digest, digest)
+            self.assertTrue(w.approved.isChecked())
+        w._set_busy(False)
+        self.assertTrue(w.approved.isEnabled())
+        self.assertEqual(w._approved_digest, digest)
+
     def test_poor_unchecked_indicator_pixel_negative_control(self):
         """Actual pixel contrast, not merely QPalette roles or string colors."""
         w = self._window()
