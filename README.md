@@ -146,3 +146,44 @@ per-row trace and explicit review-only status.
 The 30-row Bank Melli private reference and 58-row Bank Mellat original are
 **not** public fixtures. Local synthetic/Windows CI success is neither a
 private source-byte/Golden match nor desktop accountant acceptance.
+
+
+### Bounded OS-dark appearance qualification pilot (review-only)
+
+This branch adds a *pilot*, not the full workspace redesign. On Windows,
+\`QApplication.styleHints().colorScheme()\` is the sole trigger: only an actual
+\`Qt.ColorScheme.Dark\` hint selects Fusion plus a coherent dark QPalette.
+\`Light\`/\`Unknown\` retain the native \`windows11\` style (when available)
+and a native palette. No palette darkness heuristic and no forced dark mode
+on a light OS are used. An OS scheme change schedules one deferred update
+after Qt's palette transition; existing local group chrome then re-renders
+from the effective palette. When leaving Dark, the application reselects the
+native Qt style and passes an **empty `QPalette()`** to Qt, so the current
+platform/theme supplies every effective role again. Qt's
+`QStyle.standardPalette()` is deliberately **not** used: on the Windows
+runner it changed the Light Window color from `#efefef` to `#d4d0c8`.
+The reset does not use a saved/static native palette. Dynamic updates never
+call approval invalidation.
+
+Only the primary conversion button gets dark-scoped \`QPushButton\` QSS and
+only the financial checkbox receives a dark-scoped \`:indicator:unchecked\`
+border; its existing \`_ApprovalIndicatorStyle\` proxy retains the minimum
+22-pixel indicator and the full-row keyboard/mouse/approval contracts.
+\`QLineEdit\`, \`QComboBox\`, \`QSpinBox\` and popup widgets remain natively
+painted; no global stylesheet, font bundle or finance engine changes.
+
+The existing Windows CI now runs \`tests/test_gui_dark_pilot.py\`, the unchanged
+financial suites, and \`tests/qt_theme_pilot_capture.py\`. The artifact
+\`windows-qt-dark-theme-pilot\` contains original-resolution PNGs and JSON
+of **before (base commit) versus after (PR Head)** at 940×830 / 650×520,
+with light/dark *test-set* QStyleHints and only fictional CSV data. All
+initial, validation error, approved/unapproved, focus, busy, NOT_PROVEN
+and ready-to-save screenshots are review candidates, not financial approval.
+
+**Evidence boundary:** the image capture uses Windows CI's Qt windows QPA,
+not the accountant's interactive Windows 11. \`setColorScheme()\` in the
+capture script is an **explicit synthetic, application-local test override**;
+it does not prove the OS reported dark. Actual OS theme transitions, physical
+100%/125%/150% scaling, Vazirmatn on the target machine, glyph-level
+readability, and private Golden validation remain NOT_PROVEN. Nothing in this
+pilot authorizes merge, deployment, release, or live bank data.

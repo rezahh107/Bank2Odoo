@@ -11,7 +11,7 @@ from threading import Event
 import sys
 
 from PySide6.QtCore import QEvent, QObject, Qt, QThread, QTimer, Signal, Slot
-from PySide6.QtGui import QFont, QFontDatabase, QFontInfo, QPalette
+from PySide6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QPalette
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QFileDialog, QFormLayout, QFrame,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox,
@@ -34,22 +34,151 @@ def preferred_style_key(styles: list[str], *, windows: bool) -> str | None:
     return available.get("windows11") or available.get("fusion")
 
 
+# Colors are intentionally restricted to an OS-confirmed Dark scheme.
+# Qt may override system colors; keep this as a reversible qualification pilot.
+_DARK_COLORS = {
+    QPalette.ColorRole.Window: "#151A21",
+    QPalette.ColorRole.WindowText: "#EAF1F7",
+    QPalette.ColorRole.Base: "#202831",
+    QPalette.ColorRole.AlternateBase: "#151A21",
+    QPalette.ColorRole.Text: "#EAF1F7",
+    QPalette.ColorRole.Button: "#303E50",
+    QPalette.ColorRole.ButtonText: "#EAF1F7",
+    QPalette.ColorRole.Highlight: "#418BB3",
+    QPalette.ColorRole.HighlightedText: "#FFFFFF",
+    QPalette.ColorRole.Mid: "#596C7A",
+}
+_PRIMARY_DARK_QSS = (
+    "QPushButton#primaryConversion { background-color: #86C7F0;"
+    " color: #112638; border: 1px solid #86C7F0; border-radius: 5px; }"
+    " QPushButton#primaryConversion:hover { background-color: #A3D6FA; }"
+    " QPushButton#primaryConversion:pressed { background-color: #6CAAD6; }"
+    " QPushButton#primaryConversion:focus { border: 2px solid #FFE08C; }"
+    " QPushButton#primaryConversion:disabled { background-color: #303B47;"
+    " color: #B7C4CE; border: 1px solid #303B47; }"
+)
+_APPROVAL_DARK_QSS = (
+    "QCheckBox#financialApproval::indicator:unchecked {"
+    " border: 2px solid #DCE7F0; background-color: #202831; }"
+)
+
+
+def _dark_palette(app: QApplication) -> QPalette:
+    palette = QPalette(app.style().standardPalette())
+    for group in (QPalette.ColorGroup.Active, QPalette.ColorGroup.Inactive,
+                  QPalette.ColorGroup.Disabled):
+        for role, color in _DARK_COLORS.items():
+            palette.setColor(group, role, QColor(color))
+    for role, color in (
+        (QPalette.ColorRole.Button, "#252E37"),
+        (QPalette.ColorRole.ButtonText, "#A7B4BD"),
+        (QPalette.ColorRole.Text, "#A7B4BD"),
+        (QPalette.ColorRole.WindowText, "#A7B4BD"),
+    ):
+        palette.setColor(QPalette.ColorGroup.Disabled, role, QColor(color))
+    return palette
+
+
+class _AppearancePilot(QObject):
+    """One queued OS color-scheme transition; never infer Dark from palette."""
+    def __init__(self, app: QApplication):
+        super().__init__(app)
+        self.app = app
+        self.dark = False
+        self._applied = False
+        self._queued = False
+        self._applying = False
+        app.styleHints().colorSchemeChanged.connect(self.schedule)
+
+    def schedule(self, *_args: object) -> None:
+        # Qt emits colorSchemeChanged while the old palette may still be in
+        # effect. Refresh only in the next event turn, never recursively.
+        if not self._queued:
+            self._queued = True
+            QTimer.singleShot(0, self._scheduled_apply)
+
+    def _scheduled_apply(self) -> None:
+        self._queued = False
+        self.apply()
+
+    def apply(self, *, _test_scheme: Qt.ColorScheme | None = None) -> None:
+        if self._applying:
+            return
+        self._applying = True
+        try:
+            # Production calls never override Qt's OS-dependent hint.
+            # This explicit test seam is synthetic and NOT OS detection proof.
+            scheme = (_test_scheme if _test_scheme is not None
+                      else self.app.styleHints().colorScheme())
+            available = {name.casefold(): name for name in QStyleFactory.keys()}
+            requested_dark = (sys.platform == "win32"
+                              and scheme == Qt.ColorScheme.Dark
+                              and "fusion" in available)
+            target = (available["fusion"] if requested_dark
+                      else preferred_style_key(QStyleFactory.keys(),
+                                               windows=sys.platform == "win32"))
+            leaving_dark = self._applied and not requested_dark
+            # Reinstall the effective Qt style on Dark exit, even if Fusion
+            # is also the light fallback. QApplication.setStyle() alone does
+            # not clear roles explicitly assigned by setPalette().
+            if target is not None and (
+                leaving_dark
+                or self.app.style().objectName().casefold() != target.casefold()
+            ):
+                style = QStyleFactory.create(target)
+                if style is None:
+                    if leaving_dark:
+                        raise RuntimeError(
+                            "Cannot restore the native Qt palette: "
+                            f"QStyleFactory failed for {target}"
+                        )
+                else:
+                    self.app.setStyle(style)
+            elif leaving_dark:
+                raise RuntimeError(
+                    "Cannot restore the native Qt palette: no available style"
+                )
+            if requested_dark:
+                colors = _dark_palette(self.app)
+                if not self._applied or self.app.palette() != colors:
+                    self.app.setPalette(colors)
+            elif leaving_dark:
+                # QPalette() sets NO explicit color roles. Qt resolves the
+                # fresh platform/theme palette against the effective style;
+                # neither standardPalette() nor a saved OS snapshot can do so.
+                self.app.setPalette(QPalette())
+            self.dark = requested_dark
+            self._applied = requested_dark
+            for window in self.app.topLevelWidgets():
+                if isinstance(window, MainWindow) and window._presentation_ready:
+                    window._apply_theme_controls()
+                    window._queue_presentation_refresh()
+            palette = self.app.palette()
+            print("Bank2Odoo appearance pilot:"
+                  f" scheme={scheme.name}; style={self.app.style().objectName()};"
+                  f" mode={'dark' if requested_dark else 'native'};"
+                  f" window={palette.color(QPalette.ColorRole.Window).name()};"
+                  f" text={palette.color(QPalette.ColorRole.WindowText).name()};"
+                  f" base={palette.color(QPalette.ColorRole.Base).name()}")
+        finally:
+            self._applying = False
+
+
 def configure_application(app: QApplication) -> None:
-    """Native controls first; do not mask them with a global widget stylesheet."""
-    key = preferred_style_key(QStyleFactory.keys(), windows=sys.platform == "win32")
-    if key is not None:
-        style = QStyleFactory.create(key)
-        if style is not None:
-            app.setStyle(style)
+    """Use native Windows11 light; Fusion dark only on a real Dark hint."""
+    pilot = getattr(app, "_bank2odoo_appearance_pilot", None)
+    if pilot is None:
+        pilot = _AppearancePilot(app)
+        app._bank2odoo_appearance_pilot = pilot
+    pilot.apply()
     families = {family.casefold(): family for family in QFontDatabase.families()}
-    # Reuse an installed Persian typeface. Bundling is unnecessary without
-    # evidence of a missing family and a vetted redistributable font artifact.
     family = (families.get("vazirmatn") or families.get("tahoma")
               or app.font().family())
     app.setFont(QFont(family, 11))
     resolved = QFontInfo(app.font()).family()
-    print(f"Bank2Odoo Qt style: {app.style().objectName()}; "
-          f"font: {resolved}; available styles: {', '.join(QStyleFactory.keys())}")
+    print(f"Bank2Odoo Qt style: {app.style().objectName()};"
+          f" color scheme: {app.styleHints().colorScheme().name};"
+          f" font: {resolved}; available styles: {', '.join(QStyleFactory.keys())}")
 
 
 def latin(text: object) -> str:
@@ -175,6 +304,7 @@ class MainWindow(QMainWindow):
         self._saved = False
         self._last_detail = ""
         self._presentation_ready = False
+        self._presentation_refresh_queued = False
         self.setWindowTitle("Bank2Odoo | تبدیل گزارش بانک")
         self.resize(940, 830)
         self.setMinimumSize(600, 480)
@@ -295,6 +425,7 @@ class MainWindow(QMainWindow):
         approval_layout.setContentsMargins(16, 8, 16, 12)
         approval_layout.setSpacing(2)
         self.approved = _FullRowCheckBox("اطلاعات مالی بالا را شخصاً بررسی و تأیید کرده‌ام.")
+        self.approved.setObjectName("financialApproval")
         self._approval_indicator_style = _ApprovalIndicatorStyle(self.approved.style().objectName())
         self.approved.setStyle(self._approval_indicator_style)
         self.approved.setMinimumHeight(52)  # Full label and empty space are clickable.
@@ -319,6 +450,7 @@ class MainWindow(QMainWindow):
         actions = QHBoxLayout()
         actions.setSpacing(12)
         self.convert_button = QPushButton("اعتبارسنجی و تبدیل")
+        self.convert_button.setObjectName("primaryConversion")
         self.convert_button.setMinimumHeight(44)
         self.convert_button.clicked.connect(self.start_conversion)
         actions.addWidget(self.convert_button)
@@ -423,19 +555,38 @@ class MainWindow(QMainWindow):
         # hardcoded navy/red/green on a potentially dark card background.
         self.status.setPalette(QPalette(self.status.parentWidget().palette()))
 
+    def _apply_theme_controls(self) -> None:
+        pilot = getattr(QApplication.instance(), "_bank2odoo_appearance_pilot", None)
+        dark = bool(pilot is not None and pilot.dark)
+        primary = _PRIMARY_DARK_QSS if dark else ""
+        approval = _APPROVAL_DARK_QSS if dark else ""
+        if self.convert_button.styleSheet() != primary:
+            self.convert_button.setStyleSheet(primary)
+        if self.approved.styleSheet() != approval:
+            self.approved.setStyleSheet(approval)
+
+    def _queue_presentation_refresh(self) -> None:
+        if not self._presentation_refresh_queued:
+            self._presentation_refresh_queued = True
+            QTimer.singleShot(0, self._refresh_presentation)
+
+    def _refresh_presentation(self) -> None:
+        self._presentation_refresh_queued = False
+        self._apply_surface_palette()
+        self._apply_theme_controls()
+
     def changeEvent(self, event) -> None:
         super().changeEvent(event)
         if (self._presentation_ready
                 and event.type() in (QEvent.Type.PaletteChange,
                                      QEvent.Type.ApplicationPaletteChange,
                                      QEvent.Type.StyleChange)):
-            # Defer until Qt has finished propagating application palette/style
-            # changes; avoid re-polishing a group during its change event.
-            QTimer.singleShot(0, self._apply_surface_palette)
+            self._queue_presentation_refresh()
 
     def _configure_presentation(self) -> None:
         """Local card chrome with colors derived from the native Qt palette."""
         self._apply_surface_palette()
+        self._apply_theme_controls()
         base_font = QFont(self.font())
         base_font.setPointSize(11)
         self.setFont(base_font)
