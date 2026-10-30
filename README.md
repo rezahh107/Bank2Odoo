@@ -157,7 +157,13 @@ This branch adds a *pilot*, not the full workspace redesign. On Windows,
 and a native palette. No palette darkness heuristic and no forced dark mode
 on a light OS are used. An OS scheme change schedules one deferred update
 after Qt's palette transition; existing local group chrome then re-renders
-from the effective palette. Dynamic updates never call approval invalidation.
+from the effective palette. When leaving Dark, the application reselects the
+native Qt style and passes an **empty `QPalette()`** to Qt, so the current
+platform/theme supplies every effective role again. Qt's
+`QStyle.standardPalette()` is deliberately **not** used: on the Windows
+runner it changed the Light Window color from `#efefef` to `#d4d0c8`.
+The reset does not use a saved/static native palette. Dynamic updates never
+call approval invalidation.
 
 Only the primary conversion button gets dark-scoped \`QPushButton\` QSS and
 only the financial checkbox receives a dark-scoped \`:indicator:unchecked\`
