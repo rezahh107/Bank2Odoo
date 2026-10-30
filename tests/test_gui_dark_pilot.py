@@ -198,6 +198,56 @@ class DarkThemePilotTests(unittest.TestCase):
         self.assertIsNone(w.result)
         self.assertFalse(w.save_button.isEnabled())
 
+    def test_poor_unchecked_indicator_pixel_negative_control(self):
+        """Actual pixel contrast, not merely QPalette roles or string colors."""
+        w = self._window()
+        self._scheme(Qt.ColorScheme.Dark)
+        cb = w.approved
+
+        def painted_contrast_fraction():
+            opts = QStyleOptionButton()
+            opts.initFrom(cb)
+            rect = cb.style().subElementRect(
+                QStyle.SubElement.SE_CheckBoxIndicator, opts, cb
+            )
+            image = cb.grab().toImage()
+            x0, y0 = rect.x(), rect.y()
+            bg = image.pixelColor(max(0, x0-5), y0 + rect.height()//2)
+
+            def lum(color):
+                srgb = [color.redF(), color.greenF(), color.blueF()]
+                linear = [c/12.92 if c<=0.04045 else ((c+0.055)/1.055)**2.4
+                          for c in srgb]
+                return .2126*linear[0]+.7152*linear[1]+.0722*linear[2]
+
+            ref = lum(bg)
+            values = []
+            for y in range(y0, y0 + rect.height()):
+                for x in range(x0, x0 + rect.width()):
+                    v = lum(image.pixelColor(x,y))
+                    contrast = (max(v,ref)+.05)/(min(v,ref)+.05)
+                    values.append(contrast)
+            return sum(v >= 3 for v in values)/len(values)
+
+        # The known deliberately inadequate fixture is fully local to the
+        # production checkbox and uses the exact same 22px proxy.
+        cb.setStyleSheet(
+            "QCheckBox#financialApproval::indicator:unchecked {"
+            " border: 1px solid #161B22; background-color: #151A21; }"
+        )
+        self.app.processEvents()
+        poor_fraction = painted_contrast_fraction()
+        self.assertEqual(self._metric(cb), (22,22,22,22))
+        cb.setStyleSheet(_APPROVAL_DARK_QSS)
+        self.app.processEvents()
+        fixed_fraction = painted_contrast_fraction()
+        self.assertEqual(self._metric(cb), (22,22,22,22))
+        self.assertLess(poor_fraction, .05,
+                        "Negative weak indicator must not render as adequate")
+        self.assertGreaterEqual(fixed_fraction, .05,
+                                "Local border must visibly repair the indicator")
+        self.assertFalse(cb.isChecked())
+
     def test_manual_palette_change_rethemes_panels_without_reapproval(self):
         w = self._window()
         self._validated_approval(w)
