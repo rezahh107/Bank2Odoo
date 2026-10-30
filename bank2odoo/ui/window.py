@@ -101,12 +101,15 @@ class _AppearancePilot(QObject):
         self._queued = False
         self.apply()
 
-    def apply(self) -> None:
+    def apply(self, *, _test_scheme: Qt.ColorScheme | None = None) -> None:
         if self._applying:
             return
         self._applying = True
         try:
-            scheme = self.app.styleHints().colorScheme()
+            # Production calls never override Qt's OS-dependent hint.
+            # This explicit test seam is synthetic and NOT OS detection proof.
+            scheme = (_test_scheme if _test_scheme is not None
+                      else self.app.styleHints().colorScheme())
             available = {name.casefold(): name for name in QStyleFactory.keys()}
             requested_dark = (sys.platform == "win32"
                               and scheme == Qt.ColorScheme.Dark
