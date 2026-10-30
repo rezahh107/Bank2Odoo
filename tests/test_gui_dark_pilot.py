@@ -152,6 +152,12 @@ class DarkThemePilotTests(unittest.TestCase):
         w.source_unit.setFocus()
         QTest.keyClick(w.source_unit, Qt.Key.Key_Down)
         self.assertIsNotNone(w.source_unit.currentData())
+        w.source_unit.showPopup()
+        self.app.processEvents()
+        self.assertTrue(w.source_unit.view().isVisible(),
+                        "Native ComboBox popup must remain available in Fusion Dark")
+        w.source_unit.hidePopup()
+        self.app.processEvents()
         w.journal.setFocus()
         QTest.keyClicks(w.journal, "test")
         self.assertEqual(w.journal.text(), "test")
