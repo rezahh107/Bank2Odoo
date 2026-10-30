@@ -19,7 +19,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QEventLoop, Qt, QTimer, qVersion
 from PySide6.QtGui import QFontInfo, QPalette
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QStyle, QStyleOptionButton
 
 from bank2odoo.ui import window as current_ui
 
@@ -120,8 +120,28 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
     w.show()
     app.processEvents()
     label = f"{phase}_{scheme}_{width}x{height}"
+    cb = w.approved
+    option = QStyleOptionButton()
+    option.initFrom(cb)
+    rect = cb.style().subElementRect(
+        QStyle.SubElement.SE_CheckBoxIndicator, option, cb
+    )
+    metric = {
+        "effective_style_class": type(cb.style()).__name__,
+        "effective_width": cb.style().pixelMetric(
+            QStyle.PixelMetric.PM_IndicatorWidth, option, cb),
+        "effective_height": cb.style().pixelMetric(
+            QStyle.PixelMetric.PM_IndicatorHeight, option, cb),
+        "rect_width": rect.width(), "rect_height": rect.height(),
+    }
+    # A falling 22px metric is a product-pilot STOP condition, not a
+    # visually acceptable substitution from QPushButton/QSS painting.
+    if phase == "after" and any(v < 22 for key, v in metric.items()
+                                 if key != "effective_style_class"):
+        raise AssertionError("Product approval indicator 22px metric lost: " + repr(metric))
     case = {
         "phase": phase, "requested_test_scheme": scheme,
+        "approval_indicator_geometry": metric,
         "qt_effective_color_scheme": app.styleHints().colorScheme().name,
         "effective_style": app.style().objectName(),
         "resolved_font": QFontInfo(w.approved.font()).family(),
@@ -189,7 +209,10 @@ def main() -> None:
     app = QApplication.instance() or QApplication([])
     app.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
     metadata = {
-        "feature_head": os.environ.get("GITHUB_SHA"),
+        "actual_checkout_head": subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], text=True
+        ).strip(),
+        "github_event_sha": os.environ.get("GITHUB_SHA"),
         "baseline_head": BASE_SHA,
         "time_utc": datetime.now(timezone.utc).isoformat(),
         "platform": platform.platform(), "python": sys.version,
@@ -217,7 +240,8 @@ def main() -> None:
     )
     (args.output / "summary.md").write_text(
         "# Bank2Odoo dark theme pilot — synthetic Windows QPA evidence\n\n"
-        f"Baseline: {BASE_SHA}\nFeature: {metadata['feature_head']}\n"
+        f"Baseline: {BASE_SHA}\nFeature checkout HEAD: {metadata['actual_checkout_head']}\n"
+        f"GitHub event SHA (may be PR merge commit): {metadata['github_event_sha']}\n"
         f"Cases: {len(metadata['cases'])}; before/after × light/dark × wide/narrow.\n"
         "Each case saves 8 states × 2 scroll positions at original QWidget.grab resolution.\n"
         "The NOT_PROVEN financial result is computed with a fictional two-row statement.\n"
