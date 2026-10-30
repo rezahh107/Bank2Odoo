@@ -117,18 +117,32 @@ class _AppearancePilot(QObject):
             target = (available["fusion"] if requested_dark
                       else preferred_style_key(QStyleFactory.keys(),
                                                windows=sys.platform == "win32"))
-            if target is not None and self.app.style().objectName().casefold() != target.casefold():
+            leaving_dark = self._applied and not requested_dark
+            # QApplication.setStyle() returns palette ownership to Qt's
+            # platform/style integration, including colors supplied by the OS.
+            # Force this reset when leaving Dark even if Fusion remains the
+            # fallback style; standardPalette() is NOT the native palette.
+            if target is not None and (
+                leaving_dark
+                or self.app.style().objectName().casefold() != target.casefold()
+            ):
                 style = QStyleFactory.create(target)
-                if style is not None:
+                if style is None:
+                    if leaving_dark:
+                        raise RuntimeError(
+                            "Cannot restore the native Qt palette: "
+                            f"QStyleFactory failed for {target}"
+                        )
+                else:
                     self.app.setStyle(style)
+            elif leaving_dark:
+                raise RuntimeError(
+                    "Cannot restore the native Qt palette: no available style"
+                )
             if requested_dark:
                 colors = _dark_palette(self.app)
                 if not self._applied or self.app.palette() != colors:
                     self.app.setPalette(colors)
-            elif self._applied:
-                # Qt restores its style palette when switching style, but if
-                # Fusion remains selected this explicit dark palette must go.
-                self.app.setPalette(self.app.style().standardPalette())
             self.dark = requested_dark
             self._applied = requested_dark
             for window in self.app.topLevelWidgets():
