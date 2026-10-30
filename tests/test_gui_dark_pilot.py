@@ -115,6 +115,95 @@ class DarkThemePilotTests(unittest.TestCase):
         self.assertTrue(w.approved.isChecked())
         self.assertEqual(w._approved_digest, w._selected_digest)
 
+    @staticmethod
+    def _native_color_roles(palette):
+        """Read effective Qt colors, including Windows disabled color groups."""
+        roles = (QPalette.ColorRole.Window, QPalette.ColorRole.Base,
+                 QPalette.ColorRole.Text, QPalette.ColorRole.Button,
+                 QPalette.ColorRole.Highlight)
+        groups = (QPalette.ColorGroup.Active, QPalette.ColorGroup.Disabled,
+                  QPalette.ColorGroup.Inactive)
+        return {
+            (group, role): palette.color(group, role).name()
+            for group in groups for role in roles
+        }
+
+    def test_dark_exit_restores_actual_native_windows11_colors(self):
+        """Red on reviewed PR Head: native #efefef becomes standard #d4d0c8."""
+        available = {key.casefold(): key for key in QStyleFactory.keys()}
+        if "windows11" not in available:
+            self.skipTest("Windows11 Qt QStyle unavailable")
+        with patch("bank2odoo.ui.window.sys.platform", "win32"):
+            style = QStyleFactory.create(available["windows11"])
+            self.assertIsNotNone(style)
+            self.app.setStyle(style)
+            self.pilot.apply(_test_scheme=Qt.ColorScheme.Light)
+            expected = self._native_color_roles(self.app.palette())
+            expected_style = self.app.style().objectName().casefold()
+            # This checks the premise without assuming a fixed OS light color.
+            standard = self._native_color_roles(self.app.style().standardPalette())
+            self.assertNotEqual(
+                expected, standard,
+                "Native and QStyle.standardPalette() must differ for this "
+                "Windows regression fixture; otherwise the negative control "
+                "cannot falsify the original defect",
+            )
+            self.pilot.apply(_test_scheme=Qt.ColorScheme.Dark)
+            self.assertEqual(self.pilot.dark, True)
+            self.pilot.apply(_test_scheme=Qt.ColorScheme.Light)
+            self.assertEqual(self.app.style().objectName().casefold(), expected_style)
+            self.assertEqual(
+                self._native_color_roles(self.app.palette()), expected,
+                "Dark exit must recover actual platform-managed colors; "
+                "QStyle.standardPalette is not the native platform palette",
+            )
+
+    def test_dark_to_unknown_restores_native_roles_and_nonrecursive_updates(self):
+        available = {key.casefold(): key for key in QStyleFactory.keys()}
+        if "windows11" not in available:
+            self.skipTest("Windows11 Qt QStyle unavailable")
+        with patch("bank2odoo.ui.window.sys.platform", "win32"):
+            self.app.setStyle(QStyleFactory.create(available["windows11"]))
+            self.pilot.apply(_test_scheme=Qt.ColorScheme.Light)
+            expected = self._native_color_roles(self.app.palette())
+            window = self._window()
+            self.pilot.apply(_test_scheme=Qt.ColorScheme.Dark)
+            self.pilot.apply(_test_scheme=Qt.ColorScheme.Unknown)
+            for _ in range(8):
+                self.app.processEvents()
+            self.assertEqual(self._native_color_roles(self.app.palette()), expected)
+            self.assertFalse(self.pilot.dark)
+            self.assertFalse(self.pilot._applying)
+            self.assertFalse(self.pilot._queued)
+            self.assertFalse(window._presentation_refresh_queued)
+            self.assertEqual(window.approved.styleSheet(), "")
+            self.assertEqual(window.convert_button.styleSheet(), "")
+            self.assertEqual(self._metric(window.approved), (22, 22, 22, 22))
+
+    def test_fusion_fallback_resets_native_colors_when_style_name_does_not_change(self):
+        """Dark->Light with Fusion both sides must still reset via QApplication.setStyle."""
+        if not any(k.casefold() == "fusion" for k in QStyleFactory.keys()):
+            self.skipTest("Fusion Qt style unavailable")
+        with patch("bank2odoo.ui.window.sys.platform", "win32"), patch(
+            "bank2odoo.ui.window.QStyleFactory.keys", return_value=["Fusion"]
+        ):
+            self.app.setStyle(QStyleFactory.create("Fusion"))
+            self.pilot.apply(_test_scheme=Qt.ColorScheme.Light)
+            expected = self._native_color_roles(self.app.palette())
+            self.pilot.apply(_test_scheme=Qt.ColorScheme.Dark)
+            with patch(
+                "bank2odoo.ui.window.QStyleFactory.create",
+                wraps=QStyleFactory.create,
+            ) as create_style:
+                self.pilot.apply(_test_scheme=Qt.ColorScheme.Light)
+                self.assertTrue(
+                    create_style.called,
+                    "Fusion fallback must reapply its Qt style to release "
+                    "the explicit dark palette even if the style name is unchanged",
+                )
+            self.assertEqual(self.app.style().objectName().casefold(), "fusion")
+            self.assertEqual(self._native_color_roles(self.app.palette()), expected)
+
     def test_native_light_selection_and_scoped_dark_rules(self):
         w = self._window()
         self.assertEqual(w.approved.styleSheet(), "")
