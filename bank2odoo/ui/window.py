@@ -118,10 +118,9 @@ class _AppearancePilot(QObject):
                       else preferred_style_key(QStyleFactory.keys(),
                                                windows=sys.platform == "win32"))
             leaving_dark = self._applied and not requested_dark
-            # QApplication.setStyle() returns palette ownership to Qt's
-            # platform/style integration, including colors supplied by the OS.
-            # Force this reset when leaving Dark even if Fusion remains the
-            # fallback style; standardPalette() is NOT the native palette.
+            # Reinstall the effective Qt style on Dark exit, even if Fusion
+            # is also the light fallback. QApplication.setStyle() alone does
+            # not clear roles explicitly assigned by setPalette().
             if target is not None and (
                 leaving_dark
                 or self.app.style().objectName().casefold() != target.casefold()
@@ -143,6 +142,11 @@ class _AppearancePilot(QObject):
                 colors = _dark_palette(self.app)
                 if not self._applied or self.app.palette() != colors:
                     self.app.setPalette(colors)
+            elif leaving_dark:
+                # QPalette() sets NO explicit color roles. Qt resolves the
+                # fresh platform/theme palette against the effective style;
+                # neither standardPalette() nor a saved OS snapshot can do so.
+                self.app.setPalette(QPalette())
             self.dark = requested_dark
             self._applied = requested_dark
             for window in self.app.topLevelWidgets():
