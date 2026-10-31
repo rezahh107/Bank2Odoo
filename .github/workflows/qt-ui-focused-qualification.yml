@@ -1,0 +1,109 @@
+name: Review-only Qt RTL and approval visual qualification
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  render-qualification:
+    if: github.event.pull_request.head.ref == 'diagnostic/qt-rtl-checkbox-qualification-20261031'
+    runs-on: windows-latest
+    steps:
+      - name: Checkout precise review HEAD
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Confirm source and product baseline remain exact
+        shell: pwsh
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne $env:EXPECTED_HEAD) { throw "Wrong diagnostic revision" }
+          git diff 5d4b950c29a73433c043a53dc266cee9192d3de4 HEAD -- bank2odoo
+          $changed = @(git diff --name-only 5d4b950c29a73433c043a53dc266cee9192d3de4 HEAD -- bank2odoo)
+          if ($changed.Count -gt 0) { throw "Production sources changed in diagnostic branch" }
+      - name: Setup locked Python environment
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: '0.10.0'
+      - run: uv python install 3.13
+      - run: uv sync --locked
+      - name: Render actual product widget, diagnostics and negative controls
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONFAULTHANDLER: '1'
+        shell: pwsh
+        run: |
+          uv run --locked python -m tests.qt_ui_focused_qualification --output "$env:RUNNER_TEMP/qt-qualification"
+          if ($LASTEXITCODE -ne 0) { throw "Diagnostic execution failed: consult uploaded JSON/PNGs" }
+      - name: Upload unmodified native PNGs and measurements
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: qt-rtl-approval-real-product-qualification
+          path: ${{ runner.temp }}/qt-qualification/
+          retention-days: 14
+          if-no-files-found: warn
+
+  publish-evidence:
+    needs: render-qualification
+    if: github.event.pull_request.head.ref == 'diagnostic/qt-rtl-checkbox-qualification-20261031'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Checkout only the dedicated evidence branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: evidence/qt-rtl-checkbox-qualification-20261031
+      - name: Download this run's original-resolution captures
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/qt-source"
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name qt-rtl-approval-real-product-qualification \
+            --dir "$RUNNER_TEMP/qt-source"
+          test -s "$RUNNER_TEMP/qt-source/measurements.json"
+          test -s "$RUNNER_TEMP/qt-source/SUMMARY.md"
+      - name: Publish and verify curated current-run evidence ONLY
+        shell: bash
+        env:
+          QUALIFICATION_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          dest=evidence/qt-rtl-approval-20261031
+          mkdir -p "$dest"
+          cp "$RUNNER_TEMP/qt-source"/*.png "$dest/"
+          cp "$RUNNER_TEMP/qt-source/measurements.json" "$RUNNER_TEMP/qt-source/SUMMARY.md" "$dest/"
+          python3 - <<'PY'
+          import json, pathlib, os
+          d = pathlib.Path('evidence/qt-rtl-approval-20261031')
+          x = json.loads((d/'measurements.json').read_text(encoding='utf-8'))
+          listed = [p['file'] for c in x['cases'] for p in c['screenshots']]
+          assert len(listed) == len(set(listed))
+          assert all((d / name).stat().st_size for name in listed)
+          assert len(listed) >= 60, len(listed)
+          expected = '5d4b950c29a73433c043a53dc266cee9192d3de4'
+          assert x['revision'] == expected
+          (d / 'EVIDENCE_MANIFEST.md').write_text(
+              '# Bank2Odoo — bounded Qt UI/UX qualification\n\n'
+              f'Production baseline: `{expected}`\n\n'
+              f'Diagnostic HEAD: `{os.environ["QUALIFICATION_HEAD"]}`\n\n'
+              f'Windows Actions run: `{os.environ["GITHUB_RUN_ID"]}`\n\n'
+              f'Captured native PNGs: {len(listed)}; scenarios: {len(x["cases"])}.\n\n'
+              'See [measurements.json](measurements.json), [SUMMARY.md](SUMMARY.md), '
+              'and the PNGs alongside this manifest. Only synthetic CI evidence; '
+              'not owner approval or physical Windows workstation acceptance.\n',
+              encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$dest"
+          git commit -m "evidence: publish synthetic Windows Qt RTL and checkbox captures"
+          git push origin HEAD:evidence/qt-rtl-checkbox-qualification-20261031
