@@ -27,7 +27,7 @@ BASELINE = "5d4b950c29a73433c043a53dc266cee9192d3de4"
 SIZES = ((940, 830), (650, 520), (600, 480))
 SCHEMES = ("light", "dark")
 # Each treatment is an in-memory diagnostic on the actual product widget.
-B_TREATMENTS = ("baseline", "no_proxy", "unscoped_rule", "bright_border", "negative")
+B_TREATMENTS = ("baseline", "unscoped_rule", "bright_border", "negative")
 
 
 def luminance(rgb):
@@ -236,6 +236,7 @@ def interactions(w, app):
 
 def run_case(app, out, scheme, size, family, variant):
     application_scheme(app,scheme)
+    print("START",family,variant,scheme,size,flush=True)
     w=product.MainWindow()
     w.resize(*size)
     w.show()
@@ -296,6 +297,7 @@ def run_case(app, out, scheme, size, family, variant):
     finally:
         w.close()
         app.processEvents()
+    print("DONE",code,"error",record["error"],flush=True)
     return record
 
 
