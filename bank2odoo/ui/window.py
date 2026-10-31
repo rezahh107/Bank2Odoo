@@ -652,8 +652,11 @@ class MainWindow(QMainWindow):
 
     def _reveal_result(self) -> None:
         """Keep the outcome and its single next action together, including narrow mode."""
-        self.scroll.ensureWidgetVisible(self.result_state, 0, 18)
+        # Place the action first, then give the outcome itself breathing room
+        # in the narrow viewport. Otherwise focusing the action can push the
+        # second line of NOT_PROVEN below the visible edge.
         self.scroll.ensureWidgetVisible(self.convert_button, 0, 18)
+        self.scroll.ensureWidgetVisible(self.result_state, 0, 64)
         if self.convert_button.isEnabled():
             self.convert_button.setFocus(Qt.FocusReason.OtherFocusReason)
 
