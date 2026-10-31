@@ -583,20 +583,24 @@ class MainWindow(QMainWindow):
         # and actual group margins rather than accepting technically fitting
         # but unreadably squeezed "two columns" at 600/650 logical pixels.
         input_required = max(
-            self._input_column.minimumSizeHint().width(),
+            # The whole column hint includes the other column during direction
+            # changes, so it is not a stable predictor of usable two-column width.
             fm.horizontalAdvance("واحد پول ژورنال مقصد:")
             + self.source_unit.sizeHint().width() + 85,
             self.select_button.sizeHint().width()
             + fm.horizontalAdvance("C:/Private/statement_1405_IRR.csv") + 70,
         )
         result_required = max(
-            self._result_column.minimumSizeHint().width(),
+            # Measure actual localized actions, not current nested layout width.
             self.directory_button.sizeHint().width()
             + fm.horizontalAdvance("C:/Private/output_1405") + 80,
             self.convert_button.sizeHint().width()
             + self.cancel_button.sizeHint().width() + 70,
         )
         self._workspace_breakpoint = input_required + result_required + 12
+        self._workspace_measurements = (input_required, result_required,
+                                        self._input_column.minimumSizeHint().width(),
+                                        self._result_column.minimumSizeHint().width())
         available = self.scroll.viewport().width()
         target = (QBoxLayout.Direction.RightToLeft
                   if available >= self._workspace_breakpoint
