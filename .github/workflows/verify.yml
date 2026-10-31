@@ -199,3 +199,82 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: uv run --offline --locked python -c "from PySide6.QtWidgets import QApplication; from bank2odoo.ui.window import MainWindow; app=QApplication([]); w=MainWindow(); assert 'Bank2Odoo' in w.windowTitle(); w.close(); print('offline Qt window OK')"
+
+  publish-curated-overflow-evidence:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'diagnostic/qt-saved-path-overflow-20261031'
+    needs: verify-windows
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Check out isolated non-release evidence branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: evidence/qt-saved-path-overflow-pr11-20261031
+      - name: Download original synthetic Qt PNGs from successful verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/qt-evidence"
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name qt-saved-path-overflow-qualification --dir "$RUNNER_TEMP/qt-evidence"
+          test -s "$RUNNER_TEMP/qt-evidence/measurements.json"
+      - name: Curate native PNGs and machine-readable environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          source="$RUNNER_TEMP/qt-evidence"
+          dest="evidence/qt-overflow-pr11"
+          mkdir -p "$dest"
+          cp "$source/measurements.json" "$dest/"
+          cp "$source/contact_light.png" "$source/contact_dark.png" "$dest/"
+          for theme in light dark; do
+            for geometry in 940x830 650x520 600x480; do
+              for state in production_after legacy_long_injected_after; do
+                cp "$source/$theme"_"$geometry"_"$state.png" "$dest/"
+              done
+            done
+          done
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d=Path("evidence/qt-overflow-pr11")
+          data=json.loads((d/"measurements.json").read_text(encoding="utf-8"))
+          (d/"environment.json").write_text(json.dumps(data["environment"],ensure_ascii=False,indent=2),encoding="utf-8")
+          cases={x["case"]:x for x in data["cases"]}
+          rows=[
+              "# Qt saved-path overflow: synthetic Windows QPA measurements",
+              "",
+              "Review-only diagnostic and correction of Draft PR #10; no real bank files.",
+              "Original-size Qt QWidget PNGs included. Contact sheets are resized overview.",
+              "Exact verified checkout: "+data["environment"]["checkout_head"],
+              "Qt QPA windows, simulated Light/Dark. NOT a physical Windows 11 acceptance.",
+              "",
+              "| Scheme | Requested | Actual | Viewport | H-scroll fixed | H-scroll injected old label |",
+              "|---|---|---|---|---:|---:|"]
+          for theme in ("light","dark"):
+              for size in ("940x830","650x520","600x480"):
+                  base=theme+"_"+size+"_"
+                  good=cases[base+"production_after"]
+                  bad=cases[base+"legacy_long_injected_after"]
+                  rows.append(f"| {theme} | {size} | {good['window']} | {good['viewport']} | {good['hscroll']['maximum']} | {bad['hscroll']['maximum']} |")
+          rows+=["", "Root cause 1: unbounded full mixed-script path displayed by wrapped QLabel inflates minimum column width.",
+                 "Root cause 2: overly long saved-button caption independently inflates wide results column.",
+                 "Remedy: short saved status, full paths in separate bounded read-only selectable LTR QLineEdits, short saved action.",
+                 "Expected-red automated regression: run 41184158401; fixed result: current PR #11 checks.",
+                 "NOT PROVEN: accountant Windows 11, physical DPI at 100/125/150%, AT/user acceptance.",""]
+          (d/"summary.md").write_text("\n".join(rows),encoding="utf-8")
+          PY
+          (cd "$dest" && sha256sum *.png *.json summary.md > SHA256SUMS.txt)
+      - name: Commit synthetic evidence outside main and PR #10
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add evidence/qt-overflow-pr11
+          git diff --cached --check
+          git commit -m "Publish synthetic Qt PR11 overflow comparison and full-size PNGs"
+          git push origin HEAD:refs/heads/evidence/qt-saved-path-overflow-pr11-20261031
