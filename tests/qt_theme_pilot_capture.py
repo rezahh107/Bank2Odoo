@@ -246,6 +246,7 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
         if w.result is None or not w.result.balance_status.startswith("NOT_PROVEN"):
             raise AssertionError("Expected synthetic NOT_PROVEN result")
         grab("not_proven_result")
+        financial_evidence = w.result_state.text()
         if phase == "after":
             if w.save_button.isEnabled() or "انتخاب پوشه" not in w.convert_button.text():
                 raise AssertionError("Saving before private folder selection is not allowed")
@@ -258,6 +259,12 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
         wait_finished(w, w.save_done, app)
         if "خطای ذخیره" not in w.status.text() or w._saved:
             raise AssertionError("Synthetic save failure was falsely published")
+        if phase == "after" and (
+            w.output_directory.text() or
+            "انتخاب پوشه" not in w.convert_button.text() or
+            w.result_state.text() != financial_evidence
+        ):
+            raise AssertionError("Failed save must request a new folder and retain balance evidence")
         grab("save_failure")
         w.output_directory.setText(str(private_folder))
         if not w.save_button.isEnabled():
@@ -267,6 +274,8 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
         wait_finished(w, w.save_done, app)
         if not w._saved or "دو فایل ایجاد شدند" not in w.saved_paths.text():
             raise AssertionError("Actual synthetic paired save did not complete")
+        if phase == "after" and w.result_state.text() != financial_evidence:
+            raise AssertionError("Paired-save success replaced PASS/NOT_PROVEN balance evidence")
         grab("saved_success")
         balanced = synthetic.parent / f"balanced_{phase}_{scheme}_{width}.csv"
         fixture(balanced, balanced=True)
