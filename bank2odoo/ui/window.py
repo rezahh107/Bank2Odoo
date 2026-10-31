@@ -466,6 +466,7 @@ class MainWindow(QMainWindow):
         actions.setSpacing(12)
         self.convert_button = QPushButton("اعتبارسنجی و تبدیل")
         self.convert_button.setObjectName("primaryConversion")
+        self.convert_button.setAccessibleName("راهنمای تکمیل مراحل: اعتبارسنجی و تبدیل")
         self.convert_button.setMinimumHeight(44)
         self.convert_button.clicked.connect(self._next_action)
         actions.addWidget(self.convert_button)
