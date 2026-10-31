@@ -131,7 +131,7 @@ def capture(w, root, label, records, phase):
             w.scroll.ensureWidgetVisible(w.result_state)
     app.processEvents()
     dims=geometry(w)
-    requested_w=int(label.split("_")[3].split("x")[0])
+    requested_w=int(label.split("_")[2].split("x")[0])
     wide=requested_w==940
     if wide:
         if not dims["horizontal"]:
@@ -151,7 +151,7 @@ def capture(w, root, label, records, phase):
         raise AssertionError("DPR mismatch")
     records.append({
         "file":name,"state":state,"view":location,
-        "requested_window_wh":list(map(int,label.split("_")[3].split("x"))),
+        "requested_window_wh":list(map(int,label.split("_")[2].split("x"))),
         "physical_png_wh":[pm.width(),pm.height()],
         "dpr":pm.devicePixelRatio(),
         "geometry":dims,
