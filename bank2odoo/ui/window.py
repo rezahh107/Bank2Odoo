@@ -612,6 +612,10 @@ class MainWindow(QMainWindow):
             self._workspace.setDirection(target)
             self._workspace.invalidate()
             self.scroll.widget().updateGeometry()
+            # The scroll bars are recalculated after the new Qt layout turn.
+            # A result already on screen must remain findable after a resize.
+            if self.result is not None:
+                QTimer.singleShot(0, self._reveal_result)
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
@@ -655,6 +659,8 @@ class MainWindow(QMainWindow):
         # Place the action first, then give the outcome itself breathing room
         # in the narrow viewport. Otherwise focusing the action can push the
         # second line of NOT_PROVEN below the visible edge.
+        self._workspace.activate()
+        self.scroll.widget().layout().activate()
         self.scroll.ensureWidgetVisible(self.convert_button, 0, 18)
         self.scroll.ensureWidgetVisible(self.result_state, 0, 64)
         if self.convert_button.isEnabled():
