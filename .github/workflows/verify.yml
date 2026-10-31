@@ -355,5 +355,14 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add evidence/qt-overflow-pr11
           git diff --cached --check
-          git commit -m "Publish synthetic Qt PR11 overflow comparison and full-size PNGs"
-          git push origin HEAD:refs/heads/evidence/qt-saved-path-overflow-pr11-20261031
+          if git diff --cached --quiet --exit-code; then
+            echo "EVIDENCE_UNCHANGED: verified curated evidence already matches the branch; no commit needed"
+          else
+            diff_status=$?
+            if [ "$diff_status" -ne 1 ]; then
+              echo "::error::Cannot inspect staged evidence (git diff exit $diff_status)"
+              exit "$diff_status"
+            fi
+            git commit -m "Publish synthetic Qt PR11 overflow comparison and full-size PNGs"
+            git push origin HEAD:refs/heads/evidence/qt-saved-path-overflow-pr11-20261031
+          fi
