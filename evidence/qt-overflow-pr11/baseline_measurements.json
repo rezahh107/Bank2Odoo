@@ -1,0 +1,2789 @@
+{
+  "environment": {
+    "platform": "Windows-2025Server-10.0.26100-SP0",
+    "python": "3.13.12 (main, Feb  3 2026, 22:53:26) [MSC v.1944 64 bit (AMD64)]",
+    "qpa": "windows",
+    "qt": "6.11.2",
+    "pyside6": "6.11.2",
+    "effective_style_final": "fusion",
+    "font": "Tahoma",
+    "scale_factor": null,
+    "physical_windows11_verified": false,
+    "actual_os_scheme_verified": false
+  },
+  "cases": [
+    {
+      "case": "light_940x830_long_before",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        928,
+        749
+      ],
+      "content": [
+        2411,
+        917
+      ],
+      "body_min_hint": [
+        2411,
+        881
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1483,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 168,
+        "value": 0
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1871,
+        54
+      ],
+      "saved_label_hint": [
+        1871,
+        90
+      ],
+      "saved_label_rect": [
+        -980,
+        758,
+        1871,
+        90
+      ],
+      "result_rect": [
+        -999,
+        143,
+        1909,
+        754
+      ],
+      "input_rect": [
+        -1465,
+        143,
+        454,
+        754
+      ],
+      "action_rect": [
+        549,
+        188,
+        342,
+        44
+      ],
+      "state_rect": [
+        -980,
+        274,
+        1871,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_940x830_long_before.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_940x830_long_after",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        928,
+        749
+      ],
+      "content": [
+        2411,
+        917
+      ],
+      "body_min_hint": [
+        2411,
+        881
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1483,
+        "value": 974
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 168,
+        "value": 0
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1871,
+        54
+      ],
+      "saved_label_hint": [
+        1871,
+        90
+      ],
+      "saved_label_rect": [
+        -6,
+        758,
+        1871,
+        90
+      ],
+      "result_rect": [
+        -25,
+        143,
+        1909,
+        754
+      ],
+      "input_rect": [
+        -491,
+        143,
+        454,
+        754
+      ],
+      "action_rect": [
+        1523,
+        188,
+        342,
+        44
+      ],
+      "state_rect": [
+        -6,
+        274,
+        1871,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_940x830_long_after.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_940x830_long_vertical_bottom",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        928,
+        749
+      ],
+      "content": [
+        2411,
+        917
+      ],
+      "body_min_hint": [
+        2411,
+        881
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1483,
+        "value": 974
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 168,
+        "value": 168
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1871,
+        54
+      ],
+      "saved_label_hint": [
+        1871,
+        90
+      ],
+      "saved_label_rect": [
+        -6,
+        590,
+        1871,
+        90
+      ],
+      "result_rect": [
+        -25,
+        -25,
+        1909,
+        754
+      ],
+      "input_rect": [
+        -491,
+        -25,
+        454,
+        754
+      ],
+      "action_rect": [
+        1523,
+        20,
+        342,
+        44
+      ],
+      "state_rect": [
+        -6,
+        106,
+        1871,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_940x830_long_vertical_bottom.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_940x830_short_before",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        928,
+        749
+      ],
+      "content": [
+        1008,
+        863
+      ],
+      "body_min_hint": [
+        1008,
+        845
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 80,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 114,
+        "value": 114
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        78,
+        18
+      ],
+      "saved_label_hint": [
+        135,
+        54
+      ],
+      "saved_label_rect": [
+        423,
+        644,
+        468,
+        18
+      ],
+      "result_rect": [
+        404,
+        29,
+        506,
+        700
+      ],
+      "input_rect": [
+        -62,
+        29,
+        454,
+        700
+      ],
+      "action_rect": [
+        549,
+        74,
+        342,
+        44
+      ],
+      "state_rect": [
+        423,
+        160,
+        468,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_940x830_short_before.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_940x830_short_after",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        928,
+        749
+      ],
+      "content": [
+        1008,
+        863
+      ],
+      "body_min_hint": [
+        1008,
+        845
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 80,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 114,
+        "value": 114
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        78,
+        18
+      ],
+      "saved_label_hint": [
+        135,
+        54
+      ],
+      "saved_label_rect": [
+        423,
+        644,
+        468,
+        18
+      ],
+      "result_rect": [
+        404,
+        29,
+        506,
+        700
+      ],
+      "input_rect": [
+        -62,
+        29,
+        454,
+        700
+      ],
+      "action_rect": [
+        549,
+        74,
+        342,
+        44
+      ],
+      "state_rect": [
+        423,
+        160,
+        468,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_940x830_short_after.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_940x830_long_restored_after",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        928,
+        749
+      ],
+      "content": [
+        2411,
+        917
+      ],
+      "body_min_hint": [
+        2411,
+        881
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1483,
+        "value": 974
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 168,
+        "value": 114
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1871,
+        54
+      ],
+      "saved_label_hint": [
+        1871,
+        90
+      ],
+      "saved_label_rect": [
+        -6,
+        644,
+        1871,
+        90
+      ],
+      "result_rect": [
+        -25,
+        29,
+        1909,
+        754
+      ],
+      "input_rect": [
+        -491,
+        29,
+        454,
+        754
+      ],
+      "action_rect": [
+        1523,
+        74,
+        342,
+        44
+      ],
+      "state_rect": [
+        -6,
+        160,
+        1871,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_940x830_long_restored_after.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_650x520_long_before",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        638,
+        520
+      ],
+      "content": [
+        1944,
+        1534
+      ],
+      "body_min_hint": [
+        1944,
+        1480
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1306,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1014,
+        "value": 841
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1870,
+        54
+      ],
+      "saved_label_hint": [
+        1870,
+        90
+      ],
+      "saved_label_rect": [
+        -1269,
+        534,
+        1870,
+        90
+      ],
+      "result_rect": [
+        -1288,
+        -81,
+        1908,
+        754
+      ],
+      "input_rect": [
+        -1288,
+        -698,
+        1908,
+        605
+      ],
+      "action_rect": [
+        259,
+        -36,
+        342,
+        44
+      ],
+      "state_rect": [
+        -1269,
+        50,
+        1870,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_650x520_long_before.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_650x520_long_after",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        638,
+        520
+      ],
+      "content": [
+        1944,
+        1534
+      ],
+      "body_min_hint": [
+        1944,
+        1480
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1306,
+        "value": 652
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1014,
+        "value": 787
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1870,
+        54
+      ],
+      "saved_label_hint": [
+        1870,
+        90
+      ],
+      "saved_label_rect": [
+        -617,
+        588,
+        1870,
+        90
+      ],
+      "result_rect": [
+        -636,
+        -27,
+        1908,
+        754
+      ],
+      "input_rect": [
+        -636,
+        -644,
+        1908,
+        605
+      ],
+      "action_rect": [
+        911,
+        18,
+        342,
+        44
+      ],
+      "state_rect": [
+        -617,
+        104,
+        1870,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_650x520_long_after.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_650x520_long_vertical_bottom",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        638,
+        520
+      ],
+      "content": [
+        1944,
+        1534
+      ],
+      "body_min_hint": [
+        1944,
+        1480
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1306,
+        "value": 652
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1014,
+        "value": 1014
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1870,
+        54
+      ],
+      "saved_label_hint": [
+        1870,
+        90
+      ],
+      "saved_label_rect": [
+        -617,
+        361,
+        1870,
+        90
+      ],
+      "result_rect": [
+        -636,
+        -254,
+        1908,
+        754
+      ],
+      "input_rect": [
+        -636,
+        -871,
+        1908,
+        605
+      ],
+      "action_rect": [
+        911,
+        -209,
+        342,
+        44
+      ],
+      "state_rect": [
+        -617,
+        -123,
+        1870,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_650x520_long_vertical_bottom.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_650x520_short_before",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        638,
+        520
+      ],
+      "content": [
+        638,
+        1534
+      ],
+      "body_min_hint": [
+        542,
+        1444
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1014,
+        "value": 1014
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        78,
+        18
+      ],
+      "saved_label_hint": [
+        135,
+        54
+      ],
+      "saved_label_rect": [
+        37,
+        415,
+        564,
+        18
+      ],
+      "result_rect": [
+        18,
+        -200,
+        602,
+        700
+      ],
+      "input_rect": [
+        18,
+        -853,
+        602,
+        641
+      ],
+      "action_rect": [
+        259,
+        -155,
+        342,
+        44
+      ],
+      "state_rect": [
+        37,
+        -69,
+        564,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_650x520_short_before.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_650x520_short_after",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        638,
+        520
+      ],
+      "content": [
+        638,
+        1534
+      ],
+      "body_min_hint": [
+        542,
+        1444
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1014,
+        "value": 841
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        78,
+        18
+      ],
+      "saved_label_hint": [
+        135,
+        54
+      ],
+      "saved_label_rect": [
+        37,
+        588,
+        564,
+        18
+      ],
+      "result_rect": [
+        18,
+        -27,
+        602,
+        700
+      ],
+      "input_rect": [
+        18,
+        -680,
+        602,
+        641
+      ],
+      "action_rect": [
+        259,
+        18,
+        342,
+        44
+      ],
+      "state_rect": [
+        37,
+        104,
+        564,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_650x520_short_after.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_650x520_long_restored_after",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        638,
+        520
+      ],
+      "content": [
+        1944,
+        1534
+      ],
+      "body_min_hint": [
+        1944,
+        1480
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1306,
+        "value": 652
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1014,
+        "value": 787
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1870,
+        54
+      ],
+      "saved_label_hint": [
+        1870,
+        90
+      ],
+      "saved_label_rect": [
+        -617,
+        588,
+        1870,
+        90
+      ],
+      "result_rect": [
+        -636,
+        -27,
+        1908,
+        754
+      ],
+      "input_rect": [
+        -636,
+        -644,
+        1908,
+        605
+      ],
+      "action_rect": [
+        911,
+        18,
+        342,
+        44
+      ],
+      "state_rect": [
+        -617,
+        104,
+        1870,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_650x520_long_restored_after.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_600x480_long_before",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        588,
+        480
+      ],
+      "content": [
+        1943,
+        1534
+      ],
+      "body_min_hint": [
+        1943,
+        1480
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1355,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1054,
+        "value": 841
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1869,
+        54
+      ],
+      "saved_label_hint": [
+        1869,
+        90
+      ],
+      "saved_label_rect": [
+        -1318,
+        534,
+        1869,
+        90
+      ],
+      "result_rect": [
+        -1337,
+        -81,
+        1907,
+        754
+      ],
+      "input_rect": [
+        -1337,
+        -698,
+        1907,
+        605
+      ],
+      "action_rect": [
+        209,
+        -36,
+        342,
+        44
+      ],
+      "state_rect": [
+        -1318,
+        50,
+        1869,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_600x480_long_before.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_600x480_long_after",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        588,
+        480
+      ],
+      "content": [
+        1943,
+        1534
+      ],
+      "body_min_hint": [
+        1943,
+        1480
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1355,
+        "value": 677
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1054,
+        "value": 787
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1869,
+        54
+      ],
+      "saved_label_hint": [
+        1869,
+        90
+      ],
+      "saved_label_rect": [
+        -641,
+        588,
+        1869,
+        90
+      ],
+      "result_rect": [
+        -660,
+        -27,
+        1907,
+        754
+      ],
+      "input_rect": [
+        -660,
+        -644,
+        1907,
+        605
+      ],
+      "action_rect": [
+        886,
+        18,
+        342,
+        44
+      ],
+      "state_rect": [
+        -641,
+        104,
+        1869,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_600x480_long_after.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_600x480_long_vertical_bottom",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        588,
+        480
+      ],
+      "content": [
+        1943,
+        1534
+      ],
+      "body_min_hint": [
+        1943,
+        1480
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1355,
+        "value": 677
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1054,
+        "value": 1054
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1869,
+        54
+      ],
+      "saved_label_hint": [
+        1869,
+        90
+      ],
+      "saved_label_rect": [
+        -641,
+        321,
+        1869,
+        90
+      ],
+      "result_rect": [
+        -660,
+        -294,
+        1907,
+        754
+      ],
+      "input_rect": [
+        -660,
+        -911,
+        1907,
+        605
+      ],
+      "action_rect": [
+        886,
+        -249,
+        342,
+        44
+      ],
+      "state_rect": [
+        -641,
+        -163,
+        1869,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_600x480_long_vertical_bottom.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_600x480_short_before",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        588,
+        480
+      ],
+      "content": [
+        588,
+        1534
+      ],
+      "body_min_hint": [
+        542,
+        1444
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1054,
+        "value": 1054
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        78,
+        18
+      ],
+      "saved_label_hint": [
+        135,
+        54
+      ],
+      "saved_label_rect": [
+        37,
+        375,
+        514,
+        18
+      ],
+      "result_rect": [
+        18,
+        -240,
+        552,
+        700
+      ],
+      "input_rect": [
+        18,
+        -893,
+        552,
+        641
+      ],
+      "action_rect": [
+        209,
+        -195,
+        342,
+        44
+      ],
+      "state_rect": [
+        37,
+        -109,
+        514,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_600x480_short_before.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_600x480_short_after",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        588,
+        480
+      ],
+      "content": [
+        588,
+        1534
+      ],
+      "body_min_hint": [
+        542,
+        1444
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1054,
+        "value": 841
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        78,
+        18
+      ],
+      "saved_label_hint": [
+        135,
+        54
+      ],
+      "saved_label_rect": [
+        37,
+        588,
+        514,
+        18
+      ],
+      "result_rect": [
+        18,
+        -27,
+        552,
+        700
+      ],
+      "input_rect": [
+        18,
+        -680,
+        552,
+        641
+      ],
+      "action_rect": [
+        209,
+        18,
+        342,
+        44
+      ],
+      "state_rect": [
+        37,
+        104,
+        514,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_600x480_short_after.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_600x480_long_restored_after",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        588,
+        480
+      ],
+      "content": [
+        1943,
+        1534
+      ],
+      "body_min_hint": [
+        1943,
+        1480
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1355,
+        "value": 677
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1054,
+        "value": 787
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1869,
+        54
+      ],
+      "saved_label_hint": [
+        1869,
+        90
+      ],
+      "saved_label_rect": [
+        -641,
+        588,
+        1869,
+        90
+      ],
+      "result_rect": [
+        -660,
+        -27,
+        1907,
+        754
+      ],
+      "input_rect": [
+        -660,
+        -644,
+        1907,
+        605
+      ],
+      "action_rect": [
+        886,
+        18,
+        342,
+        44
+      ],
+      "state_rect": [
+        -641,
+        104,
+        1869,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "light_600x480_long_restored_after.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_940x830_long_before",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        926,
+        749
+      ],
+      "content": [
+        2400,
+        913
+      ],
+      "body_min_hint": [
+        2400,
+        877
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1474,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 164,
+        "value": 0
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1872,
+        54
+      ],
+      "saved_label_hint": [
+        1872,
+        90
+      ],
+      "saved_label_rect": [
+        -983,
+        754,
+        1872,
+        90
+      ],
+      "result_rect": [
+        -1002,
+        141,
+        1910,
+        752
+      ],
+      "input_rect": [
+        -1456,
+        141,
+        442,
+        752
+      ],
+      "action_rect": [
+        561,
+        186,
+        328,
+        44
+      ],
+      "state_rect": [
+        -983,
+        272,
+        1872,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_940x830_long_before.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_940x830_long_after",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        926,
+        749
+      ],
+      "content": [
+        2400,
+        913
+      ],
+      "body_min_hint": [
+        2400,
+        877
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1474,
+        "value": 963
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 164,
+        "value": 0
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1872,
+        54
+      ],
+      "saved_label_hint": [
+        1872,
+        90
+      ],
+      "saved_label_rect": [
+        -20,
+        754,
+        1872,
+        90
+      ],
+      "result_rect": [
+        -39,
+        141,
+        1910,
+        752
+      ],
+      "input_rect": [
+        -493,
+        141,
+        442,
+        752
+      ],
+      "action_rect": [
+        1524,
+        186,
+        328,
+        44
+      ],
+      "state_rect": [
+        -20,
+        272,
+        1872,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_940x830_long_after.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_940x830_long_vertical_bottom",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        926,
+        749
+      ],
+      "content": [
+        2400,
+        913
+      ],
+      "body_min_hint": [
+        2400,
+        877
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1474,
+        "value": 963
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 164,
+        "value": 164
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1872,
+        54
+      ],
+      "saved_label_hint": [
+        1872,
+        90
+      ],
+      "saved_label_rect": [
+        -20,
+        590,
+        1872,
+        90
+      ],
+      "result_rect": [
+        -39,
+        -23,
+        1910,
+        752
+      ],
+      "input_rect": [
+        -493,
+        -23,
+        442,
+        752
+      ],
+      "action_rect": [
+        1524,
+        22,
+        328,
+        44
+      ],
+      "state_rect": [
+        -20,
+        108,
+        1872,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_940x830_long_vertical_bottom.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_940x830_short_before",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        926,
+        749
+      ],
+      "content": [
+        980,
+        877
+      ],
+      "body_min_hint": [
+        980,
+        841
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 54,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 128,
+        "value": 128
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        78,
+        18
+      ],
+      "saved_label_hint": [
+        135,
+        54
+      ],
+      "saved_label_rect": [
+        437,
+        644,
+        452,
+        18
+      ],
+      "result_rect": [
+        418,
+        13,
+        490,
+        716
+      ],
+      "input_rect": [
+        -36,
+        13,
+        442,
+        716
+      ],
+      "action_rect": [
+        561,
+        58,
+        328,
+        44
+      ],
+      "state_rect": [
+        437,
+        162,
+        452,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_940x830_short_before.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_940x830_short_after",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        926,
+        749
+      ],
+      "content": [
+        980,
+        877
+      ],
+      "body_min_hint": [
+        980,
+        841
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 54,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 128,
+        "value": 128
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        78,
+        18
+      ],
+      "saved_label_hint": [
+        135,
+        54
+      ],
+      "saved_label_rect": [
+        437,
+        644,
+        452,
+        18
+      ],
+      "result_rect": [
+        418,
+        13,
+        490,
+        716
+      ],
+      "input_rect": [
+        -36,
+        13,
+        442,
+        716
+      ],
+      "action_rect": [
+        561,
+        58,
+        328,
+        44
+      ],
+      "state_rect": [
+        437,
+        162,
+        452,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_940x830_short_after.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_940x830_long_restored_after",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        926,
+        749
+      ],
+      "content": [
+        2400,
+        913
+      ],
+      "body_min_hint": [
+        2400,
+        877
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1474,
+        "value": 963
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 164,
+        "value": 128
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1872,
+        54
+      ],
+      "saved_label_hint": [
+        1872,
+        90
+      ],
+      "saved_label_rect": [
+        -20,
+        626,
+        1872,
+        90
+      ],
+      "result_rect": [
+        -39,
+        13,
+        1910,
+        752
+      ],
+      "input_rect": [
+        -493,
+        13,
+        442,
+        752
+      ],
+      "action_rect": [
+        1524,
+        58,
+        328,
+        44
+      ],
+      "state_rect": [
+        -20,
+        144,
+        1872,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_940x830_long_restored_after.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_650x520_long_before",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        636,
+        520
+      ],
+      "content": [
+        1937,
+        1528
+      ],
+      "body_min_hint": [
+        1937,
+        1474
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1301,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1008,
+        "value": 837
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1863,
+        54
+      ],
+      "saved_label_hint": [
+        1863,
+        90
+      ],
+      "saved_label_rect": [
+        -1264,
+        532,
+        1863,
+        90
+      ],
+      "result_rect": [
+        -1283,
+        -81,
+        1901,
+        752
+      ],
+      "input_rect": [
+        -1283,
+        -696,
+        1901,
+        603
+      ],
+      "action_rect": [
+        271,
+        -36,
+        328,
+        44
+      ],
+      "state_rect": [
+        -1264,
+        50,
+        1863,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_650x520_long_before.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_650x520_long_after",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        636,
+        520
+      ],
+      "content": [
+        1937,
+        1528
+      ],
+      "body_min_hint": [
+        1937,
+        1474
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1301,
+        "value": 650
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1008,
+        "value": 783
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1863,
+        54
+      ],
+      "saved_label_hint": [
+        1863,
+        90
+      ],
+      "saved_label_rect": [
+        -614,
+        586,
+        1863,
+        90
+      ],
+      "result_rect": [
+        -633,
+        -27,
+        1901,
+        752
+      ],
+      "input_rect": [
+        -633,
+        -642,
+        1901,
+        603
+      ],
+      "action_rect": [
+        921,
+        18,
+        328,
+        44
+      ],
+      "state_rect": [
+        -614,
+        104,
+        1863,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_650x520_long_after.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_650x520_long_vertical_bottom",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        636,
+        520
+      ],
+      "content": [
+        1937,
+        1528
+      ],
+      "body_min_hint": [
+        1937,
+        1474
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1301,
+        "value": 650
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1008,
+        "value": 1008
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1863,
+        54
+      ],
+      "saved_label_hint": [
+        1863,
+        90
+      ],
+      "saved_label_rect": [
+        -614,
+        361,
+        1863,
+        90
+      ],
+      "result_rect": [
+        -633,
+        -252,
+        1901,
+        752
+      ],
+      "input_rect": [
+        -633,
+        -867,
+        1901,
+        603
+      ],
+      "action_rect": [
+        921,
+        -207,
+        328,
+        44
+      ],
+      "state_rect": [
+        -614,
+        -121,
+        1863,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_650x520_long_vertical_bottom.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_650x520_short_before",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        636,
+        520
+      ],
+      "content": [
+        636,
+        1528
+      ],
+      "body_min_hint": [
+        526,
+        1438
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1008,
+        "value": 1008
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        78,
+        18
+      ],
+      "saved_label_hint": [
+        135,
+        54
+      ],
+      "saved_label_rect": [
+        37,
+        415,
+        562,
+        18
+      ],
+      "result_rect": [
+        18,
+        -198,
+        600,
+        698
+      ],
+      "input_rect": [
+        18,
+        -849,
+        600,
+        639
+      ],
+      "action_rect": [
+        271,
+        -153,
+        328,
+        44
+      ],
+      "state_rect": [
+        37,
+        -67,
+        562,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_650x520_short_before.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_650x520_short_after",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        636,
+        520
+      ],
+      "content": [
+        636,
+        1528
+      ],
+      "body_min_hint": [
+        526,
+        1438
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1008,
+        "value": 837
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        78,
+        18
+      ],
+      "saved_label_hint": [
+        135,
+        54
+      ],
+      "saved_label_rect": [
+        37,
+        586,
+        562,
+        18
+      ],
+      "result_rect": [
+        18,
+        -27,
+        600,
+        698
+      ],
+      "input_rect": [
+        18,
+        -678,
+        600,
+        639
+      ],
+      "action_rect": [
+        271,
+        18,
+        328,
+        44
+      ],
+      "state_rect": [
+        37,
+        104,
+        562,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_650x520_short_after.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_650x520_long_restored_after",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        636,
+        520
+      ],
+      "content": [
+        1937,
+        1528
+      ],
+      "body_min_hint": [
+        1937,
+        1474
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1301,
+        "value": 650
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1008,
+        "value": 783
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1863,
+        54
+      ],
+      "saved_label_hint": [
+        1863,
+        90
+      ],
+      "saved_label_rect": [
+        -614,
+        586,
+        1863,
+        90
+      ],
+      "result_rect": [
+        -633,
+        -27,
+        1901,
+        752
+      ],
+      "input_rect": [
+        -633,
+        -642,
+        1901,
+        603
+      ],
+      "action_rect": [
+        921,
+        18,
+        328,
+        44
+      ],
+      "state_rect": [
+        -614,
+        104,
+        1863,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_650x520_long_restored_after.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_600x480_long_before",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        586,
+        480
+      ],
+      "content": [
+        1940,
+        1528
+      ],
+      "body_min_hint": [
+        1940,
+        1474
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1354,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1048,
+        "value": 837
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1866,
+        54
+      ],
+      "saved_label_hint": [
+        1866,
+        90
+      ],
+      "saved_label_rect": [
+        -1317,
+        532,
+        1866,
+        90
+      ],
+      "result_rect": [
+        -1336,
+        -81,
+        1904,
+        752
+      ],
+      "input_rect": [
+        -1336,
+        -696,
+        1904,
+        603
+      ],
+      "action_rect": [
+        221,
+        -36,
+        328,
+        44
+      ],
+      "state_rect": [
+        -1317,
+        50,
+        1866,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_600x480_long_before.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_600x480_long_after",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        586,
+        480
+      ],
+      "content": [
+        1940,
+        1528
+      ],
+      "body_min_hint": [
+        1940,
+        1474
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1354,
+        "value": 676
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1048,
+        "value": 783
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1866,
+        54
+      ],
+      "saved_label_hint": [
+        1866,
+        90
+      ],
+      "saved_label_rect": [
+        -641,
+        586,
+        1866,
+        90
+      ],
+      "result_rect": [
+        -660,
+        -27,
+        1904,
+        752
+      ],
+      "input_rect": [
+        -660,
+        -642,
+        1904,
+        603
+      ],
+      "action_rect": [
+        897,
+        18,
+        328,
+        44
+      ],
+      "state_rect": [
+        -641,
+        104,
+        1866,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_600x480_long_after.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_600x480_long_vertical_bottom",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        586,
+        480
+      ],
+      "content": [
+        1940,
+        1528
+      ],
+      "body_min_hint": [
+        1940,
+        1474
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1354,
+        "value": 676
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1048,
+        "value": 1048
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1866,
+        54
+      ],
+      "saved_label_hint": [
+        1866,
+        90
+      ],
+      "saved_label_rect": [
+        -641,
+        321,
+        1866,
+        90
+      ],
+      "result_rect": [
+        -660,
+        -292,
+        1904,
+        752
+      ],
+      "input_rect": [
+        -660,
+        -907,
+        1904,
+        603
+      ],
+      "action_rect": [
+        897,
+        -247,
+        328,
+        44
+      ],
+      "state_rect": [
+        -641,
+        -161,
+        1866,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_600x480_long_vertical_bottom.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_600x480_short_before",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        586,
+        480
+      ],
+      "content": [
+        586,
+        1528
+      ],
+      "body_min_hint": [
+        526,
+        1438
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1048,
+        "value": 1048
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        78,
+        18
+      ],
+      "saved_label_hint": [
+        135,
+        54
+      ],
+      "saved_label_rect": [
+        37,
+        375,
+        512,
+        18
+      ],
+      "result_rect": [
+        18,
+        -238,
+        550,
+        698
+      ],
+      "input_rect": [
+        18,
+        -889,
+        550,
+        639
+      ],
+      "action_rect": [
+        221,
+        -193,
+        328,
+        44
+      ],
+      "state_rect": [
+        37,
+        -107,
+        512,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_600x480_short_before.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_600x480_short_after",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        586,
+        480
+      ],
+      "content": [
+        586,
+        1528
+      ],
+      "body_min_hint": [
+        526,
+        1438
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1048,
+        "value": 837
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        78,
+        18
+      ],
+      "saved_label_hint": [
+        135,
+        54
+      ],
+      "saved_label_rect": [
+        37,
+        586,
+        512,
+        18
+      ],
+      "result_rect": [
+        18,
+        -27,
+        550,
+        698
+      ],
+      "input_rect": [
+        18,
+        -678,
+        550,
+        639
+      ],
+      "action_rect": [
+        221,
+        18,
+        328,
+        44
+      ],
+      "state_rect": [
+        37,
+        104,
+        512,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_600x480_short_after.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_600x480_long_restored_after",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        586,
+        480
+      ],
+      "content": [
+        1940,
+        1528
+      ],
+      "body_min_hint": [
+        1940,
+        1474
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1354,
+        "value": 676
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1048,
+        "value": 783
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1866,
+        54
+      ],
+      "saved_label_hint": [
+        1866,
+        90
+      ],
+      "saved_label_rect": [
+        -641,
+        586,
+        1866,
+        90
+      ],
+      "result_rect": [
+        -660,
+        -27,
+        1904,
+        752
+      ],
+      "input_rect": [
+        -660,
+        -642,
+        1904,
+        603
+      ],
+      "action_rect": [
+        897,
+        18,
+        328,
+        44
+      ],
+      "state_rect": [
+        -641,
+        104,
+        1866,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "image": "dark_600x480_long_restored_after.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    }
+  ],
+  "source": "actual Qt Widgets, fictional statement and real paired-save only"
+}
