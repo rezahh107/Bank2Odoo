@@ -114,7 +114,7 @@ def snapshot(app, w, out: Path, label: str, records: list[dict]):
             "busy": w.busy.isVisible(), "save_enabled": w.save_button.isEnabled(),
             "result_present": w.result is not None,
             "status_visible": w.status.isVisible(),
-            "result_state_visible": w.result_state.isVisible(),
+            "result_state_visible": (w.result_state.isVisible() if hasattr(w, "result_state") else None),
             "metrics_visible": (w.metrics_panel.isVisible()
                                 if hasattr(w, "metrics_panel") else True),
             "save_section_visible": (w.save_box.isVisible()
