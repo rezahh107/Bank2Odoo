@@ -874,7 +874,12 @@ class MainWindow(QMainWindow):
             label.setText("—")
         # Do not leave an earlier "saved" or "conversion succeeded" status
         # after source/financial context or SHA-bound approval was revoked.
-        self._set_message("زمینه یا تأیید تغییر کرد؛ نتیجه قبلی معتبر نیست. دوباره تأیید و تبدیل کنید.")
+        if had_result:
+            self._set_message("زمینه یا تأیید تغییر کرد؛ نتیجه قبلی معتبر نیست. دوباره تأیید و تبدیل کنید.")
+        elif self.source is None:
+            self._set_message("گام بعد: فایل گزارش بانک را انتخاب کنید.")
+        else:
+            self._set_message("گام بعد: اطلاعات مالی را تکمیل و شخصاً تأیید کنید.")
         self._sync_actions()
 
     def _revoke_approval(self) -> None:
