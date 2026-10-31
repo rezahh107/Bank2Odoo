@@ -275,7 +275,7 @@ class DarkThemePilotTests(unittest.TestCase):
         self.assertIsNotNone(w._selected_digest)
         self.assertEqual(w._approved_digest, w._selected_digest)
         self.assertEqual(w.select_button.styleSheet(), "")
-        self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_LIGHT_QSS)
+        self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_DARK_QSS)
         w.approved.setChecked(False)
         self.assertEqual(w.convert_button.styleSheet(), "")
         w.approved.setChecked(True)
