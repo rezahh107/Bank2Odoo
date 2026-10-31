@@ -846,7 +846,7 @@ class AccountantUiTests(unittest.TestCase):
                 self.window._reflow_workspace()
                 self.app.processEvents()
                 self.assertEqual(self.window._workspace.direction(), direction,
-                                 f"Measured breakpoint={self.window._workspace_breakpoint}")
+                                 f"Measured breakpoint={self.window._workspace_breakpoint}, parts={self.window._workspace_measurements}, viewport={self.window.scroll.viewport().width()}")
                 content = self.window.scroll.widget()
                 for control in (
                     self.window.source_unit, self.window.target_unit,
