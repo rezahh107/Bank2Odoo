@@ -4,7 +4,7 @@
   "qpa": "windows",
   "qt": "6.11.2",
   "pyside6": "6.11.2",
-  "checkout_head": "281b5770919adcb3948bf2476affaa09160329c6",
+  "checkout_head": "7f1e29d87a0e3a454c946e007bdb4359009d5fe4",
   "effective_style_final": "fusion",
   "font": "Tahoma",
   "scale_factor": null,
