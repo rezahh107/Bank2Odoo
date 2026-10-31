@@ -9,6 +9,7 @@ import argparse
 import json
 import os
 import platform
+import subprocess
 import sys
 import tempfile
 import weakref
@@ -255,6 +256,7 @@ def run_case(app, out, scheme, size, family, variant):
     record={
         "id":code,"family":family,"variant":variant,"requested_scheme":scheme,
         "size_requested":list(size),"app_style":app.style().objectName(),
+        "qpa":app.platformName(),
         "checkbox_style_class":type(w.approved.style()).__name__,
         "font":QFontInfo(w.approved.font()).family(),
         "font_pt":QFontInfo(w.approved.font()).pointSizeF(),
@@ -311,19 +313,40 @@ def run_case(app, out, scheme, size, family, variant):
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--output",type=Path,required=True)
+    parser.add_argument("--worker",action="store_true")
+    parser.add_argument("--family",choices=("rtl","checkbox"))
+    parser.add_argument("--variant")
+    parser.add_argument("--scheme",choices=SCHEMES)
+    parser.add_argument("--width",type=int)
+    parser.add_argument("--height",type=int)
     args=parser.parse_args()
     args.output.mkdir(parents=True,exist_ok=True)
-    app=QApplication.instance() or QApplication([])
-    app.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
+
+    if args.worker:
+        # Native Qt Windows style/proxy teardown is process-local. A unique
+        # QApplication per case prevents one experimental widget from
+        # retaining QStyle/native references across unrelated treatments.
+        app=QApplication([])
+        app.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
+        rec=run_case(app,args.output,args.scheme,(args.width,args.height),
+                     args.family,args.variant)
+        (args.output/("case_"+rec["id"]+".json")).write_text(
+            json.dumps(rec,ensure_ascii=False,indent=2),encoding="utf-8")
+        if rec["error"]:
+            raise SystemExit(2)
+        return
+
     payload={
         "revision":BASELINE,"collected_utc":datetime.now(timezone.utc).isoformat(),
         "environment":{
             "os":platform.platform(),"python":sys.version,
             "qt":qVersion(),"pyside6":__import__("PySide6").__version__,
-            "qpa":app.platformName(),"qt_qpa_platform_env":os.getenv("QT_QPA_PLATFORM"),
+            "qpa_from_windows_worker":None,
+            "qt_qpa_platform_env":os.getenv("QT_QPA_PLATFORM"),
             "display_scaling_physical_win11_verified":False,
             "color_scheme_test_override":True,
-            "native_workstation_verified":False
+            "native_workstation_verified":False,
+            "process_isolation":"one Qt QApplication per spawned Python worker"
         },"cases":[],"limitations":[
             "Synthetic Windows GitHub-hosted runner, not accountant workstation",
             "Qt styleHint Light/Dark override is not measured Windows OS preference",
@@ -331,17 +354,44 @@ def main():
             "Contrast samples depend on QStyle indicator geometry and local pixel rasterization"
         ]
     }
+    tasks=[]
     for scheme in SCHEMES:
         for size in SIZES:
             for variant in ("baseline","horizontal_ltr"):
-                payload["cases"].append(run_case(app,args.output,scheme,size,"rtl",variant))
+                tasks.append((scheme,size,"rtl",variant))
         for variant in B_TREATMENTS:
-            payload["cases"].append(run_case(app,args.output,scheme,SIZES[0],"checkbox",variant))
+            tasks.append((scheme,SIZES[0],"checkbox",variant))
+    for scheme,size,family,variant in tasks:
+        cmd=[sys.executable,"-m","tests.qt_ui_focused_qualification",
+             "--output",str(args.output),"--worker",
+             "--scheme",scheme,"--family",family,"--variant",variant,
+             "--width",str(size[0]),"--height",str(size[1])]
+        child=subprocess.run(cmd,capture_output=True,text=True,
+                             encoding="utf-8",errors="replace",timeout=90)
+        print("CASE",family,variant,scheme,size,"exit",child.returncode,flush=True)
+        if child.stdout:
+            print(child.stdout[-3500:],flush=True)
+        if child.stderr:
+            print(child.stderr[-3500:],file=sys.stderr,flush=True)
+        ident=f"{family}_{variant}_{scheme}_{size[0]}x{size[1]}"
+        case_path=args.output/("case_"+ident+".json")
+        if case_path.exists():
+            rec=json.loads(case_path.read_text(encoding="utf-8"))
+        else:
+            rec={"id":ident,"family":family,"variant":variant,
+                 "error":"Child process did not produce measurements; exit="+str(child.returncode),
+                 "screenshots":[]}
+        if child.returncode and not rec.get("error"):
+            rec["error"]="Worker native/runtime exit code "+str(child.returncode)
+        if rec.get("qpa"):
+            payload["environment"]["qpa_from_windows_worker"]=rec["qpa"]
+        payload["cases"].append(rec)
     (args.output/"measurements.json").write_text(
         json.dumps(payload,ensure_ascii=False,indent=2),encoding="utf-8")
     summary=["# Real-product Qt UI diagnostic — synthetic Windows QPA",
              "",f"Base: {BASELINE}",
-             f"OS: {payload['environment']['os']}; Qt: {qVersion()}; QPA: {app.platformName()}",
+             f"OS: {payload['environment']['os']}; Qt: {qVersion()}; "
+             f"QPA: {payload['environment']['qpa_from_windows_worker']}",
              "Theme selection is an application-only test override, not an OS preference measurement.",
              ""]
     for item in payload["cases"]:
@@ -356,10 +406,9 @@ def main():
             f"border_fraction_3={pixels.get('border_fraction_ge_3')}")
     summary+=["","No production patch or physical Windows 11 acceptance. See measurements.json and original-resolution PNGs."]
     (args.output/"SUMMARY.md").write_text("\n".join(summary)+"\n",encoding="utf-8")
-    print("\n".join(summary))
+    print("\n".join(summary),flush=True)
     if any(i["error"] for i in payload["cases"]):
-        print("ERROR: One or more diagnostic scenarios did not finish; inspect measurements.json",file=sys.stderr)
-        raise SystemExit(1)
+        raise SystemExit("One or more diagnostic workers failed; see measurements.json")
 
 
 if __name__=="__main__":
