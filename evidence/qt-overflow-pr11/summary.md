@@ -2,17 +2,17 @@
 
 Review-only diagnostic and correction of Draft PR #10; no real bank files.
 Original-size Qt QWidget PNGs included. Contact sheets are resized overview.
-Exact verified checkout: 4655ab7f61297840e3ba56ea6b38bee13709dfa5
+Exact verified checkout: 281b5770919adcb3948bf2476affaa09160329c6
 Qt QPA windows, simulated Light/Dark. NOT a physical Windows 11 acceptance.
 
 | Scheme | Requested | Actual | Viewport | H-scroll original PR10 | H-scroll fixed | H-scroll injected old label |
 |---|---|---|---|---:|---:|---:|
 | light | 940x830 | [940, 749] | [928, 749] | 1483 | 0 | 1533 |
-| light | 650x520 | [650, 520] | [638, 520] | 1306 | 0 | 1361 |
-| light | 600x480 | [600, 480] | [588, 480] | 1355 | 0 | 1414 |
-| dark | 940x830 | [940, 749] | [926, 749] | 1474 | 0 | 1514 |
-| dark | 650x520 | [650, 520] | [636, 520] | 1301 | 0 | 1360 |
-| dark | 600x480 | [600, 480] | [586, 480] | 1354 | 0 | 1410 |
+| light | 650x520 | [650, 520] | [638, 520] | 1306 | 0 | 1357 |
+| light | 600x480 | [600, 480] | [588, 480] | 1355 | 0 | 1406 |
+| dark | 940x830 | [940, 749] | [926, 749] | 1474 | 0 | 1521 |
+| dark | 650x520 | [650, 520] | [636, 520] | 1301 | 0 | 1355 |
+| dark | 600x480 | [600, 480] | [586, 480] | 1354 | 0 | 1414 |
 
 Actual PRE-FIX PR10 images: CI 41183845090, original unmodified product plus test-only probe.
 ![Original PR10, light 940x830](baseline_light_940x830_long_after.png)
