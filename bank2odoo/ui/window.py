@@ -303,6 +303,7 @@ class MainWindow(QMainWindow):
         self._selected_digest: str | None = None
         self._approved_digest: str | None = None
         self._saved = False
+        self._ui_busy = False
         self._last_detail = ""
         self._presentation_ready = False
         self._presentation_refresh_queued = False
@@ -577,16 +578,23 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "_workspace"):
             return
         fm = self.fontMetrics()
+        # QLineEdit.minimumSizeHint() can be tiny under native windows11.
+        # Measure usable Persian labels plus LTR example text, action widths
+        # and actual group margins rather than accepting technically fitting
+        # but unreadably squeezed "two columns" at 600/650 logical pixels.
         input_required = max(
             self._input_column.minimumSizeHint().width(),
             fm.horizontalAdvance("واحد پول ژورنال مقصد:")
             + self.source_unit.sizeHint().width() + 85,
             self.select_button.sizeHint().width()
-            + self.path_field.minimumSizeHint().width() + 70,
+            + fm.horizontalAdvance("C:/Private/statement_1405_IRR.csv") + 70,
         )
         result_required = max(
             self._result_column.minimumSizeHint().width(),
-            fm.horizontalAdvance("ذخیره CSV و گزارش کنترل") + 140,
+            self.directory_button.sizeHint().width()
+            + fm.horizontalAdvance("C:/Private/output_1405") + 80,
+            self.convert_button.sizeHint().width()
+            + self.cancel_button.sizeHint().width() + 70,
         )
         self._workspace_breakpoint = input_required + result_required + 12
         available = self.scroll.viewport().width()
@@ -616,7 +624,7 @@ class MainWindow(QMainWindow):
     def _sync_actions(self, *_args: object) -> None:
         if not hasattr(self, "save_button"):
             return
-        active = self._thread is not None
+        active = self._thread is not None or self._ui_busy
         has_result = self.result is not None
         has_folder = bool(self.output_directory.text().strip())
         self.save_button.setEnabled(
@@ -869,6 +877,7 @@ class MainWindow(QMainWindow):
         self._begin("convert", path=self.source, context=context, stop=self._stop)
 
     def _set_busy(self, active: bool) -> None:
+        self._ui_busy = active
         self.busy.setVisible(active)
         self.cancel_button.setEnabled(active and self._job_state is not None
                                       and self._job_state["kind"] == "convert")
