@@ -86,11 +86,13 @@ def snapshot(app, w, out: Path, label: str, records: list[dict]):
     # replacing real widget geometry or drawing a reconstructed picture.
     for view in ("top", "action", "bottom"):
         if view == "action":
-            # Bottom of the whole document may hide the result/action in the
-            # middle of the workspace. Capture the actual task-action viewport.
-            w.scroll.ensureWidgetVisible(w.convert_button, 0, 8)
-            w.scroll.ensureWidgetVisible(
-                getattr(w, "result_state", w.status), 0, 8)
+            # Use the exact production focus/scroll behavior, not a separate
+            # screenshot-only positioning heuristic with weaker margins.
+            if hasattr(w, "_reveal_result"):
+                w._reveal_result()
+            else:
+                w.scroll.ensureWidgetVisible(w.convert_button, 0, 18)
+                w.scroll.ensureWidgetVisible(w.status, 0, 64)
             app.processEvents()
         elif view == "bottom":
             w.scroll.verticalScrollBar().setValue(
