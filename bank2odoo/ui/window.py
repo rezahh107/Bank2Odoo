@@ -597,7 +597,7 @@ class MainWindow(QMainWindow):
         result_layout.addWidget(save_box)
         input_layout.addStretch()
         result_layout.addStretch()
-        self._workspace = QBoxLayout(QBoxLayout.Direction.RightToLeft)
+        self._workspace = QBoxLayout(QBoxLayout.Direction.LeftToRight)
         self._workspace.setSpacing(12)
         self._workspace.addWidget(self._input_column, 1)
         self._workspace.addWidget(self._result_column, 1)
@@ -632,7 +632,7 @@ class MainWindow(QMainWindow):
                                         self._input_column.minimumSizeHint().width(),
                                         self._result_column.minimumSizeHint().width())
         available = self.scroll.viewport().width()
-        target = (QBoxLayout.Direction.RightToLeft
+        target = (QBoxLayout.Direction.LeftToRight
                   if available >= self._workspace_breakpoint
                   else QBoxLayout.Direction.TopToBottom)
         if self._workspace.direction() != target:

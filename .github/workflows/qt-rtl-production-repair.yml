@@ -1,0 +1,147 @@
+name: Production RTL workspace ordering — Windows visual regression
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  rtl-native-capture:
+    if: github.event.pull_request.head.ref == 'fix/rtl-workspace-order-20261031'
+    runs-on: windows-latest
+    steps:
+      - name: Checkout exact review HEAD and pinned baseline history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Verify exact HEAD and bounded production edit
+        shell: pwsh
+        env:
+          EXPECTED: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne $env:EXPECTED) { throw 'Wrong review HEAD' }
+          $changed = @(git diff --name-only 5d4b950c29a73433c043a53dc266cee9192d3de4 HEAD -- bank2odoo)
+          if ($changed.Count -ne 1 -or $changed[0] -ne 'bank2odoo/ui/window.py') {
+            throw "Unexpected production changes: $changed"
+          }
+          $diff = git diff -U0 5d4b950c29a73433c043a53dc266cee9192d3de4 HEAD -- bank2odoo/ui/window.py
+          Write-Output $diff
+          $add = @($diff | Select-String '^\+[^+].*QBoxLayout.Direction.LeftToRight')
+          $del = @($diff | Select-String '^-[^-].*QBoxLayout.Direction.RightToLeft')
+          if ($add.Count -ne 2 -or $del.Count -ne 2) {
+            throw 'Production change not the two exact directed layout lines'
+          }
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: '0.10.0'
+      - run: uv python install 3.13
+      - run: uv sync --locked
+      - name: Execute actual Windows Qt before/after with synthetic workflows
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONFAULTHANDLER: '1'
+        shell: pwsh
+        run: |
+          uv run --locked python -m tests.qt_rtl_repair_capture --output "$env:RUNNER_TEMP/rtl-repair-evidence"
+          if ($LASTEXITCODE -ne 0) { throw 'Native Qt repair qualification failed' }
+      - name: Upload original images, contact sheets and measurements
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: qt-rtl-production-repair-original-pngs
+          path: ${{ runner.temp }}/rtl-repair-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+
+  publish-rtl-evidence:
+    if: github.event.pull_request.head.ref == 'fix/rtl-workspace-order-20261031'
+    needs: rtl-native-capture
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Checkout dedicated evidence branch only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: evidence/qt-rtl-production-repair-20261031
+      - name: Download current run's synthetic PNGs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/rtl-curated"
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name qt-rtl-production-repair-original-pngs --dir "$RUNNER_TEMP/rtl-curated"
+          test -s "$RUNNER_TEMP/rtl-curated/measurements.json"
+          test -s "$RUNNER_TEMP/rtl-curated/SUMMARY.md"
+      - name: Curate exact-run original images with mechanical verification
+        env:
+          FEATURE_HEAD: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=evidence/qt-rtl-production-repair
+          mkdir -p "$target"
+          cp "$RUNNER_TEMP/rtl-curated"/*.png "$target/"
+          cp "$RUNNER_TEMP/rtl-curated/measurements.json" "$RUNNER_TEMP/rtl-curated/SUMMARY.md" "$target/"
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os,struct
+          d=Path('evidence/qt-rtl-production-repair')
+          m=json.loads((d/'measurements.json').read_text(encoding='utf-8'))
+          assert m['production_baseline']=='5d4b950c29a73433c043a53dc266cee9192d3de4'
+          assert m['feature_checkout_head']==os.environ['FEATURE_HEAD']
+          assert len(m['cases'])==12
+          assert len(m['contact_sheets'])==18
+          names=[record['file'] for case in m['cases'] for record in case['records']]
+          assert len(names)==108 and len(names)==len(set(names))
+          for case in m['cases']:
+              assert len(case['records'])==9
+              assert case['qpa']=='windows'
+              for x in case['records']:
+                  g=x['geometry']
+                  assert g['horizontal_scroll_max']==0
+                  if g['horizontal']:
+                      assert g['input_right_of_result']==(case['phase']=='after')
+                  else:
+                      assert g['input_above_result']
+                  p=d/x['file']
+                  h=p.read_bytes()[:24]
+                  assert h[:8]==b'\x89PNG\r\n\x1a\n', p
+                  assert struct.unpack('>II',h[16:24])==tuple(x['physical_png_wh'])
+          for item in m['contact_sheets']:
+              assert (d/item).stat().st_size>0
+          manifest={
+              'production_baseline':m['production_baseline'],
+              'feature_head':m['feature_checkout_head'],
+              'windows_run':os.environ['GITHUB_RUN_ID'],
+              'original_pngs':len(names),
+              'contact_sheets':len(m['contact_sheets']),
+              'files_sha256':{
+                  f.name:hashlib.sha256(f.read_bytes()).hexdigest()
+                  for f in sorted(d.iterdir()) if f.is_file()
+              }
+          }
+          (d/'EVIDENCE_MANIFEST.json').write_text(
+              json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
+          (d/'README.md').write_text(
+              '# Bank2Odoo: RTL workspace production repair — Windows synthetic evidence\n\n'
+              f'Feature Head: `{m["feature_checkout_head"]}`\n\n'
+              f'Baseline: `{m["production_baseline"]}`\n\n'
+              f'Windows Actions Run: `{os.environ["GITHUB_RUN_ID"]}`\n\n'
+              'See [original PNGs and before/after contact sheets](.), '
+              '[measurements.json](measurements.json), [SUMMARY.md](SUMMARY.md), '
+              '[hash manifest](EVIDENCE_MANIFEST.json). '
+              'Hosted CI/QPA is not actual Windows 11 or accountant acceptance.\n',
+              encoding='utf-8')
+          print('VERIFIED: original screenshots, dimensions, source-head, order and negative control')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$target"
+          git commit -m 'evidence(ui): native Windows Qt RTL before-after comparison and safety'
+          git push origin HEAD:evidence/qt-rtl-production-repair-20261031
