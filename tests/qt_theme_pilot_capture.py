@@ -246,7 +246,9 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
         if w.result is None or not w.result.balance_status.startswith("NOT_PROVEN"):
             raise AssertionError("Expected synthetic NOT_PROVEN result")
         grab("not_proven_result")
-        financial_evidence = w.result_state.text()
+        # The historical baseline predates result_state; assert only on the
+        # candidate while retaining before/after screenshot parity.
+        financial_evidence = w.result_state.text() if phase == "after" else None
         if phase == "after":
             if w.save_button.isEnabled() or "انتخاب پوشه" not in w.convert_button.text():
                 raise AssertionError("Saving before private folder selection is not allowed")
