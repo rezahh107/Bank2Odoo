@@ -120,6 +120,75 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIsNotNone(self.window.result)
         return self.window.result
 
+    def test_minimal_initial_workspace_guidance_and_click_validation(self):
+        w = self.window
+        self.assertTrue(w.convert_button.isVisible())
+        self.assertTrue(w.convert_button.isEnabled(), "Guidance-first action stays available")
+        self.assertFalse(w.metrics_panel.isVisible())
+        self.assertFalse(w.summary.isVisible())
+        self.assertFalse(w.result_state.isVisible())
+        self.assertFalse(w.save_box.isVisible())
+        self.assertFalse(w.cancel_button.isVisible())
+        self.assertFalse(w.details_button.isVisible())
+        self.assertFalse(w.approved.isChecked())
+        QTest.mouseClick(w.convert_button, Qt.MouseButton.LeftButton)
+        self.assertIn("ابتدا یک گزارش بانکی", w.status.text())
+        self.assertIs(self.app.focusWidget(), w.select_button)
+        self.assertIsNone(w._thread)
+        self.assertIsNone(w.result)
+
+    def test_progressive_review_distinguishes_result_uncertainty_and_stale(self):
+        w = self.window
+        result = self._convert()
+        self.assertTrue(result.balance_status.startswith("PASS"))
+        for section in (w.metrics_panel, w.summary, w.result_state, w.save_box):
+            self.assertTrue(section.isVisible())
+        self.assertFalse(w.cancel_button.isVisible())
+        self.assertIn("PASS", w.result_state.text())
+        self.assertIn("تأیید حسابداری", w.result_state.text())
+        self.assertIn("خصوصی", w.directory_button.text())
+        w.resize(600, 480)
+        QTest.qWait(30)
+        self.assertEqual(w._workspace.direction(), QBoxLayout.Direction.TopToBottom)
+        self.assertEqual(w.scroll.horizontalScrollBar().maximum(), 0)
+        w.journal.setText("ژورنال دیگری")
+        self.assertIsNone(w.result)
+        self.assertFalse(w.approved.isChecked())
+        self.assertFalse(w.metrics_panel.isVisible())
+        self.assertFalse(w.save_box.isVisible())
+        self.assertTrue(w.result_state.isVisible())
+        self.assertIn("نتیجه قبلی معتبر نیست", w.result_state.text())
+        w._failed("invalid headers")
+        self.assertTrue(w.result_state.isVisible(), "Errors must remain visible")
+        self.assertTrue(w.details_button.isVisible(), "Technical diagnosis remains reachable")
+        self.assertFalse(w.metrics_panel.isVisible())
+        statement(self.source, not_proven=True)
+        w.resize(940, 830)
+        self._convert()
+        self.assertIn("NOT_PROVEN", w.result_state.text())
+        self.assertTrue(w.summary.isVisible())
+        self.assertTrue(w.save_box.isVisible())
+        self.assertNotIn("PASS", w.result_state.text())
+
+    def test_visibility_negative_control_and_guidance_first_safety(self):
+        w = self.window
+        def assert_no_unearned_review():
+            self.assertFalse(w.metrics_panel.isVisible(), "No real result: do not show metrics")
+            self.assertFalse(w.save_box.isVisible(), "No real result: do not prompt saving")
+        assert_no_unearned_review()
+        # Negative control: an artificially visible empty panel must fail.
+        w.metrics_panel.show()
+        with self.assertRaises(AssertionError):
+            assert_no_unearned_review()
+        w._sync_actions()
+        assert_no_unearned_review()
+        # A clickable primary action must not bypass incomplete-input validation.
+        w.convert_button.click()
+        self.assertIsNone(w._thread)
+        self.assertIsNone(w.result)
+        self.assertFalse(w.approved.isChecked())
+        self.assertFalse(w.save_button.isEnabled())
+
     def test_visible_persian_workflow_and_directionality(self):
         self.assertEqual(self.window.layoutDirection(), Qt.LayoutDirection.RightToLeft)
         self.assertIn("Odoo", self.window.status.parent().window().windowTitle() or "Odoo")
