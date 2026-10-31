@@ -25,14 +25,14 @@ from PySide6.QtWidgets import QApplication, QStyleFactory, QStyle, QStyleOptionB
 
 from bank2odoo.ui import window as current_ui
 
-BASE_SHA = "d06b35f41ac46936716b186fb1dfac33da983eb9"
+BASE_SHA = "1ff8057945abacf1ae8a2532ac37b9fe9dd43361"
 STATES = ("initial", "validation_error", "approval_unchecked",
           "approval_checked", "keyboard_focus", "conversion_busy",
           "not_proven_result", "ready_to_save")
-SIZES = ((940, 830), (650, 520))
+SIZES = ((940, 830), (650, 520), (600, 480))
 
 
-def fixture(file: Path) -> None:
+def fixture(file: Path, *, balanced: bool = False) -> None:
     with file.open("w", encoding="utf-8-sig", newline="") as f:
         w = csv.writer(f)
         w.writerow(["Fictional test data — not a bank statement"])
@@ -44,7 +44,7 @@ def fixture(file: Path) -> None:
         # Deliberately lacks ending balance: conversion should remain
         # NOT_PROVEN while still producing an explicitly review-only candidate.
         w.writerow(["2", "1405/07/02", "11:00", "A2",
-                    "کارمزد آزمایشی", "25", "0", ""])
+                    "کارمزد آزمایشی", "25", "0", "75" if balanced else ""])
 
 
 def wait_finished(w, signal, app) -> None:
@@ -103,6 +103,11 @@ def snapshot(app, w, out: Path, label: str, records: list[dict]):
             ),
             "busy": w.busy.isVisible(), "save_enabled": w.save_button.isEnabled(),
             "result_present": w.result is not None,
+            "actual_window_geometry": [w.width(), w.height()],
+            "actual_viewport_width": w.scroll.viewport().width(),
+            "workspace_breakpoint": getattr(w, "_workspace_breakpoint", None),
+            "layout_direction": (w._workspace.direction().name
+                                 if hasattr(w, "_workspace") else "legacy"),
             "result_balance_status": (
                 w.result.balance_status if w.result else None
             ),
@@ -147,6 +152,8 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
         "qt_effective_color_scheme": app.styleHints().colorScheme().name,
         "effective_style": app.style().objectName(),
         "resolved_font": QFontInfo(w.approved.font()).family(),
+        "resolved_font_point_size": QFontInfo(w.approved.font()).pointSize(),
+        "effective_dpr": w.devicePixelRatioF(),
         "effective_app_palette": {
             k: app.palette().color(getattr(QPalette.ColorRole, k)).name()
             for k in ("Window", "WindowText", "Base", "Text", "Button",
@@ -191,10 +198,38 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
         if w.result is None or not w.result.balance_status.startswith("NOT_PROVEN"):
             raise AssertionError("Expected synthetic NOT_PROVEN result")
         grab("not_proven_result")
-        w.output_directory.setText(str(synthetic.parent))
+        if phase == "after":
+            if w.save_button.isEnabled() or "انتخاب پوشه" not in w.convert_button.text():
+                raise AssertionError("Saving before private folder selection is not allowed")
+        grab("ready_to_save_no_folder")
+        private_folder = synthetic.parent / f"out_{phase}_{scheme}_{width}x{height}"
+        private_folder.mkdir(exist_ok=True)
+        # Genuine paired-save failure on a missing folder; no synthetic success text.
+        w.output_directory.setText(str(private_folder / "missing"))
+        w.save_files()
+        wait_finished(w, w.save_done, app)
+        if "خطای ذخیره" not in w.status.text() or w._saved:
+            raise AssertionError("Synthetic save failure was falsely published")
+        grab("save_failure")
+        w.output_directory.setText(str(private_folder))
         if not w.save_button.isEnabled():
-            raise AssertionError("Review candidate not ready to save")
-        grab("ready_to_save")
+            raise AssertionError("Review candidate not ready after folder selection")
+        grab("folder_selected")
+        w.save_files()
+        wait_finished(w, w.save_done, app)
+        if not w._saved or "دو فایل ایجاد شدند" not in w.saved_paths.text():
+            raise AssertionError("Actual synthetic paired save did not complete")
+        grab("saved_success")
+        balanced = synthetic.parent / f"balanced_{phase}_{scheme}_{width}.csv"
+        fixture(balanced, balanced=True)
+        w.set_source(balanced)
+        wait_finished(w, w.detection_done, app)
+        w.approved.setChecked(True)
+        w.start_conversion()
+        wait_finished(w, w.conversion_done, app)
+        if w.result is None or not w.result.balance_status.startswith("PASS"):
+            raise AssertionError("Expected real synthetic PASS result")
+        grab("pass_result")
         records.append(case)
     finally:
         if w._thread is not None:
@@ -299,6 +334,7 @@ def main() -> None:
         "time_utc": datetime.now(timezone.utc).isoformat(),
         "platform": platform.platform(), "python": sys.version,
         "qt": qVersion(), "qpa": app.platformName(),
+        "pyside6": __import__("PySide6").__version__,
         "qt_scale_factor": os.environ.get("QT_SCALE_FACTOR"),
         "physical_os_scheme_verified": False,
         "physical_windows11_dpi_verified": False,
@@ -325,8 +361,8 @@ def main() -> None:
         "# Bank2Odoo dark theme pilot — synthetic Windows QPA evidence\n\n"
         f"Baseline: {BASE_SHA}\nFeature checkout HEAD: {metadata['actual_checkout_head']}\n"
         f"GitHub event SHA (may be PR merge commit): {metadata['github_event_sha']}\n"
-        f"Cases: {len(metadata['cases'])}; before/after × light/dark × wide/narrow.\n"
-        "Each case saves 8 states × 2 scroll positions at original QWidget.grab resolution.\n"
+        f"Cases: {len(metadata['cases'])}; before/after × light/dark × three window sizes.\n"
+        "Each case saves 12 states × 2 scroll positions at original QWidget.grab resolution.\n"
         f"Native restoration audit: {len(metadata['palette_restoration'])} Qt style/scheme cases.\n"
         "The NOT_PROVEN financial result is computed with a fictional two-row statement.\n"
         "ColorScheme was set by an application-only TEST override, NOT by the real OS.\n"
