@@ -61,20 +61,20 @@ def render_probe(cb):
     opt.initFrom(cb)
     sty = cb.style()
     r = sty.subElementRect(QStyle.SubElement.SE_CheckBoxIndicator, opt, cb)
-    pm = cb.grab()
+    # Composited window pixels include the actual adjacent painted surface.
+    host = cb.window()
+    pm = host.grab()
     image = pm.toImage()
     dpr = pm.devicePixelRatio()
-    # All sampling locations below are LOGICAL widget coordinates multiplied by
-    # actual grab DPR; never misreport palette role contrast as pixel contrast.
+    origin = cb.mapTo(host,QPoint(0,0))
     def pixel(x, y):
-        return rgb_at(image, x * dpr, y * dpr)
-    cy = r.center().y()
+        return rgb_at(image, (origin.x()+x)*dpr, (origin.y()+y)*dpr)
     outside = []
-    for x in (r.left()-8, r.left()-5, r.right()+5, r.right()+8):
-        if 2 <= x < cb.width()-2:
-            outside.extend(pixel(x, cy + dy) for dy in (-2, 0, 2))
+    for y in (r.top()-7, r.top()-5, r.bottom()+5, r.bottom()+7):
+        if 2 <= y < cb.height()-2:
+            outside.extend(pixel(r.center().x()+dx,y) for dx in (-3,0,3))
     if not outside:
-        outside = [pixel(3, cb.height()//2)]
+        outside = [pixel(r.center().x(),cb.height()-3)]
     bg = Counter(outside).most_common(1)[0][0]
     border = []
     for x in range(r.left(), r.right()+1):
@@ -94,7 +94,7 @@ def render_probe(cb):
         "indicator_rect":[r.x(),r.y(),r.width(),r.height()],
         "grab_size_px":[image.width(),image.height()], "grab_dpr":dpr,
         "background_rgb":hexcolor(bg),
-        "background_sampling":"outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+        "background_sampling":"COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
         "border_sampling":"inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
         "border_color_histogram":[{"rgb":hexcolor(c),"n":n} for c,n in colors],
         "border_p95_ratio":ratios[int(.95*(len(ratios)-1))] if ratios else None,
@@ -245,12 +245,24 @@ def interactions(w, app):
 def run_case(app, out, scheme, size, family, variant):
     application_scheme(app,scheme)
     print("START",family,variant,scheme,size,flush=True)
+    # A product-owned rule value is varied before widget construction.
+    # Normal product refresh therefore keeps the diagnostic treatment.
+    old_rule=product._APPROVAL_DARK_QSS
+    if family=="checkbox":
+        if variant=="unscoped_rule":
+            product._APPROVAL_DARK_QSS=old_rule.replace(
+                "QCheckBox#financialApproval::indicator","QCheckBox::indicator")
+        elif variant=="bright_border":
+            product._APPROVAL_DARK_QSS=old_rule.replace("#DCE7F0","#FF00FF")
+        elif variant=="negative":
+            product._APPROVAL_DARK_QSS=(
+                "QCheckBox#financialApproval::indicator:unchecked {"
+                " border: 2px solid #161B22; background-color: #151A21; }")
     w=product.MainWindow()
     w.resize(*size)
     w.show()
     app.processEvents()
     if family=="rtl": apply_layout_variant(w,variant)
-    else: treatment(w,variant)
     app.processEvents()
     code=f"{family}_{variant}_{scheme}_{size[0]}x{size[1]}"
     record={
@@ -306,6 +318,7 @@ def run_case(app, out, scheme, size, family, variant):
     finally:
         w.close()
         app.processEvents()
+        product._APPROVAL_DARK_QSS=old_rule
     print("DONE",code,"error",record["error"],flush=True)
     return record
 
