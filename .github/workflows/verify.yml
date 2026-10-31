@@ -179,6 +179,23 @@ jobs:
           path: ${{ runner.temp }}/bank2odoo-dark-pilot/
           retention-days: 14
           if-no-files-found: error
+      - name: Capture minimal UX baseline vs candidate (native Qt, fictional data)
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONFAULTHANDLER: "1"
+        shell: pwsh
+        run: |
+          git fetch --no-tags --depth=1 origin 4cbc3c97454f9a5840d28350250a838dd3c5abbb
+          uv run --locked python -m tests.qt_theme_pilot_capture --output "$env:RUNNER_TEMP/bank2odoo-minimal-ux" --baseline-sha 4cbc3c97454f9a5840d28350250a838dd3c5abbb --capture-states initial validation_error approval_unchecked conversion_busy cancel_requested not_proven_result save_failure saved_success pass_result
+          if ($LASTEXITCODE -ne 0) { throw "Minimal UX baseline/after capture failed" }
+      - name: Upload original-size minimal UX evidence and environment
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: qt-minimal-ux-before-after
+          path: ${{ runner.temp }}/bank2odoo-minimal-ux/
+          retention-days: 14
+          if-no-files-found: warn
       - name: Diagnose fictional saved-path overflow on native Windows QPA
         env:
           QT_QPA_PLATFORM: windows
