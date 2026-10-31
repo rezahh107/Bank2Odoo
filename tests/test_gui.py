@@ -903,6 +903,118 @@ class AccountantUiTests(unittest.TestCase):
             self._wait_operation(self.window.detection_done)
         self.assertEqual(outcomes, ["save"])
 
+
+    def _assert_folder_reselection_after_failed_save(self, old_candidate, old_balance):
+        """A failed pair must keep review evidence but never retry the same destination."""
+        w = self.window
+        self.assertIs(w.result, old_candidate)
+        self.assertEqual(w.result_state.text(), old_balance)
+        self.assertFalse(w._saved)
+        self.assertTrue(w.approved.isChecked())
+        self.assertIn("خطای ذخیره", w.status.text())
+        self.assertIn("ذخیره کامل نشد", w.saved_paths.text())
+        self.assertEqual(w.output_directory.text(), "")
+        self.assertFalse(w.save_button.isEnabled())
+        self.assertEqual(w.convert_button.text(), "انتخاب پوشهٔ خصوصی خروجی…")
+        self.assertIs(self.app.focusWidget(), w.convert_button)
+        self.assertTrue(w.directory_button.isVisible())
+        self.assertFalse(w.saved_path_fields.isVisible())
+        # The single primary action must ask for the new destination, not retry.
+        self.assertFalse(w.save_button.isVisible())
+        for width, height in ((940, 830), (650, 520), (600, 480)):
+            with self.subTest(size=(width, height)):
+                w.resize(width, height)
+                self.app.processEvents()
+                w._reflow_workspace()
+                self.app.processEvents()
+                self.assertEqual(w.scroll.horizontalScrollBar().maximum(), 0)
+                self.assertTrue(w.convert_button.isVisible())
+                self.assertTrue(w.directory_button.isVisible())
+
+    def test_missing_destination_recovery_uses_primary_folder_action(self):
+        old_candidate = self._convert()
+        old_balance = self.window.result_state.text()
+        removed = self.private / "removed_after_selection"
+        removed.mkdir()
+        self.window.output_directory.setText(str(removed))
+        removed.rmdir()  # Simulate a real user-selected folder disappearing.
+        self._save()
+        self._assert_folder_reselection_after_failed_save(old_candidate, old_balance)
+        recovered = self.private / "new_private_folder"
+        recovered.mkdir()
+        with patch("bank2odoo.ui.window.QFileDialog.getExistingDirectory",
+                   return_value=str(recovered)) as picker:
+            self.window.convert_button.click()
+        picker.assert_called_once()
+        self.assertEqual(self.window.output_directory.text(), str(recovered))
+        self.assertEqual(self.window.convert_button.text(), "ذخیره CSV و گزارش کنترل")
+        self.window.convert_button.click()
+        self._wait_operation(self.window.save_done)
+        self.assertTrue(self.window._saved)
+        self.assertIs(self.window.result, old_candidate)
+        self.assertEqual(self.window.result_state.text(), old_balance)
+        self.assertIn("ذخیره هر دو فایل موفق بود", self.window.status.text())
+        self.assertEqual(len(list(recovered.glob("Bank2Odoo_*"))), 2)
+        self.assertFalse(self.window.convert_button.isEnabled())
+
+    def test_existing_output_collision_keeps_file_and_requires_reselection(self):
+        candidate = self._convert()
+        evidence = self.window.result_state.text()
+        collision_dir = self.private / "collision"
+        collision_dir.mkdir()
+        expected = collision_dir / (
+            f"Bank2Odoo_{self.source.stem}_{candidate.sha256[:10]}_candidate.csv"
+        )
+        expected.write_bytes(b"existing fictional export; must not overwrite")
+        self.window.output_directory.setText(str(collision_dir))
+        self._save()
+        self._assert_folder_reselection_after_failed_save(candidate, evidence)
+        self.assertEqual(expected.read_bytes(), b"existing fictional export; must not overwrite")
+        self.assertEqual(len(list(collision_dir.glob("Bank2Odoo_*"))), 1)
+        alternate = self.private / "collision_recovery"
+        alternate.mkdir()
+        self.window.output_directory.setText(str(alternate))
+        self._save()
+        self.assertTrue(self.window._saved)
+        self.assertEqual(len(list(alternate.glob("Bank2Odoo_*"))), 2)
+
+    def test_prohibited_checkout_destination_requires_private_reselection(self):
+        candidate = self._convert()
+        evidence = self.window.result_state.text()
+        # The checkout root exists but production save_candidate prohibits it.
+        checkout = Path(__file__).resolve().parents[1]
+        self.window.output_directory.setText(str(checkout))
+        self._save()
+        self._assert_folder_reselection_after_failed_save(candidate, evidence)
+        self.assertEqual(list(checkout.glob(f"Bank2Odoo_{self.source.stem}_*")), [])
+
+    def test_stored_pair_preserves_pass_and_not_proven_balance_evidence(self):
+        for not_proven in (False, True):
+            with self.subTest(not_proven=not_proven):
+                statement(self.source, not_proven=not_proven)
+                candidate = self._convert()
+                expected = self.window.result_state.text()
+                self.assertTrue(expected.startswith("NOT_PROVEN" if not_proven else "PASS"))
+                self.assertIn("تأیید حسابدار" if not_proven else "نه تأیید حسابداری",
+                              self.window.status.text() if not_proven else expected)
+                private = self.private / ("uncertain" if not_proven else "balanced")
+                private.mkdir()
+                self.window.output_directory.setText(str(private))
+                self._save()
+                self.assertTrue(self.window._saved)
+                self.assertEqual(self.window.result_state.text(), expected)
+                self.assertIn("ذخیره هر دو فایل موفق بود", self.window.status.text())
+                self.assertIn("مجوز ورود به Odoo نیست", self.window.status.text())
+                self.assertIn("دو فایل ایجاد شدند", self.window.saved_paths.text())
+                self.assertEqual(len(list(private.glob("Bank2Odoo_*"))), 2)
+                # A saved candidate becomes stale after financial context changes.
+                self.window.journal.setText("ژورنال جدید آزمایشی")
+                self.assertFalse(self.window.approved.isChecked())
+                self.assertIsNone(self.window._approved_digest)
+                self.assertIsNone(self.window.result)
+                self.assertIn("معتبر نیست", self.window.result_state.text())
+                self.assertFalse(self.window.save_box.isVisible())
+
     def test_failed_and_successful_paired_save_after_join_timeouts(self):
         self._convert()
         calls = []
