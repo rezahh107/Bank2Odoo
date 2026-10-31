@@ -315,7 +315,7 @@ class MainWindow(QMainWindow):
         self._configure_presentation()
         self._presentation_ready = True
         self._update_units()
-        self._set_message("آماده: ابتدا فایل گزارش بانک را انتخاب کنید.")
+        self._set_message("گام بعد: فایل گزارش بانک را انتخاب کنید؛ سپس اطلاعات مالی را بررسی و تأیید کنید.")
 
     def _build(self) -> None:
         scroll = QScrollArea(self)
@@ -459,23 +459,28 @@ class MainWindow(QMainWindow):
         self.cancel_button.setMinimumHeight(40)
         self.cancel_button.clicked.connect(self.cancel_conversion)
         self.cancel_button.setEnabled(False)
+        self.cancel_button.hide()  # Only an active conversion can be cancelled.
         actions.addWidget(self.cancel_button)
         actions.addStretch(1)
+        # Status and guidance precede the single contextual primary action.
+        self.status = QLabel()
+        self.status.setObjectName("status")
+        self.status.setWordWrap(True)
+        review_layout.addWidget(self.status)
         review_layout.addLayout(actions)
         self.busy = QProgressBar()
         self.busy.setRange(0, 0)
         self.busy.setVisible(False)
         self.busy.setAccessibleName("پردازش در حال اجرا")
         review_layout.addWidget(self.busy)
-        self.status = QLabel()
-        self.status.setObjectName("status")
-        self.status.setWordWrap(True)
-        review_layout.addWidget(self.status)
         self.result_state = QLabel("هنوز تبدیل انجام نشده است")
         self.result_state.setAccessibleName("وضعیت واقعی تبدیل و شواهد مانده")
         self.result_state.setWordWrap(True)
         review_layout.addWidget(self.result_state)
-        metrics = QGridLayout()
+        self.result_state.hide()
+        self.metrics_panel = QWidget(review_box)
+        metrics = QGridLayout(self.metrics_panel)
+        metrics.setContentsMargins(0, 0, 0, 0)
         metrics.setHorizontalSpacing(14)
         metrics.setVerticalSpacing(8)
         self._metrics = {}
@@ -502,16 +507,19 @@ class MainWindow(QMainWindow):
             metrics.addWidget(value, row, 1)
             self._metrics[key] = value
         metrics.setColumnStretch(1, 1)
-        review_layout.addLayout(metrics)
+        review_layout.addWidget(self.metrics_panel)
+        self.metrics_panel.hide()
         self.summary = QLabel("هنوز خروجی برای بررسی تولید نشده است.")
         self.summary.setWordWrap(True)
         self.summary.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.summary.setMinimumHeight(42)
         review_layout.addWidget(self.summary)
+        self.summary.hide()
         self.details_button = QPushButton("نمایش جزئیات فنی")
         self.details_button.setCheckable(True)
         self.details_button.toggled.connect(self._toggle_details)
         review_layout.addWidget(self.details_button, alignment=Qt.AlignmentFlag.AlignRight)
+        self.details_button.hide()
         self.details = QPlainTextEdit()
         self.details.setReadOnly(True)
         self.details.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
@@ -530,12 +538,16 @@ class MainWindow(QMainWindow):
         self.output_directory.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.output_directory.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.output_directory.setMinimumHeight(40)
+        self.output_directory.setMinimumWidth(0)
+        self.output_directory.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         self.output_directory.setPlaceholderText("هنوز پوشه‌ای انتخاب نشده است")
         self.output_directory.setAccessibleName("پوشه خصوصی خروجی")
         self.output_directory.setReadOnly(True)
         self.output_directory.textChanged.connect(self._sync_actions)
         output_row.addWidget(self.output_directory, 1)
-        self.directory_button = QPushButton("انتخاب پوشه…")
+        self.directory_button = QPushButton("پوشه خصوصی…")
+        self.directory_button.setAccessibleName("انتخاب پوشه خصوصی برای ذخیره هم‌زمان دو فایل")
+        self.directory_button.setToolTip("هر دو فایل در یک پوشه خصوصی موجود، خارج از پوشه برنامه ذخیره می‌شوند.")
         self.directory_button.setMinimumHeight(40)
         self.directory_button.clicked.connect(self._browse_directory)
         output_row.addWidget(self.directory_button)
@@ -595,6 +607,8 @@ class MainWindow(QMainWindow):
         input_layout.addWidget(context_box)
         result_layout.addWidget(review_box)
         result_layout.addWidget(save_box)
+        self.save_box = save_box
+        self.save_box.hide()  # No candidate is available to save at launch.
         input_layout.addStretch()
         result_layout.addStretch()
         self._workspace = QBoxLayout(QBoxLayout.Direction.LeftToRight)
@@ -679,7 +693,19 @@ class MainWindow(QMainWindow):
         else:
             caption = "اعتبارسنجی و تبدیل"
         self.convert_button.setText(caption)
+        self.convert_button.setAccessibleName("اقدام اصلی: " + caption)
+        # Evidence is shown only when a current conversion exists; failure,
+        # cancellation and revoked-result messages remain visible independently.
+        self.metrics_panel.setVisible(has_result)
+        self.summary.setVisible(has_result)
+        self.save_box.setVisible(has_result)
+        self.result_state.setVisible(has_result or self.result_state.text().startswith(
+            ("ERROR", "توقف درخواست‌شده", "نیازمند تبدیل تازه")))
+        self.cancel_button.setVisible(
+            active and self._job_state is not None and self._job_state["kind"] == "convert"
+        )
         self._apply_theme_controls()
+        QTimer.singleShot(0, self._reflow_workspace)
 
     def _reveal_result(self) -> None:
         """Keep the outcome and its single next action together, including narrow mode."""
@@ -778,6 +804,9 @@ class MainWindow(QMainWindow):
         self.status.setText(message)
         self._last_detail = detail
         self.details.setPlainText(detail or "جزئیات بیشتری برای نمایش وجود ندارد.")
+        if not detail and self.details_button.isChecked():
+            self.details_button.setChecked(False)
+        self.details_button.setVisible(bool(detail))
 
     def _clear_saved_path_fields(self) -> None:
         self.saved_path_fields.hide()
@@ -785,12 +814,16 @@ class MainWindow(QMainWindow):
         self.saved_report_path.clear()
 
     def _invalidate(self) -> None:
+        had_result = self.result is not None or self._saved
         self._clear_saved_path_fields()
         self.result = None
         self._saved = False
         self.saved_paths.setText("هنوز خروجی جدیدی ذخیره نشده است.")
         self.summary.setText("پس از تأیید زمینه مالی، تبدیل را اجرا کنید.")
-        self.result_state.setText("نیازمند تبدیل تازه — نتیجه قبلی معتبر نیست")
+        self.result_state.setText(
+            "نیازمند تبدیل تازه — نتیجه قبلی معتبر نیست" if had_result
+            else "هنوز تبدیل انجام نشده است"
+        )
         for label in self._metrics.values():
             label.setText("—")
         # Do not leave an earlier "saved" or "conversion succeeded" status
@@ -981,7 +1014,7 @@ class MainWindow(QMainWindow):
                if result.issues
                else "مورد اضافی گزارش نشده؛ بررسی مستقل حسابدار همچنان لازم است.")
         )
-        self._set_message("تبدیل انجام شد: نامزد بررسی تهیه شده، اما هنوز ذخیره یا تأیید نشده است.",
+        self._set_message("نامزد بررسی آماده است؛ هشدارها و پوشه خصوصی را بررسی و سپس دو فایل را ذخیره کنید. این تأیید حسابداری نیست.",
                           "Balance: " + result.balance_status + "\n" + "\n".join(result.issues))
         self._sync_actions()
         self._reveal_result()
@@ -1076,6 +1109,11 @@ class MainWindow(QMainWindow):
         elif kind == "save":
             if error is not None:
                 self._clear_saved_path_fields()
+                # Any failed pair needs a fresh explicit destination: a missing
+                # folder, existing output, forbidden checkout or write failure
+                # must not leave the primary action offering an identical retry.
+                # Keep the conversion candidate and its balance evidence.
+                self.output_directory.clear()
                 self.saved_paths.setText("ذخیره کامل نشد؛ فایل‌ها را در پوشه مقصد بررسی کنید.")
                 self._set_message("خطای ذخیره: " + human_error(error, saving=True), error)
             else:
@@ -1086,7 +1124,8 @@ class MainWindow(QMainWindow):
                 self.saved_path_fields.show()
                 self.saved_paths.setText("دو فایل ایجاد شدند؛ مسیرهای کامل زیر قابل انتخاب و کپی هستند.")
                 self._set_message("ذخیره هر دو فایل موفق بود. نامزد هنوز مجوز ورود به Odoo نیست.")
-                self.result_state.setText("ذخیره انجام شد — بررسی مستقل حسابدار/Odoo لازم است")
+                # Storage success belongs in status/saved_paths; retain the
+                # independent PASS/NOT_PROVEN balance qualification.
         self._set_busy(False)
         if kind in ("convert", "save"):
             self._reveal_result()

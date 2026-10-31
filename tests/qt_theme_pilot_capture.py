@@ -68,9 +68,9 @@ def wait_finished(w, signal, app) -> None:
         raise RuntimeError("Qt worker not joined after synthetic result")
 
 
-def load_before(directory: Path):
+def load_before(directory: Path, baseline: str = BASE_SHA):
     raw = subprocess.check_output(["git", "show",
-                                   BASE_SHA + ":bank2odoo/ui/window.py"])
+                                   baseline + ":bank2odoo/ui/window.py"])
     file = directory / "bank2odoo_before.py"
     file.write_bytes(raw)
     spec = importlib.util.spec_from_file_location("bank2odoo_before", file)
@@ -113,6 +113,17 @@ def snapshot(app, w, out: Path, label: str, records: list[dict]):
             ),
             "busy": w.busy.isVisible(), "save_enabled": w.save_button.isEnabled(),
             "result_present": w.result is not None,
+            "status_visible": w.status.isVisible(),
+            "result_state_visible": (w.result_state.isVisible() if hasattr(w, "result_state") else None),
+            "metrics_visible": (w.metrics_panel.isVisible()
+                                if hasattr(w, "metrics_panel") else True),
+            "save_section_visible": (w.save_box.isVisible()
+                                     if hasattr(w, "save_box") else True),
+            "cancel_visible": w.cancel_button.isVisible(),
+            "primary_text": w.convert_button.text(),
+            "primary_accessible_name": w.convert_button.accessibleName(),
+            "approval_visible": w.approved.isVisible(),
+            "horizontal_scroll_max": w.scroll.horizontalScrollBar().maximum(),
             "actual_window_geometry": [w.width(), w.height()],
             "actual_viewport_width": w.scroll.viewport().width(),
             "workspace_breakpoint": getattr(w, "_workspace_breakpoint", None),
@@ -125,7 +136,8 @@ def snapshot(app, w, out: Path, label: str, records: list[dict]):
 
 
 def take(app, module, phase: str, scheme: str, width: int, height: int,
-         root: Path, synthetic: Path, records: list[dict]):
+         root: Path, synthetic: Path, records: list[dict],
+         capture_states: set[str] | None = None):
     app.styleHints().setColorScheme(
         Qt.ColorScheme.Dark if scheme == "dark" else Qt.ColorScheme.Light
     )
@@ -176,8 +188,9 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
     }
     try:
         def grab(state):
-            snapshot(app, w, root, label + "_" + state,
-                     case["capture_records"])
+            if capture_states is None or state in capture_states:
+                snapshot(app, w, root, label + "_" + state,
+                         case["capture_records"])
 
         grab("initial")
         w.start_conversion()
@@ -233,6 +246,9 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
         if w.result is None or not w.result.balance_status.startswith("NOT_PROVEN"):
             raise AssertionError("Expected synthetic NOT_PROVEN result")
         grab("not_proven_result")
+        # The historical baseline predates result_state; assert only on the
+        # candidate while retaining before/after screenshot parity.
+        financial_evidence = w.result_state.text() if phase == "after" else None
         if phase == "after":
             if w.save_button.isEnabled() or "انتخاب پوشه" not in w.convert_button.text():
                 raise AssertionError("Saving before private folder selection is not allowed")
@@ -245,6 +261,12 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
         wait_finished(w, w.save_done, app)
         if "خطای ذخیره" not in w.status.text() or w._saved:
             raise AssertionError("Synthetic save failure was falsely published")
+        if phase == "after" and (
+            w.output_directory.text() or
+            "انتخاب پوشه" not in w.convert_button.text() or
+            w.result_state.text() != financial_evidence
+        ):
+            raise AssertionError("Failed save must request a new folder and retain balance evidence")
         grab("save_failure")
         w.output_directory.setText(str(private_folder))
         if not w.save_button.isEnabled():
@@ -254,6 +276,8 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
         wait_finished(w, w.save_done, app)
         if not w._saved or "دو فایل ایجاد شدند" not in w.saved_paths.text():
             raise AssertionError("Actual synthetic paired save did not complete")
+        if phase == "after" and w.result_state.text() != financial_evidence:
+            raise AssertionError("Paired-save success replaced PASS/NOT_PROVEN balance evidence")
         grab("saved_success")
         balanced = synthetic.parent / f"balanced_{phase}_{scheme}_{width}.csv"
         fixture(balanced, balanced=True)
@@ -356,6 +380,8 @@ def verify_native_restoration(app, root: Path, metadata: dict) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--baseline-sha", default=BASE_SHA)
+    parser.add_argument("--capture-states", nargs="+", default=None)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     app = QApplication.instance() or QApplication([])
@@ -365,7 +391,7 @@ def main() -> None:
             ["git", "rev-parse", "HEAD"], text=True
         ).strip(),
         "github_event_sha": os.environ.get("GITHUB_SHA"),
-        "baseline_head": BASE_SHA,
+        "baseline_head": args.baseline_sha,
         "time_utc": datetime.now(timezone.utc).isoformat(),
         "platform": platform.platform(), "python": sys.version,
         "qt": qVersion(), "qpa": app.platformName(),
@@ -384,22 +410,23 @@ def main() -> None:
         directory.mkdir()
         data = directory / ("fictional_IRR_ISO_1405_" + "a" * 48 + ".csv")
         fixture(data)
-        original = load_before(private)
+        original = load_before(private, args.baseline_sha)
         for phase, module in (("before", original), ("after", current_ui)):
             for scheme in ("light", "dark"):
                 for width, height in SIZES:
                     take(app, module, phase, scheme, width, height,
-                         args.output, data, metadata["cases"])
+                         args.output, data, metadata["cases"],
+                         set(args.capture_states) if args.capture_states else None)
         verify_native_restoration(app, args.output, metadata)
     (args.output / "environment.json").write_text(
         json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     (args.output / "summary.md").write_text(
         "# Bank2Odoo dark theme pilot — synthetic Windows QPA evidence\n\n"
-        f"Baseline: {BASE_SHA}\nFeature checkout HEAD: {metadata['actual_checkout_head']}\n"
+        f"Baseline: {args.baseline_sha}\nFeature checkout HEAD: {metadata['actual_checkout_head']}\n"
         f"GitHub event SHA (may be PR merge commit): {metadata['github_event_sha']}\n"
         f"Cases: {len(metadata['cases'])}; before/after × light/dark × three window sizes.\n"
-        "Each case saves 13 states × 3 actual scroll positions (top, task-action, bottom) at native QWidget.grab resolution, including cancellation request during a real held worker.\n"
+        f"Each case captures {len(args.capture_states) if args.capture_states else 13} states × 3 scroll positions at native QWidget.grab resolution.\n"
         f"Native restoration audit: {len(metadata['palette_restoration'])} Qt style/scheme cases.\n"
         "The NOT_PROVEN financial result is computed with a fictional two-row statement.\n"
         "ColorScheme was set by an application-only TEST override, NOT by the real OS.\n"

@@ -120,6 +120,84 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIsNotNone(self.window.result)
         return self.window.result
 
+    def test_minimal_initial_workspace_guidance_and_click_validation(self):
+        w = self.window
+        self.assertTrue(w.convert_button.isVisible())
+        self.assertTrue(w.convert_button.isEnabled(), "Guidance-first action stays available")
+        self.assertFalse(w.metrics_panel.isVisible())
+        self.assertFalse(w.summary.isVisible())
+        self.assertFalse(w.result_state.isVisible())
+        self.assertFalse(w.save_box.isVisible())
+        self.assertFalse(w.cancel_button.isVisible())
+        self.assertFalse(w.details_button.isVisible())
+        self.assertFalse(w.approved.isChecked())
+        QTest.mouseClick(w.convert_button, Qt.MouseButton.LeftButton)
+        self.assertIn("ابتدا یک گزارش بانکی", w.status.text())
+        self.assertIs(self.app.focusWidget(), w.select_button)
+        self.assertIsNone(w._thread)
+        self.assertIsNone(w.result)
+
+    def test_progressive_review_distinguishes_result_uncertainty_and_stale(self):
+        w = self.window
+        result = self._convert()
+        self.assertTrue(result.balance_status.startswith("PASS"))
+        for section in (w.metrics_panel, w.summary, w.result_state, w.save_box):
+            self.assertTrue(section.isVisible())
+        self.assertFalse(w.cancel_button.isVisible())
+        self.assertIn("PASS", w.result_state.text())
+        self.assertIn("تأیید حسابداری", w.result_state.text())
+        self.assertIn("خصوصی", w.directory_button.text())
+        w.resize(600, 480)
+        QTest.qWait(30)
+        self.assertEqual(w._workspace.direction(), QBoxLayout.Direction.TopToBottom)
+        self.assertEqual(w.scroll.horizontalScrollBar().maximum(), 0)
+        for control in (w.output_directory, w.directory_button):
+            self.assertTrue(control.isVisible())
+            x = control.mapTo(w.scroll.widget(), QPoint(0, 0)).x()
+            self.assertGreaterEqual(x, 0)
+            self.assertLessEqual(x + control.width(), w.scroll.widget().width() + 1)
+            w.scroll.ensureWidgetVisible(control)
+            self.app.processEvents()
+            visible_center = control.mapTo(w.scroll.viewport(), control.rect().center())
+            self.assertTrue(w.scroll.viewport().rect().contains(visible_center))
+        w.journal.setText("ژورنال دیگری")
+        self.assertIsNone(w.result)
+        self.assertFalse(w.approved.isChecked())
+        self.assertFalse(w.metrics_panel.isVisible())
+        self.assertFalse(w.save_box.isVisible())
+        self.assertTrue(w.result_state.isVisible())
+        self.assertIn("نتیجه قبلی معتبر نیست", w.result_state.text())
+        w._failed("invalid headers")
+        self.assertTrue(w.result_state.isVisible(), "Errors must remain visible")
+        self.assertTrue(w.details_button.isVisible(), "Technical diagnosis remains reachable")
+        self.assertFalse(w.metrics_panel.isVisible())
+        statement(self.source, not_proven=True)
+        w.resize(940, 830)
+        self._convert()
+        self.assertIn("NOT_PROVEN", w.result_state.text())
+        self.assertTrue(w.summary.isVisible())
+        self.assertTrue(w.save_box.isVisible())
+        self.assertNotIn("PASS", w.result_state.text())
+
+    def test_visibility_negative_control_and_guidance_first_safety(self):
+        w = self.window
+        def assert_no_unearned_review():
+            self.assertFalse(w.metrics_panel.isVisible(), "No real result: do not show metrics")
+            self.assertFalse(w.save_box.isVisible(), "No real result: do not prompt saving")
+        assert_no_unearned_review()
+        # Negative control: an artificially visible empty panel must fail.
+        w.metrics_panel.show()
+        with self.assertRaises(AssertionError):
+            assert_no_unearned_review()
+        w._sync_actions()
+        assert_no_unearned_review()
+        # A clickable primary action must not bypass incomplete-input validation.
+        w.convert_button.click()
+        self.assertIsNone(w._thread)
+        self.assertIsNone(w.result)
+        self.assertFalse(w.approved.isChecked())
+        self.assertFalse(w.save_button.isEnabled())
+
     def test_visible_persian_workflow_and_directionality(self):
         self.assertEqual(self.window.layoutDirection(), Qt.LayoutDirection.RightToLeft)
         self.assertIn("Odoo", self.window.status.parent().window().windowTitle() or "Odoo")
@@ -184,13 +262,34 @@ class AccountantUiTests(unittest.TestCase):
         for width, height in ((940, 830), (650, 520), (600, 480)):
             self.window.resize(width, height)
             self.app.processEvents()
-            for widget in (self.window.approved, self.window.convert_button, self.window.directory_button):
+            for widget in (self.window.approved, self.window.convert_button):
                 self.window.scroll.ensureWidgetVisible(widget)
                 self.app.processEvents()
                 viewport = self.window.scroll.viewport()
                 target = widget.mapTo(viewport, widget.rect().center())
                 self.assertTrue(viewport.rect().contains(target),
-                                "Critical control should be scroll-reachable at this size")
+                                "Available control must be scroll-reachable at this size")
+        # Folder selection is intentionally progressive, not available before
+        # conversion. Prove the actual control becomes reachable after a result.
+        self._convert()
+        for width, height in ((940, 830), (650, 520), (600, 480)):
+            self.window.resize(width, height)
+            self.app.processEvents()
+            widget = self.window.directory_button
+            self.assertTrue(widget.isVisible())
+            self.window._reflow_workspace()
+            self.window.scroll.widget().layout().activate()
+            self.app.processEvents()
+            self.window.scroll.ensureWidgetVisible(widget, 0, 10)
+            self.app.processEvents()
+            viewport = self.window.scroll.viewport()
+            target = widget.mapTo(viewport, widget.rect().center())
+            self.assertTrue(viewport.rect().contains(target),
+                            f"Folder action unreachable: window={width}x{height}, "
+                            f"target=({target.x()},{target.y()}), viewport={viewport.rect()}, "
+                            f"scrollY={self.window.scroll.verticalScrollBar().value()}/"
+                            f"{self.window.scroll.verticalScrollBar().maximum()}, "
+                            f"workspace={self.window._workspace.direction().name}")
 
     def test_confirmation_mouse_keyboard_disabled_and_revocation(self):
         self._select(self.source)
@@ -639,7 +738,10 @@ class AccountantUiTests(unittest.TestCase):
         self.window._thread_finished()  # orphaned/late callback, no active sender
         self.assertEqual(text, self.window.status.text())
         self.assertIsNone(self.window._thread)
-        self.assertTrue(self.window.save_button.isEnabled())
+        self.assertIsNotNone(self.window.result)
+        self.assertEqual(self.window.output_directory.text(), "")
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertIn("انتخاب پوشه", self.window.convert_button.text())
 
     def _await_join_attempts(self, calls: list[int], count: int) -> None:
         for _ in range(160):
@@ -804,6 +906,120 @@ class AccountantUiTests(unittest.TestCase):
             self._wait_operation(self.window.detection_done)
         self.assertEqual(outcomes, ["save"])
 
+
+    def _assert_folder_reselection_after_failed_save(self, old_candidate, old_balance):
+        """A failed pair must keep review evidence but never retry the same destination."""
+        w = self.window
+        self.assertIs(w.result, old_candidate)
+        self.assertEqual(w.result_state.text(), old_balance)
+        self.assertFalse(w._saved)
+        self.assertTrue(w.approved.isChecked())
+        self.assertIn("خطای ذخیره", w.status.text())
+        self.assertIn("ذخیره کامل نشد", w.saved_paths.text())
+        self.assertEqual(w.output_directory.text(), "")
+        self.assertFalse(w.save_button.isEnabled())
+        self.assertEqual(w.convert_button.text(), "انتخاب پوشهٔ خصوصی خروجی…")
+        self.assertIs(self.app.focusWidget(), w.convert_button)
+        self.assertTrue(w.directory_button.isVisible())
+        self.assertFalse(w.saved_path_fields.isVisible())
+        # The single primary action must ask for the new destination, not retry.
+        self.assertFalse(w.save_button.isVisible())
+        for width, height in ((940, 830), (650, 520), (600, 480)):
+            with self.subTest(size=(width, height)):
+                w.resize(width, height)
+                self.app.processEvents()
+                w._reflow_workspace()
+                self.app.processEvents()
+                self.assertEqual(w.scroll.horizontalScrollBar().maximum(), 0)
+                self.assertTrue(w.convert_button.isVisible())
+                self.assertTrue(w.directory_button.isVisible())
+
+    def test_missing_destination_recovery_uses_primary_folder_action(self):
+        old_candidate = self._convert()
+        old_balance = self.window.result_state.text()
+        removed = self.private / "removed_after_selection"
+        removed.mkdir()
+        self.window.output_directory.setText(str(removed))
+        removed.rmdir()  # Simulate a real user-selected folder disappearing.
+        self._save()
+        self._assert_folder_reselection_after_failed_save(old_candidate, old_balance)
+        recovered = self.private / "new_private_folder"
+        recovered.mkdir()
+        with patch("bank2odoo.ui.window.QFileDialog.getExistingDirectory",
+                   return_value=str(recovered)) as picker:
+            self.window.convert_button.click()
+        picker.assert_called_once()
+        self.assertEqual(self.window.output_directory.text(), str(recovered))
+        self.assertEqual(self.window.convert_button.text(), "ذخیره CSV و گزارش کنترل")
+        self.window.convert_button.click()
+        self._wait_operation(self.window.save_done)
+        self.assertTrue(self.window._saved)
+        self.assertIs(self.window.result, old_candidate)
+        self.assertEqual(self.window.result_state.text(), old_balance)
+        self.assertIn("ذخیره هر دو فایل موفق بود", self.window.status.text())
+        self.assertEqual(len(list(recovered.glob("Bank2Odoo_*"))), 2)
+        self.assertFalse(self.window.convert_button.isEnabled())
+
+    def test_existing_output_collision_keeps_file_and_requires_reselection(self):
+        candidate = self._convert()
+        evidence = self.window.result_state.text()
+        collision_dir = self.private / "collision"
+        collision_dir.mkdir()
+        expected = collision_dir / (
+            f"Bank2Odoo_{self.source.stem}_{candidate.sha256[:10]}_candidate.csv"
+        )
+        expected.write_bytes(b"existing fictional export; must not overwrite")
+        self.window.output_directory.setText(str(collision_dir))
+        self._save()
+        self._assert_folder_reselection_after_failed_save(candidate, evidence)
+        self.assertEqual(expected.read_bytes(), b"existing fictional export; must not overwrite")
+        self.assertEqual(len(list(collision_dir.glob("Bank2Odoo_*"))), 1)
+        alternate = self.private / "collision_recovery"
+        alternate.mkdir()
+        self.window.output_directory.setText(str(alternate))
+        self._save()
+        self.assertTrue(self.window._saved)
+        self.assertEqual(len(list(alternate.glob("Bank2Odoo_*"))), 2)
+
+    def test_prohibited_checkout_destination_requires_private_reselection(self):
+        candidate = self._convert()
+        evidence = self.window.result_state.text()
+        # The checkout root exists but production save_candidate prohibits it.
+        checkout = Path(__file__).resolve().parents[1]
+        self.window.output_directory.setText(str(checkout))
+        self._save()
+        self._assert_folder_reselection_after_failed_save(candidate, evidence)
+        self.assertEqual(list(checkout.glob(f"Bank2Odoo_{self.source.stem}_*")), [])
+
+    def test_stored_pair_preserves_pass_and_not_proven_balance_evidence(self):
+        for not_proven in (False, True):
+            with self.subTest(not_proven=not_proven):
+                statement(self.source, not_proven=not_proven)
+                candidate = self._convert()
+                expected = self.window.result_state.text()
+                self.assertTrue(expected.startswith("NOT_PROVEN" if not_proven else "PASS"))
+                if not_proven:
+                    self.assertIn("شواهد کافی", expected)
+                else:
+                    self.assertIn("نه تأیید حسابداری", expected)
+                private = self.private / ("uncertain" if not_proven else "balanced")
+                private.mkdir()
+                self.window.output_directory.setText(str(private))
+                self._save()
+                self.assertTrue(self.window._saved)
+                self.assertEqual(self.window.result_state.text(), expected)
+                self.assertIn("ذخیره هر دو فایل موفق بود", self.window.status.text())
+                self.assertIn("مجوز ورود به Odoo نیست", self.window.status.text())
+                self.assertIn("دو فایل ایجاد شدند", self.window.saved_paths.text())
+                self.assertEqual(len(list(private.glob("Bank2Odoo_*"))), 2)
+                # A saved candidate becomes stale after financial context changes.
+                self.window.journal.setText("ژورنال جدید آزمایشی")
+                self.assertFalse(self.window.approved.isChecked())
+                self.assertIsNone(self.window._approved_digest)
+                self.assertIsNone(self.window.result)
+                self.assertIn("معتبر نیست", self.window.result_state.text())
+                self.assertFalse(self.window.save_box.isVisible())
+
     def test_failed_and_successful_paired_save_after_join_timeouts(self):
         self._convert()
         calls = []
@@ -884,6 +1100,10 @@ class AccountantUiTests(unittest.TestCase):
                     self.window.approved, self.window.convert_button,
                     self.window.output_directory, self.window.directory_button,
                 ):
+                    # Hidden future-step controls have no current layout
+                    # geometry; geometry only matters once they are shown.
+                    if not control.isVisible():
+                        continue
                     x = control.mapTo(content, QPoint(0, 0)).x()
                     self.assertGreaterEqual(x, 0, control.objectName())
                     self.assertLessEqual(x + control.width(), content.width() + 1,
@@ -920,7 +1140,9 @@ class AccountantUiTests(unittest.TestCase):
         self.assertTrue(self.window._saved)
         self.assertFalse(self.window.convert_button.isEnabled())
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
-        self.assertIn("Odoo", self.window.result_state.text())
+        self.assertTrue(self.window.result_state.text().startswith("PASS"))
+        self.assertIn("نه تأیید حسابداری", self.window.result_state.text())
+        self.assertIn("Odoo", self.window.status.text())
         self.assertIn("control.txt", self.window.saved_report_path.text())
 
     def test_financial_edit_and_approval_revocation_clear_stale_success(self):
