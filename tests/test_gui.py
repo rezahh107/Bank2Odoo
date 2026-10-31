@@ -277,11 +277,19 @@ class AccountantUiTests(unittest.TestCase):
             self.app.processEvents()
             widget = self.window.directory_button
             self.assertTrue(widget.isVisible())
-            self.window.scroll.ensureWidgetVisible(widget)
+            self.window._reflow_workspace()
+            self.window.scroll.widget().layout().activate()
             self.app.processEvents()
-            target = widget.mapTo(self.window.scroll.viewport(), widget.rect().center())
-            self.assertTrue(self.window.scroll.viewport().rect().contains(target),
-                            "Private-folder action must be reachable once conversion succeeds")
+            self.window.scroll.ensureWidgetVisible(widget, 0, 10)
+            self.app.processEvents()
+            viewport = self.window.scroll.viewport()
+            target = widget.mapTo(viewport, widget.rect().center())
+            self.assertTrue(viewport.rect().contains(target),
+                            f"Folder action unreachable: window={width}x{height}, "
+                            f"target=({target.x()},{target.y()}), viewport={viewport.rect()}, "
+                            f"scrollY={self.window.scroll.verticalScrollBar().value()}/"
+                            f"{self.window.scroll.verticalScrollBar().maximum()}, "
+                            f"workspace={self.window._workspace.direction().name}")
 
     def test_confirmation_mouse_keyboard_disabled_and_revocation(self):
         self._select(self.source)
