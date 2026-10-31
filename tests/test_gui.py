@@ -995,8 +995,8 @@ class AccountantUiTests(unittest.TestCase):
                 candidate = self._convert()
                 expected = self.window.result_state.text()
                 self.assertTrue(expected.startswith("NOT_PROVEN" if not_proven else "PASS"))
-                self.assertIn("تأیید حسابدار" if not_proven else "نه تأیید حسابداری",
-                              self.window.status.text() if not_proven else expected)
+                self.assertIn("نه تأیید حسابداری", expected) if not not_proven else self.assertIn(
+                    "شواهد کافی", expected)
                 private = self.private / ("uncertain" if not_proven else "balanced")
                 private.mkdir()
                 self.window.output_directory.setText(str(private))
@@ -1135,7 +1135,9 @@ class AccountantUiTests(unittest.TestCase):
         self.assertTrue(self.window._saved)
         self.assertFalse(self.window.convert_button.isEnabled())
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
-        self.assertIn("Odoo", self.window.result_state.text())
+        self.assertTrue(self.window.result_state.text().startswith("PASS"))
+        self.assertIn("نه تأیید حسابداری", self.window.result_state.text())
+        self.assertIn("Odoo", self.window.status.text())
         self.assertIn("control.txt", self.window.saved_report_path.text())
 
     def test_financial_edit_and_approval_revocation_clear_stale_success(self):
