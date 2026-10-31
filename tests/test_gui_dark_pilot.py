@@ -279,6 +279,8 @@ class DarkThemePilotTests(unittest.TestCase):
         w.approved.setChecked(False)
         self.assertEqual(w.convert_button.styleSheet(), "")
         w.approved.setChecked(True)
+        self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_DARK_QSS)
+        self._scheme(Qt.ColorScheme.Light)
         self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_LIGHT_QSS)
         self._scheme(Qt.ColorScheme.Dark)
         self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_DARK_QSS)
