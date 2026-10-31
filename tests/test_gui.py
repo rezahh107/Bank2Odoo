@@ -140,6 +140,20 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIsNone(w._thread)
         self.assertIsNone(w.result)
 
+    def test_selected_source_guides_financial_review_without_false_stale_claim(self):
+        w = self.window
+        self._select(self.source)
+        w.source_unit.setCurrentIndex(w.source_unit.findData("IRR"))
+        w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
+        w.journal.setText("ژورنال آزمایشی")
+        self.assertIsNone(w.result)
+        self.assertFalse(w.approved.isChecked())
+        self.assertIn("گام بعد: اطلاعات مالی", w.status.text())
+        self.assertNotIn("نتیجه قبلی معتبر نیست", w.status.text())
+        self.assertTrue(w.convert_button.isEnabled())
+        self.assertEqual(w.convert_button.styleSheet(), "")
+        self.assertEqual(w.select_button.styleSheet(), "")
+
     def test_progressive_review_distinguishes_result_uncertainty_and_stale(self):
         w = self.window
         result = self._convert()
