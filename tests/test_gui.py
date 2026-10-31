@@ -864,6 +864,17 @@ class AccountantUiTests(unittest.TestCase):
     def test_primary_action_tracks_real_candidate_folder_and_saved_pair(self):
         self._convert()
         self.assertTrue(self.window.result_state.text().startswith("PASS"))
+        self.window.resize(650, 520)
+        self.app.processEvents()
+        self.window._reflow_workspace()
+        self.window._reveal_result()
+        self.app.processEvents()
+        viewport = self.window.scroll.viewport()
+        for target in (self.window.convert_button, self.window.result_state):
+            point = target.mapTo(viewport, QPoint(0, 0))
+            self.assertGreaterEqual(point.y(), 0, "Result/action above viewport")
+            self.assertLessEqual(point.y() + target.height(), viewport.height(),
+                                 "Result/action clipped below narrow viewport")
         self.assertIn("انتخاب پوشه", self.window.convert_button.text())
         self.assertFalse(self.window.save_button.isEnabled())
         self.assertIs(self.app.focusWidget(), self.window.convert_button)
