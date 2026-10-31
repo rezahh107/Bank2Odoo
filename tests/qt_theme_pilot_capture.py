@@ -15,6 +15,7 @@ import platform
 import subprocess
 import sys
 import tempfile
+from threading import Event
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
@@ -189,11 +190,36 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
         w.approved.setFocus(Qt.FocusReason.TabFocusReason)
         app.processEvents()
         grab("keyboard_focus")
+        # Hold the genuine QThread worker at the conversion boundary to
+        # capture a deterministic busy/cancel-request interaction. The result
+        # of this cancelled phase must be discarded; then run real conversion.
+        original_convert = module.convert
+        entered, release = Event(), Event()
+
+        def held_convert(path, context):
+            entered.set()
+            if not release.wait(10):
+                raise RuntimeError("Synthetic busy capture release timed out")
+            return original_convert(path, context)
+
+        with patch.object(module, "convert", side_effect=held_convert):
+            try:
+                w.start_conversion()
+                if not entered.wait(8):
+                    raise AssertionError("Qt conversion thread never entered")
+                if w._thread is None or w.busy.maximum() != 0:
+                    raise AssertionError("Authentic indeterminate busy state missing")
+                grab("conversion_busy")
+                w.cancel_conversion()
+                if "درخواست توقف" not in w.status.text() or w._stop is None:
+                    raise AssertionError("Cancellation request was not recorded")
+                grab("cancel_requested")
+            finally:
+                release.set()
+            wait_finished(w, w.conversion_done, app)
+        if w.result is not None or w._thread is not None:
+            raise AssertionError("Cancelled active-phase result was not discarded")
         w.start_conversion()
-        if w._thread is None:
-            raise AssertionError("Expected conversion worker to start")
-        # Observe the authentic busy state before awaiting the result.
-        grab("conversion_busy")
         wait_finished(w, w.conversion_done, app)
         if w.result is None or not w.result.balance_status.startswith("NOT_PROVEN"):
             raise AssertionError("Expected synthetic NOT_PROVEN result")
@@ -345,7 +371,9 @@ def main() -> None:
     }
     with tempfile.TemporaryDirectory() as tmp:
         private = Path(tmp)
-        data = private / "fictional_statement.csv"
+        directory = private / ("مسیر-ساختگی-" * 6)
+        directory.mkdir()
+        data = directory / ("fictional_IRR_ISO_1405_" + "a" * 48 + ".csv")
         fixture(data)
         original = load_before(private)
         for phase, module in (("before", original), ("after", current_ui)):
@@ -362,7 +390,7 @@ def main() -> None:
         f"Baseline: {BASE_SHA}\nFeature checkout HEAD: {metadata['actual_checkout_head']}\n"
         f"GitHub event SHA (may be PR merge commit): {metadata['github_event_sha']}\n"
         f"Cases: {len(metadata['cases'])}; before/after × light/dark × three window sizes.\n"
-        "Each case saves 12 states × 2 scroll positions at original QWidget.grab resolution.\n"
+        "Each case saves 13 states × 2 scroll positions at original QWidget.grab resolution, including cancellation request during a real held worker.\n"
         f"Native restoration audit: {len(metadata['palette_restoration'])} Qt style/scheme cases.\n"
         "The NOT_PROVEN financial result is computed with a fictional two-row statement.\n"
         "ColorScheme was set by an application-only TEST override, NOT by the real OS.\n"
