@@ -169,7 +169,7 @@ jobs:
           PYTHONFAULTHANDLER: "1"
         shell: pwsh
         run: |
-          git fetch --no-tags --depth=1 origin d06b35f41ac46936716b186fb1dfac33da983eb9
+          git fetch --no-tags --depth=1 origin 1ff8057945abacf1ae8a2532ac37b9fe9dd43361
           uv run --locked python -m tests.qt_theme_pilot_capture --output "$env:RUNNER_TEMP/bank2odoo-dark-pilot"
           if ($LASTEXITCODE -ne 0) { throw "Dark pilot capture failed" }
       - name: Upload synthetic dark theme pilot images and environment
