@@ -221,9 +221,61 @@ jobs:
           mkdir -p "$RUNNER_TEMP/qt-evidence"
           gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name qt-saved-path-overflow-qualification --dir "$RUNNER_TEMP/qt-evidence"
           test -s "$RUNNER_TEMP/qt-evidence/measurements.json"
-          mkdir -p "$RUNNER_TEMP/qt-baseline"
-          gh run download 41183845090 --repo "$GITHUB_REPOSITORY" --name qt-saved-path-overflow-qualification --dir "$RUNNER_TEMP/qt-baseline"
-          test -s "$RUNNER_TEMP/qt-baseline/measurements.json"
+      - name: Obtain and independently verify immutable original Qt baseline
+        shell: bash
+        env:
+          BASELINE_COMMIT: 2161ffdc7053b2c76e42b283b44f2b2f18efa84e
+        run: |
+          set -euo pipefail
+          baseline="$RUNNER_TEMP/qt-baseline"
+          mkdir -p "$baseline"
+          # Never use a historical expiring Actions artifact or the mutable
+          # evidence-branch HEAD as the authority for baseline bytes.
+          git fetch --no-tags --depth=1 origin "$BASELINE_COMMIT"
+          manifest="$RUNNER_TEMP/qt-baseline-pinned.sha256"
+          cat > "$manifest" <<'SHA256'
+          33968a2b1f4002416deacfe721134b3c41accb6f0b5aadc51d0cfa59231242ea  baseline_measurements.json
+          4f308061c1a6b71d4df09796d94796ddb5c8013e83fa04ff50c8232a013b0b3a  baseline_dark_600x480_long_after.png
+          954afd999f6c71eddadb5716ce5c38f2a8462c86519055df8023f3fbfd0ae37c  baseline_dark_650x520_long_after.png
+          814f239a0de0f6237f716e1fd08195b9ae76860204e69d1d6d74cb50916fa75f  baseline_dark_940x830_long_after.png
+          cf7634da965e5e27f8c25e39b4f903ee1a3a9ef2395aef803a15f8f0f9468f2b  baseline_light_600x480_long_after.png
+          f96d6079382aad32b8433b986a4adc52bd76e9369bc9d1ca39f1fc88e2d8bb08  baseline_light_650x520_long_after.png
+          45230e4dee072e5ab19205ce0e4bd6b882357670c0ab100f650885cc2f68c100  baseline_light_940x830_long_after.png
+          SHA256
+          for name in baseline_measurements.json \
+                      baseline_dark_600x480_long_after.png \
+                      baseline_dark_650x520_long_after.png \
+                      baseline_dark_940x830_long_after.png \
+                      baseline_light_600x480_long_after.png \
+                      baseline_light_650x520_long_after.png \
+                      baseline_light_940x830_long_after.png; do
+            git show "$BASELINE_COMMIT:evidence/qt-overflow-pr11/$name" > "$baseline/$name"
+          done
+          (cd "$baseline" && sha256sum --check --strict "$manifest")
+          echo "PINNED_BASELINE_VERIFIED: commit=$BASELINE_COMMIT, 7 files SHA-256 match"
+      - name: Falsify corrupted and missing pinned baseline before publishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline="$RUNNER_TEMP/qt-baseline"
+          manifest="$RUNNER_TEMP/qt-baseline-pinned.sha256"
+          negative="$RUNNER_TEMP/qt-baseline-negative"
+          mkdir -p "$negative"
+          cp "$baseline"/* "$negative/"
+          # The same verifier used for real publication must reject a byte change.
+          printf '\nTAMPERED\n' >> "$negative/baseline_measurements.json"
+          if (cd "$negative" && sha256sum --check --status --strict "$manifest"); then
+            echo "::error::Altered pinned baseline was accepted"; exit 1
+          fi
+          echo "EXPECTED_REJECTION: baseline_measurements.json hash mismatch"
+          cp "$baseline/baseline_measurements.json" "$negative/"
+          rm "$negative/baseline_dark_600x480_long_after.png"
+          if (cd "$negative" && sha256sum --check --status --strict "$manifest"); then
+            echo "::error::Missing pinned baseline PNG was accepted"; exit 1
+          fi
+          echo "EXPECTED_REJECTION: missing pinned baseline PNG"
+          (cd "$baseline" && sha256sum --check --status --strict "$manifest")
+          echo "PINNED_BASELINE_VALID_CONTROL: PASS"
       - name: Curate native PNGs and machine-readable environment
         shell: bash
         run: |
@@ -232,7 +284,7 @@ jobs:
           dest="evidence/qt-overflow-pr11"
           mkdir -p "$dest"
           cp "$source/measurements.json" "$dest/"
-          cp "$RUNNER_TEMP/qt-baseline/measurements.json" "$dest/baseline_measurements.json"
+          cp "$RUNNER_TEMP/qt-baseline/baseline_measurements.json" "$dest/baseline_measurements.json"
           cp "$source/contact_light.png" "$source/contact_dark.png" "$dest/"
           for theme in light dark; do
             for geometry in 940x830 650x520 600x480; do
