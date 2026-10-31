@@ -199,6 +199,7 @@ jobs:
       - name: Qualify initial primary-action hierarchy on actual Windows Qt
         env:
           QT_QPA_PLATFORM: windows
+          QT_PRIMARY_LOG_PREVIEWS: "1"
           PYTHONFAULTHANDLER: "1"
         shell: pwsh
         run: |
