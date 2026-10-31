@@ -578,22 +578,20 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "_workspace"):
             return
         fm = self.fontMetrics()
-        # QLineEdit.minimumSizeHint() can be tiny under native windows11.
-        # Measure usable Persian labels plus LTR example text, action widths
-        # and actual group margins rather than accepting technically fitting
-        # but unreadably squeezed "two columns" at 600/650 logical pixels.
+        # Paths are copyable, horizontally scrollable QLineEdits. Reserve
+        # space for a readable basename, not the entire arbitrarily long path.
+        # Also measure Persian form labels, buttons and their action row.
         input_required = max(
-            # The whole column hint includes the other column during direction
-            # changes, so it is not a stable predictor of usable two-column width.
+            # Use independent control widths, not a fixed breakpoint.
             fm.horizontalAdvance("واحد پول ژورنال مقصد:")
             + self.source_unit.sizeHint().width() + 85,
             self.select_button.sizeHint().width()
-            + fm.horizontalAdvance("C:/Private/statement_1405_IRR.csv") + 70,
+            + fm.horizontalAdvance("statement.csv") + 60,
         )
         result_required = max(
-            # Measure actual localized actions, not current nested layout width.
+            # Keep the output action row usable alongside the input column.
             self.directory_button.sizeHint().width()
-            + fm.horizontalAdvance("C:/Private/output_1405") + 80,
+            + fm.horizontalAdvance("private/output") + 55,
             self.convert_button.sizeHint().width()
             + self.cancel_button.sizeHint().width() + 70,
         )
