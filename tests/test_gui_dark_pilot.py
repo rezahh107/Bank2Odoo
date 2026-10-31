@@ -274,6 +274,7 @@ class DarkThemePilotTests(unittest.TestCase):
         self._validated_approval(w)
         self.assertIsNotNone(w._selected_digest)
         self.assertEqual(w._approved_digest, w._selected_digest)
+        self.assertIn("گام بعد: اعتبارسنجی و تبدیل", w.status.text())
         self.assertEqual(w.select_button.styleSheet(), "")
         self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_DARK_QSS)
         w.approved.setChecked(False)
