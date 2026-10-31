@@ -221,6 +221,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/qt-evidence"
           gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name qt-saved-path-overflow-qualification --dir "$RUNNER_TEMP/qt-evidence"
           test -s "$RUNNER_TEMP/qt-evidence/measurements.json"
+          mkdir -p "$RUNNER_TEMP/qt-baseline"
+          gh run download 41183845090 --repo "$GITHUB_REPOSITORY" --name qt-saved-path-overflow-qualification --dir "$RUNNER_TEMP/qt-baseline"
+          test -s "$RUNNER_TEMP/qt-baseline/measurements.json"
       - name: Curate native PNGs and machine-readable environment
         shell: bash
         run: |
@@ -229,12 +232,14 @@ jobs:
           dest="evidence/qt-overflow-pr11"
           mkdir -p "$dest"
           cp "$source/measurements.json" "$dest/"
+          cp "$RUNNER_TEMP/qt-baseline/measurements.json" "$dest/baseline_measurements.json"
           cp "$source/contact_light.png" "$source/contact_dark.png" "$dest/"
           for theme in light dark; do
             for geometry in 940x830 650x520 600x480; do
               for state in production_after legacy_long_injected_after; do
                 cp "$source/$theme"_"$geometry"_"$state.png" "$dest/"
               done
+              cp "$RUNNER_TEMP/qt-baseline/$theme"_"$geometry"_long_after.png" "$dest/baseline_$theme"_"$geometry"_long_after.png"
             done
           done
           python3 - <<'PY'
@@ -244,6 +249,8 @@ jobs:
           data=json.loads((d/"measurements.json").read_text(encoding="utf-8"))
           (d/"environment.json").write_text(json.dumps(data["environment"],ensure_ascii=False,indent=2),encoding="utf-8")
           cases={x["case"]:x for x in data["cases"]}
+          baseline=json.loads((d/"baseline_measurements.json").read_text(encoding="utf-8"))
+          old_cases={x["case"]:x for x in baseline["cases"]}
           rows=[
               "# Qt saved-path overflow: synthetic Windows QPA measurements",
               "",
@@ -252,15 +259,21 @@ jobs:
               "Exact verified checkout: "+data["environment"]["checkout_head"],
               "Qt QPA windows, simulated Light/Dark. NOT a physical Windows 11 acceptance.",
               "",
-              "| Scheme | Requested | Actual | Viewport | H-scroll fixed | H-scroll injected old label |",
-              "|---|---|---|---|---:|---:|"]
+              "| Scheme | Requested | Actual | Viewport | H-scroll original PR10 | H-scroll fixed | H-scroll injected old label |",
+              "|---|---|---|---|---:|---:|---:|"]
           for theme in ("light","dark"):
               for size in ("940x830","650x520","600x480"):
                   base=theme+"_"+size+"_"
                   good=cases[base+"production_after"]
                   bad=cases[base+"legacy_long_injected_after"]
-                  rows.append(f"| {theme} | {size} | {good['window']} | {good['viewport']} | {good['hscroll']['maximum']} | {bad['hscroll']['maximum']} |")
-          rows+=["", "Root cause 1: unbounded full mixed-script path displayed by wrapped QLabel inflates minimum column width.",
+                  actual_old=old_cases[base+"long_after"]
+                  rows.append(f"| {theme} | {size} | {good['window']} | {good['viewport']} | {actual_old['hscroll']['maximum']} | {good['hscroll']['maximum']} | {bad['hscroll']['maximum']} |")
+          rows+=["", "Actual PRE-FIX PR10 images: CI 41183845090, original unmodified product plus test-only probe.",
+                 "![Original PR10, light 940x830](baseline_light_940x830_long_after.png)",
+                 "![Repaired, light 940x830](light_940x830_production_after.png)",
+                 "![Original PR10, dark 650x520](baseline_dark_650x520_long_after.png)",
+                 "![Repaired, dark 650x520](dark_650x520_production_after.png)",
+                 "", "Root cause 1: unbounded full mixed-script path displayed by wrapped QLabel inflates minimum column width.",
                  "Root cause 2: overly long saved-button caption independently inflates wide results column.",
                  "Remedy: short saved status, full paths in separate bounded read-only selectable LTR QLineEdits, short saved action.",
                  "Expected-red automated regression: run 41184158401; fixed result: current PR #11 checks.",
