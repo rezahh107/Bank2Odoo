@@ -179,6 +179,22 @@ jobs:
           path: ${{ runner.temp }}/bank2odoo-dark-pilot/
           retention-days: 14
           if-no-files-found: error
+      - name: Diagnose fictional saved-path overflow on native Windows QPA
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONFAULTHANDLER: "1"
+        shell: pwsh
+        run: |
+          uv run --locked python -m tests.qt_saved_paths_overflow_probe --output "$env:RUNNER_TEMP/bank2odoo-overflow-qualification"
+          if ($LASTEXITCODE -ne 0) { throw "Saved paths probe failed" }
+      - name: Upload diagnostic measurements and original-resolution PNGs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: qt-saved-path-overflow-qualification
+          path: ${{ runner.temp }}/bank2odoo-overflow-qualification/
+          retention-days: 14
+          if-no-files-found: warn
       - name: Offline Qt window creation smoke
         env:
           QT_QPA_PLATFORM: offscreen
