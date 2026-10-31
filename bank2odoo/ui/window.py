@@ -894,6 +894,10 @@ class MainWindow(QMainWindow):
         else:
             self._approved_digest = self._selected_digest if checked else None
         self._invalidate()
+        if checked and self._conversion_is_ready_for_emphasis():
+            self._set_message(
+                "گام بعد: اعتبارسنجی و تبدیل را اجرا کنید؛ نتیجه هنوز تولید یا بررسی نشده است."
+            )
 
     def _update_units(self) -> None:
         left, right = self.source_unit.currentData(), self.target_unit.currentData()
