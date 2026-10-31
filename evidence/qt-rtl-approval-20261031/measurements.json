@@ -1,6 +1,6 @@
 {
   "revision": "5d4b950c29a73433c043a53dc266cee9192d3de4",
-  "collected_utc": "2026-10-31T11:28:38.938893+00:00",
+  "collected_utc": "2026-10-31T11:31:54.381001+00:00",
   "environment": {
     "os": "Windows-2025Server-10.0.26100-SP0",
     "python": "3.13.12 (main, Feb  3 2026, 22:53:26) [MSC v.1944 64 bit (AMD64)]",
@@ -270,7 +270,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-j_o19l06\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-r94oer41\\fi"
               },
               {
                 "class": "QComboBox",
@@ -458,7 +458,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-j_o19l06\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-r94oer41\\fi"
               },
               {
                 "class": "QComboBox",
@@ -566,7 +566,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-j_o19l06\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-r94oer41\\pr"
               },
               {
                 "class": "QPushButton",
@@ -584,13 +584,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-j_o19l06\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-r94oer41\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-j_o19l06\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-r94oer41\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -866,7 +866,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-shk0o3ib\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-m7lqw_lf\\fi"
               },
               {
                 "class": "QComboBox",
@@ -1054,7 +1054,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-shk0o3ib\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-m7lqw_lf\\fi"
               },
               {
                 "class": "QComboBox",
@@ -1162,7 +1162,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-shk0o3ib\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-m7lqw_lf\\pr"
               },
               {
                 "class": "QPushButton",
@@ -1180,13 +1180,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-shk0o3ib\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-m7lqw_lf\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-shk0o3ib\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-m7lqw_lf\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -1462,7 +1462,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-rhjdq_vi\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-6r5r67_s\\fi"
               },
               {
                 "class": "QComboBox",
@@ -1650,7 +1650,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-rhjdq_vi\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-6r5r67_s\\fi"
               },
               {
                 "class": "QComboBox",
@@ -1758,7 +1758,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-rhjdq_vi\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-6r5r67_s\\pr"
               },
               {
                 "class": "QPushButton",
@@ -1776,13 +1776,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-rhjdq_vi\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-6r5r67_s\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-rhjdq_vi\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-6r5r67_s\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -2058,7 +2058,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-02fjbcsi\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-f17kuw_2\\fi"
               },
               {
                 "class": "QComboBox",
@@ -2246,7 +2246,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-02fjbcsi\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-f17kuw_2\\fi"
               },
               {
                 "class": "QComboBox",
@@ -2354,7 +2354,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-02fjbcsi\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-f17kuw_2\\pr"
               },
               {
                 "class": "QPushButton",
@@ -2372,13 +2372,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-02fjbcsi\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-f17kuw_2\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-02fjbcsi\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-f17kuw_2\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -2654,7 +2654,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0efuw02d\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-s9c7qt2j\\fi"
               },
               {
                 "class": "QComboBox",
@@ -2842,7 +2842,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0efuw02d\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-s9c7qt2j\\fi"
               },
               {
                 "class": "QComboBox",
@@ -2950,7 +2950,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0efuw02d\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-s9c7qt2j\\pr"
               },
               {
                 "class": "QPushButton",
@@ -2968,13 +2968,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0efuw02d\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-s9c7qt2j\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0efuw02d\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-s9c7qt2j\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -3250,7 +3250,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-6243ndqz\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-xuz_ngj0\\fi"
               },
               {
                 "class": "QComboBox",
@@ -3438,7 +3438,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-6243ndqz\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-xuz_ngj0\\fi"
               },
               {
                 "class": "QComboBox",
@@ -3546,7 +3546,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-6243ndqz\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-xuz_ngj0\\pr"
               },
               {
                 "class": "QPushButton",
@@ -3564,13 +3564,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-6243ndqz\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-xuz_ngj0\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-6243ndqz\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-xuz_ngj0\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -3846,7 +3846,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-rbr7a6i1\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7c_1jk3c\\fi"
               },
               {
                 "class": "QComboBox",
@@ -4034,7 +4034,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-rbr7a6i1\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7c_1jk3c\\fi"
               },
               {
                 "class": "QComboBox",
@@ -4222,7 +4222,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-rbr7a6i1\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7c_1jk3c\\fi"
               },
               {
                 "class": "QComboBox",
@@ -4410,7 +4410,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-rbr7a6i1\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7c_1jk3c\\fi"
               },
               {
                 "class": "QComboBox",
@@ -4518,7 +4518,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-rbr7a6i1\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7c_1jk3c\\pr"
               },
               {
                 "class": "QPushButton",
@@ -4536,13 +4536,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-rbr7a6i1\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7c_1jk3c\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-rbr7a6i1\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7c_1jk3c\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -4574,50 +4574,50 @@
             22
           ],
           "grab_size_px": [
-            380,
-            52
+            940,
+            749
           ],
           "grab_dpr": 1.0,
-          "background_rgb": "#B2F3F3",
-          "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+          "background_rgb": "#FFFFFF",
+          "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
           "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
           "border_color_histogram": [
             {
-              "rgb": "#EDEDED",
+              "rgb": "#F9F9F9",
               "n": 140
             },
             {
-              "rgb": "#AEAEAE",
+              "rgb": "#B6B6B6",
               "n": 2
-            },
-            {
-              "rgb": "#8F8F8F",
-              "n": 2
-            },
-            {
-              "rgb": "#888888",
-              "n": 2
-            },
-            {
-              "rgb": "#ACACAC",
-              "n": 1
-            },
-            {
-              "rgb": "#8B8B8B",
-              "n": 1
-            },
-            {
-              "rgb": "#898989",
-              "n": 1
             },
             {
               "rgb": "#909090",
+              "n": 2
+            },
+            {
+              "rgb": "#969696",
+              "n": 2
+            },
+            {
+              "rgb": "#B4B4B4",
+              "n": 1
+            },
+            {
+              "rgb": "#929292",
+              "n": 1
+            },
+            {
+              "rgb": "#979797",
+              "n": 1
+            },
+            {
+              "rgb": "#949494",
               "n": 1
             }
           ],
-          "border_p95_ratio": 1.838,
-          "border_max_ratio": 2.871,
-          "border_fraction_ge_3": 0.0,
+          "border_p95_ratio": 2.073,
+          "border_max_ratio": 3.234,
+          "border_fraction_ge_3": 0.0329,
           "samples": 152,
           "qss": "",
           "app_qss": "",
@@ -4646,12 +4646,12 @@
           22
         ],
         "grab_size_px": [
-          380,
-          52
+          940,
+          749
         ],
         "grab_dpr": 1.0,
-        "background_rgb": "#B2F3F3",
-        "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+        "background_rgb": "#FFFFFF",
+        "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
         "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
         "border_color_histogram": [
           {
@@ -4659,20 +4659,20 @@
             "n": 140
           },
           {
-            "rgb": "#D7E3ED",
+            "rgb": "#E2EEF8",
             "n": 4
           },
           {
-            "rgb": "#5397D1",
+            "rgb": "#579BD5",
             "n": 4
           },
           {
-            "rgb": "#1070C3",
+            "rgb": "#1171C4",
             "n": 4
           }
         ],
-        "border_p95_ratio": 4.595,
-        "border_max_ratio": 4.595,
+        "border_p95_ratio": 5.674,
+        "border_max_ratio": 5.674,
         "border_fraction_ge_3": 0.9474,
         "samples": 152,
         "qss": "",
@@ -4939,7 +4939,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-q5oyfrqh\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-xy_decbh\\fi"
               },
               {
                 "class": "QComboBox",
@@ -5127,7 +5127,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-q5oyfrqh\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-xy_decbh\\fi"
               },
               {
                 "class": "QComboBox",
@@ -5315,7 +5315,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-q5oyfrqh\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-xy_decbh\\fi"
               },
               {
                 "class": "QComboBox",
@@ -5503,7 +5503,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-q5oyfrqh\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-xy_decbh\\fi"
               },
               {
                 "class": "QComboBox",
@@ -5611,7 +5611,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-q5oyfrqh\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-xy_decbh\\pr"
               },
               {
                 "class": "QPushButton",
@@ -5629,13 +5629,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-q5oyfrqh\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-xy_decbh\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-q5oyfrqh\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-xy_decbh\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -5667,50 +5667,50 @@
             22
           ],
           "grab_size_px": [
-            380,
-            52
+            940,
+            749
           ],
           "grab_dpr": 1.0,
-          "background_rgb": "#B2F3F3",
-          "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+          "background_rgb": "#FFFFFF",
+          "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
           "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
           "border_color_histogram": [
             {
-              "rgb": "#EDEDED",
+              "rgb": "#F9F9F9",
               "n": 140
             },
             {
-              "rgb": "#AEAEAE",
+              "rgb": "#B6B6B6",
               "n": 2
-            },
-            {
-              "rgb": "#8F8F8F",
-              "n": 2
-            },
-            {
-              "rgb": "#888888",
-              "n": 2
-            },
-            {
-              "rgb": "#ACACAC",
-              "n": 1
-            },
-            {
-              "rgb": "#8B8B8B",
-              "n": 1
-            },
-            {
-              "rgb": "#898989",
-              "n": 1
             },
             {
               "rgb": "#909090",
+              "n": 2
+            },
+            {
+              "rgb": "#969696",
+              "n": 2
+            },
+            {
+              "rgb": "#B4B4B4",
+              "n": 1
+            },
+            {
+              "rgb": "#929292",
+              "n": 1
+            },
+            {
+              "rgb": "#979797",
+              "n": 1
+            },
+            {
+              "rgb": "#949494",
               "n": 1
             }
           ],
-          "border_p95_ratio": 1.838,
-          "border_max_ratio": 2.871,
-          "border_fraction_ge_3": 0.0,
+          "border_p95_ratio": 2.073,
+          "border_max_ratio": 3.234,
+          "border_fraction_ge_3": 0.0329,
           "samples": 152,
           "qss": "",
           "app_qss": "",
@@ -5739,12 +5739,12 @@
           22
         ],
         "grab_size_px": [
-          380,
-          52
+          940,
+          749
         ],
         "grab_dpr": 1.0,
-        "background_rgb": "#B2F3F3",
-        "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+        "background_rgb": "#FFFFFF",
+        "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
         "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
         "border_color_histogram": [
           {
@@ -5752,20 +5752,20 @@
             "n": 140
           },
           {
-            "rgb": "#D7E3ED",
+            "rgb": "#E2EEF8",
             "n": 4
           },
           {
-            "rgb": "#5397D1",
+            "rgb": "#579BD5",
             "n": 4
           },
           {
-            "rgb": "#1070C3",
+            "rgb": "#1171C4",
             "n": 4
           }
         ],
-        "border_p95_ratio": 4.595,
-        "border_max_ratio": 4.595,
+        "border_p95_ratio": 5.674,
+        "border_max_ratio": 5.674,
         "border_fraction_ge_3": 0.9474,
         "samples": 152,
         "qss": "",
@@ -6032,7 +6032,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0t3vd1g0\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-mj2_oaxv\\fi"
               },
               {
                 "class": "QComboBox",
@@ -6220,7 +6220,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0t3vd1g0\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-mj2_oaxv\\fi"
               },
               {
                 "class": "QComboBox",
@@ -6408,7 +6408,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0t3vd1g0\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-mj2_oaxv\\fi"
               },
               {
                 "class": "QComboBox",
@@ -6596,7 +6596,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0t3vd1g0\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-mj2_oaxv\\fi"
               },
               {
                 "class": "QComboBox",
@@ -6704,7 +6704,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0t3vd1g0\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-mj2_oaxv\\pr"
               },
               {
                 "class": "QPushButton",
@@ -6722,13 +6722,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0t3vd1g0\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-mj2_oaxv\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0t3vd1g0\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-mj2_oaxv\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -6760,50 +6760,50 @@
             22
           ],
           "grab_size_px": [
-            380,
-            52
+            940,
+            749
           ],
           "grab_dpr": 1.0,
-          "background_rgb": "#B2F3F3",
-          "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+          "background_rgb": "#FFFFFF",
+          "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
           "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
           "border_color_histogram": [
             {
-              "rgb": "#EDEDED",
+              "rgb": "#F9F9F9",
               "n": 140
             },
             {
-              "rgb": "#AEAEAE",
+              "rgb": "#B6B6B6",
               "n": 2
-            },
-            {
-              "rgb": "#8F8F8F",
-              "n": 2
-            },
-            {
-              "rgb": "#888888",
-              "n": 2
-            },
-            {
-              "rgb": "#ACACAC",
-              "n": 1
-            },
-            {
-              "rgb": "#8B8B8B",
-              "n": 1
-            },
-            {
-              "rgb": "#898989",
-              "n": 1
             },
             {
               "rgb": "#909090",
+              "n": 2
+            },
+            {
+              "rgb": "#969696",
+              "n": 2
+            },
+            {
+              "rgb": "#B4B4B4",
+              "n": 1
+            },
+            {
+              "rgb": "#929292",
+              "n": 1
+            },
+            {
+              "rgb": "#979797",
+              "n": 1
+            },
+            {
+              "rgb": "#949494",
               "n": 1
             }
           ],
-          "border_p95_ratio": 1.838,
-          "border_max_ratio": 2.871,
-          "border_fraction_ge_3": 0.0,
+          "border_p95_ratio": 2.073,
+          "border_max_ratio": 3.234,
+          "border_fraction_ge_3": 0.0329,
           "samples": 152,
           "qss": "",
           "app_qss": "",
@@ -6832,12 +6832,12 @@
           22
         ],
         "grab_size_px": [
-          380,
-          52
+          940,
+          749
         ],
         "grab_dpr": 1.0,
-        "background_rgb": "#B2F3F3",
-        "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+        "background_rgb": "#FFFFFF",
+        "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
         "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
         "border_color_histogram": [
           {
@@ -6845,20 +6845,20 @@
             "n": 140
           },
           {
-            "rgb": "#D7E3ED",
+            "rgb": "#E2EEF8",
             "n": 4
           },
           {
-            "rgb": "#5397D1",
+            "rgb": "#579BD5",
             "n": 4
           },
           {
-            "rgb": "#1070C3",
+            "rgb": "#1171C4",
             "n": 4
           }
         ],
-        "border_p95_ratio": 4.595,
-        "border_max_ratio": 4.595,
+        "border_p95_ratio": 5.674,
+        "border_max_ratio": 5.674,
         "border_fraction_ge_3": 0.9474,
         "samples": 152,
         "qss": "",
@@ -6902,13 +6902,13 @@
             "input_rect_viewport": [
               18,
               143,
-              446,
+              454,
               736
             ],
             "result_rect_viewport": [
-              476,
+              484,
               143,
-              434,
+              426,
               736
             ],
             "input_right_of_result": false,
@@ -7125,7 +7125,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-pcu5ebtl\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7aja9qgj\\fi"
               },
               {
                 "class": "QComboBox",
@@ -7313,7 +7313,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-pcu5ebtl\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7aja9qgj\\fi"
               },
               {
                 "class": "QComboBox",
@@ -7501,7 +7501,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-pcu5ebtl\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7aja9qgj\\fi"
               },
               {
                 "class": "QComboBox",
@@ -7689,7 +7689,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-pcu5ebtl\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7aja9qgj\\fi"
               },
               {
                 "class": "QComboBox",
@@ -7797,7 +7797,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-pcu5ebtl\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7aja9qgj\\pr"
               },
               {
                 "class": "QPushButton",
@@ -7815,13 +7815,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-pcu5ebtl\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7aja9qgj\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-pcu5ebtl\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7aja9qgj\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -7853,50 +7853,50 @@
             22
           ],
           "grab_size_px": [
-            380,
-            52
+            940,
+            749
           ],
           "grab_dpr": 1.0,
-          "background_rgb": "#B2F3F3",
-          "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+          "background_rgb": "#FFFFFF",
+          "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
           "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
           "border_color_histogram": [
             {
-              "rgb": "#EDEDED",
+              "rgb": "#F9F9F9",
               "n": 140
             },
             {
-              "rgb": "#AEAEAE",
+              "rgb": "#B6B6B6",
               "n": 2
-            },
-            {
-              "rgb": "#8F8F8F",
-              "n": 2
-            },
-            {
-              "rgb": "#888888",
-              "n": 2
-            },
-            {
-              "rgb": "#ACACAC",
-              "n": 1
-            },
-            {
-              "rgb": "#8B8B8B",
-              "n": 1
-            },
-            {
-              "rgb": "#898989",
-              "n": 1
             },
             {
               "rgb": "#909090",
+              "n": 2
+            },
+            {
+              "rgb": "#969696",
+              "n": 2
+            },
+            {
+              "rgb": "#B4B4B4",
+              "n": 1
+            },
+            {
+              "rgb": "#929292",
+              "n": 1
+            },
+            {
+              "rgb": "#979797",
+              "n": 1
+            },
+            {
+              "rgb": "#949494",
               "n": 1
             }
           ],
-          "border_p95_ratio": 1.838,
-          "border_max_ratio": 2.871,
-          "border_fraction_ge_3": 0.0,
+          "border_p95_ratio": 2.073,
+          "border_max_ratio": 3.234,
+          "border_fraction_ge_3": 0.0329,
           "samples": 152,
           "qss": "",
           "app_qss": "",
@@ -7925,12 +7925,12 @@
           22
         ],
         "grab_size_px": [
-          380,
-          52
+          940,
+          749
         ],
         "grab_dpr": 1.0,
-        "background_rgb": "#B2F3F3",
-        "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+        "background_rgb": "#FFFFFF",
+        "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
         "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
         "border_color_histogram": [
           {
@@ -7938,20 +7938,20 @@
             "n": 140
           },
           {
-            "rgb": "#D7E3ED",
+            "rgb": "#E2EEF8",
             "n": 4
           },
           {
-            "rgb": "#5397D1",
+            "rgb": "#579BD5",
             "n": 4
           },
           {
-            "rgb": "#1070C3",
+            "rgb": "#1171C4",
             "n": 4
           }
         ],
-        "border_p95_ratio": 4.595,
-        "border_max_ratio": 4.595,
+        "border_p95_ratio": 5.674,
+        "border_max_ratio": 5.674,
         "border_fraction_ge_3": 0.9474,
         "samples": 152,
         "qss": "",
@@ -8218,7 +8218,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0rsutark\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-3dlyql_b\\fi"
               },
               {
                 "class": "QComboBox",
@@ -8406,7 +8406,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0rsutark\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-3dlyql_b\\fi"
               },
               {
                 "class": "QComboBox",
@@ -8514,7 +8514,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0rsutark\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-3dlyql_b\\pr"
               },
               {
                 "class": "QPushButton",
@@ -8532,13 +8532,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0rsutark\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-3dlyql_b\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0rsutark\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-3dlyql_b\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -8814,7 +8814,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-vzlx8w63\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0hztdpcg\\fi"
               },
               {
                 "class": "QComboBox",
@@ -9002,7 +9002,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-vzlx8w63\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0hztdpcg\\fi"
               },
               {
                 "class": "QComboBox",
@@ -9110,7 +9110,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-vzlx8w63\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0hztdpcg\\pr"
               },
               {
                 "class": "QPushButton",
@@ -9128,13 +9128,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-vzlx8w63\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0hztdpcg\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-vzlx8w63\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-0hztdpcg\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -9410,7 +9410,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-pntj4_wg\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7l42ega5\\fi"
               },
               {
                 "class": "QComboBox",
@@ -9598,7 +9598,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-pntj4_wg\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7l42ega5\\fi"
               },
               {
                 "class": "QComboBox",
@@ -9706,7 +9706,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-pntj4_wg\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7l42ega5\\pr"
               },
               {
                 "class": "QPushButton",
@@ -9724,13 +9724,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-pntj4_wg\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7l42ega5\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-pntj4_wg\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7l42ega5\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -10006,7 +10006,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-a9eqht25\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-8va4u2um\\fi"
               },
               {
                 "class": "QComboBox",
@@ -10194,7 +10194,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-a9eqht25\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-8va4u2um\\fi"
               },
               {
                 "class": "QComboBox",
@@ -10302,7 +10302,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-a9eqht25\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-8va4u2um\\pr"
               },
               {
                 "class": "QPushButton",
@@ -10320,13 +10320,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-a9eqht25\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-8va4u2um\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-a9eqht25\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-8va4u2um\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -10602,7 +10602,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ayrzbd3k\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-aqa6kzqh\\fi"
               },
               {
                 "class": "QComboBox",
@@ -10790,7 +10790,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ayrzbd3k\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-aqa6kzqh\\fi"
               },
               {
                 "class": "QComboBox",
@@ -10898,7 +10898,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ayrzbd3k\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-aqa6kzqh\\pr"
               },
               {
                 "class": "QPushButton",
@@ -10916,13 +10916,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ayrzbd3k\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-aqa6kzqh\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ayrzbd3k\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-aqa6kzqh\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -11198,7 +11198,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-mi7s_xcj\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ybezm2ig\\fi"
               },
               {
                 "class": "QComboBox",
@@ -11386,7 +11386,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-mi7s_xcj\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ybezm2ig\\fi"
               },
               {
                 "class": "QComboBox",
@@ -11494,7 +11494,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-mi7s_xcj\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ybezm2ig\\pr"
               },
               {
                 "class": "QPushButton",
@@ -11512,13 +11512,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-mi7s_xcj\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ybezm2ig\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-mi7s_xcj\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ybezm2ig\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -11794,7 +11794,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-cqtd71nj\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-8fn2wx73\\fi"
               },
               {
                 "class": "QComboBox",
@@ -11982,7 +11982,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-cqtd71nj\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-8fn2wx73\\fi"
               },
               {
                 "class": "QComboBox",
@@ -12170,7 +12170,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-cqtd71nj\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-8fn2wx73\\fi"
               },
               {
                 "class": "QComboBox",
@@ -12358,7 +12358,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-cqtd71nj\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-8fn2wx73\\fi"
               },
               {
                 "class": "QComboBox",
@@ -12466,7 +12466,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-cqtd71nj\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-8fn2wx73\\pr"
               },
               {
                 "class": "QPushButton",
@@ -12484,13 +12484,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-cqtd71nj\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-8fn2wx73\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-cqtd71nj\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-8fn2wx73\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -12522,12 +12522,12 @@
             22
           ],
           "grab_size_px": [
-            370,
-            52
+            940,
+            749
           ],
           "grab_dpr": 1.0,
-          "background_rgb": "#EAF1B7",
-          "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+          "background_rgb": "#151A21",
+          "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
           "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
           "border_color_histogram": [
             {
@@ -12539,9 +12539,9 @@
               "n": 68
             }
           ],
-          "border_p95_ratio": 12.605,
-          "border_max_ratio": 12.605,
-          "border_fraction_ge_3": 0.4474,
+          "border_p95_ratio": 13.925,
+          "border_max_ratio": 13.925,
+          "border_fraction_ge_3": 0.5526,
           "samples": 152,
           "qss": "QCheckBox#financialApproval::indicator:unchecked { border: 2px solid #DCE7F0; background-color: #202831; }",
           "app_qss": "",
@@ -12570,12 +12570,12 @@
           22
         ],
         "grab_size_px": [
-          370,
-          52
+          940,
+          749
         ],
         "grab_dpr": 1.0,
-        "background_rgb": "#EAF1B7",
-        "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+        "background_rgb": "#151A21",
+        "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
         "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
         "border_color_histogram": [
           {
@@ -12583,7 +12583,7 @@
             "n": 104
           },
           {
-            "rgb": "#1D252D",
+            "rgb": "#1D242D",
             "n": 20
           },
           {
@@ -12599,9 +12599,9 @@
             "n": 1
           }
         ],
-        "border_p95_ratio": 13.113,
-        "border_max_ratio": 13.113,
-        "border_fraction_ge_3": 1.0,
+        "border_p95_ratio": 1.174,
+        "border_max_ratio": 1.256,
+        "border_fraction_ge_3": 0.0,
         "samples": 152,
         "qss": "QCheckBox#financialApproval::indicator:unchecked { border: 2px solid #DCE7F0; background-color: #202831; }",
         "app_qss": "",
@@ -12867,7 +12867,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7n8vadb7\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-h_5h5079\\fi"
               },
               {
                 "class": "QComboBox",
@@ -13055,7 +13055,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7n8vadb7\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-h_5h5079\\fi"
               },
               {
                 "class": "QComboBox",
@@ -13243,7 +13243,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7n8vadb7\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-h_5h5079\\fi"
               },
               {
                 "class": "QComboBox",
@@ -13431,7 +13431,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7n8vadb7\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-h_5h5079\\fi"
               },
               {
                 "class": "QComboBox",
@@ -13539,7 +13539,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7n8vadb7\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-h_5h5079\\pr"
               },
               {
                 "class": "QPushButton",
@@ -13557,13 +13557,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7n8vadb7\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-h_5h5079\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-7n8vadb7\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-h_5h5079\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -13595,12 +13595,12 @@
             22
           ],
           "grab_size_px": [
-            370,
-            52
+            940,
+            749
           ],
           "grab_dpr": 1.0,
-          "background_rgb": "#EAF1B7",
-          "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+          "background_rgb": "#151A21",
+          "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
           "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
           "border_color_histogram": [
             {
@@ -13612,11 +13612,11 @@
               "n": 68
             }
           ],
-          "border_p95_ratio": 12.605,
-          "border_max_ratio": 12.605,
-          "border_fraction_ge_3": 0.4474,
+          "border_p95_ratio": 13.925,
+          "border_max_ratio": 13.925,
+          "border_fraction_ge_3": 0.5526,
           "samples": 152,
-          "qss": "QCheckBox#financialApproval::indicator:unchecked { border: 2px solid #DCE7F0; background-color: #202831; }",
+          "qss": "QCheckBox::indicator:unchecked { border: 2px solid #DCE7F0; background-color: #202831; }",
           "app_qss": "",
           "parent_qss": "",
           "palette_window": "#151a21",
@@ -13643,12 +13643,12 @@
           22
         ],
         "grab_size_px": [
-          370,
-          52
+          940,
+          749
         ],
         "grab_dpr": 1.0,
-        "background_rgb": "#EAF1B7",
-        "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+        "background_rgb": "#151A21",
+        "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
         "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
         "border_color_histogram": [
           {
@@ -13656,7 +13656,7 @@
             "n": 104
           },
           {
-            "rgb": "#1D252D",
+            "rgb": "#1D242D",
             "n": 20
           },
           {
@@ -13672,11 +13672,11 @@
             "n": 1
           }
         ],
-        "border_p95_ratio": 13.113,
-        "border_max_ratio": 13.113,
-        "border_fraction_ge_3": 1.0,
+        "border_p95_ratio": 1.174,
+        "border_max_ratio": 1.256,
+        "border_fraction_ge_3": 0.0,
         "samples": 152,
-        "qss": "QCheckBox#financialApproval::indicator:unchecked { border: 2px solid #DCE7F0; background-color: #202831; }",
+        "qss": "QCheckBox::indicator:unchecked { border: 2px solid #DCE7F0; background-color: #202831; }",
         "app_qss": "",
         "parent_qss": "",
         "palette_window": "#151a21",
@@ -13940,7 +13940,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ojqdcwbc\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-yd7e8ic1\\fi"
               },
               {
                 "class": "QComboBox",
@@ -14128,7 +14128,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ojqdcwbc\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-yd7e8ic1\\fi"
               },
               {
                 "class": "QComboBox",
@@ -14316,7 +14316,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ojqdcwbc\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-yd7e8ic1\\fi"
               },
               {
                 "class": "QComboBox",
@@ -14504,7 +14504,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ojqdcwbc\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-yd7e8ic1\\fi"
               },
               {
                 "class": "QComboBox",
@@ -14612,7 +14612,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ojqdcwbc\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-yd7e8ic1\\pr"
               },
               {
                 "class": "QPushButton",
@@ -14630,13 +14630,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ojqdcwbc\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-yd7e8ic1\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-ojqdcwbc\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-yd7e8ic1\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -14668,16 +14668,16 @@
             22
           ],
           "grab_size_px": [
-            370,
-            52
+            940,
+            749
           ],
           "grab_dpr": 1.0,
-          "background_rgb": "#EAF1B7",
-          "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+          "background_rgb": "#151A21",
+          "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
           "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
           "border_color_histogram": [
             {
-              "rgb": "#DCE7F0",
+              "rgb": "#FF00FF",
               "n": 84
             },
             {
@@ -14685,11 +14685,11 @@
               "n": 68
             }
           ],
-          "border_p95_ratio": 12.605,
-          "border_max_ratio": 12.605,
-          "border_fraction_ge_3": 0.4474,
+          "border_p95_ratio": 5.573,
+          "border_max_ratio": 5.573,
+          "border_fraction_ge_3": 0.5526,
           "samples": 152,
-          "qss": "QCheckBox#financialApproval::indicator:unchecked { border: 2px solid #DCE7F0; background-color: #202831; }",
+          "qss": "QCheckBox#financialApproval::indicator:unchecked { border: 2px solid #FF00FF; background-color: #202831; }",
           "app_qss": "",
           "parent_qss": "",
           "palette_window": "#151a21",
@@ -14716,12 +14716,12 @@
           22
         ],
         "grab_size_px": [
-          370,
-          52
+          940,
+          749
         ],
         "grab_dpr": 1.0,
-        "background_rgb": "#EAF1B7",
-        "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+        "background_rgb": "#151A21",
+        "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
         "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
         "border_color_histogram": [
           {
@@ -14729,7 +14729,7 @@
             "n": 104
           },
           {
-            "rgb": "#1D252D",
+            "rgb": "#1D242D",
             "n": 20
           },
           {
@@ -14745,11 +14745,11 @@
             "n": 1
           }
         ],
-        "border_p95_ratio": 13.113,
-        "border_max_ratio": 13.113,
-        "border_fraction_ge_3": 1.0,
+        "border_p95_ratio": 1.174,
+        "border_max_ratio": 1.256,
+        "border_fraction_ge_3": 0.0,
         "samples": 152,
-        "qss": "QCheckBox#financialApproval::indicator:unchecked { border: 2px solid #DCE7F0; background-color: #202831; }",
+        "qss": "QCheckBox#financialApproval::indicator:unchecked { border: 2px solid #FF00FF; background-color: #202831; }",
         "app_qss": "",
         "parent_qss": "",
         "palette_window": "#151a21",
@@ -15013,7 +15013,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-cvj_0gp4\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-sz3jwlvj\\fi"
               },
               {
                 "class": "QComboBox",
@@ -15201,7 +15201,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-cvj_0gp4\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-sz3jwlvj\\fi"
               },
               {
                 "class": "QComboBox",
@@ -15389,7 +15389,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-cvj_0gp4\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-sz3jwlvj\\fi"
               },
               {
                 "class": "QComboBox",
@@ -15577,7 +15577,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر فایل انتخاب‌شده",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-cvj_0gp4\\fi"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-sz3jwlvj\\fi"
               },
               {
                 "class": "QComboBox",
@@ -15685,7 +15685,7 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "پوشه خصوصی خروجی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-cvj_0gp4\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-sz3jwlvj\\pr"
               },
               {
                 "class": "QPushButton",
@@ -15703,13 +15703,13 @@
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل فایل CSV نامزد",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-cvj_0gp4\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-sz3jwlvj\\pr"
               },
               {
                 "class": "QLineEdit",
                 "object": "",
                 "accessible": "مسیر کامل گزارش کنترل خصوصی",
-                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-cvj_0gp4\\pr"
+                "label": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\b2o-qt-qual-sz3jwlvj\\pr"
               },
               {
                 "class": "QScrollArea",
@@ -15741,28 +15741,28 @@
             22
           ],
           "grab_size_px": [
-            370,
-            52
+            940,
+            749
           ],
           "grab_dpr": 1.0,
-          "background_rgb": "#EAF1B7",
-          "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+          "background_rgb": "#151A21",
+          "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
           "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
           "border_color_histogram": [
             {
-              "rgb": "#DCE7F0",
+              "rgb": "#161B22",
               "n": 84
             },
             {
-              "rgb": "#202831",
+              "rgb": "#151A21",
               "n": 68
             }
           ],
-          "border_p95_ratio": 12.605,
-          "border_max_ratio": 12.605,
-          "border_fraction_ge_3": 0.4474,
+          "border_p95_ratio": 1.01,
+          "border_max_ratio": 1.01,
+          "border_fraction_ge_3": 0.0,
           "samples": 152,
-          "qss": "QCheckBox#financialApproval::indicator:unchecked { border: 2px solid #DCE7F0; background-color: #202831; }",
+          "qss": "QCheckBox#financialApproval::indicator:unchecked { border: 2px solid #161B22; background-color: #151A21; }",
           "app_qss": "",
           "parent_qss": "",
           "palette_window": "#151a21",
@@ -15789,12 +15789,12 @@
           22
         ],
         "grab_size_px": [
-          370,
-          52
+          940,
+          749
         ],
         "grab_dpr": 1.0,
-        "background_rgb": "#EAF1B7",
-        "background_sampling": "outside indicator at center line, 5/8 logical px to either side; mode of 12 samples",
+        "background_rgb": "#151A21",
+        "background_sampling": "COMPOSITED window; center x +/-3; 5/7 logical px above/below indicator; RGB mode of up to 12 samples",
         "border_sampling": "inside the indicator, 1/2 logical pixels from four edges, DPR-scaled nearest-point",
         "border_color_histogram": [
           {
@@ -15802,7 +15802,7 @@
             "n": 104
           },
           {
-            "rgb": "#1D252D",
+            "rgb": "#1D242D",
             "n": 20
           },
           {
@@ -15818,11 +15818,11 @@
             "n": 1
           }
         ],
-        "border_p95_ratio": 13.113,
-        "border_max_ratio": 13.113,
-        "border_fraction_ge_3": 1.0,
+        "border_p95_ratio": 1.174,
+        "border_max_ratio": 1.256,
+        "border_fraction_ge_3": 0.0,
         "samples": 152,
-        "qss": "QCheckBox#financialApproval::indicator:unchecked { border: 2px solid #DCE7F0; background-color: #202831; }",
+        "qss": "QCheckBox#financialApproval::indicator:unchecked { border: 2px solid #161B22; background-color: #151A21; }",
         "app_qss": "",
         "parent_qss": "",
         "palette_window": "#151a21",
