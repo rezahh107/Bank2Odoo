@@ -219,8 +219,18 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/qt-evidence"
+          # Negative control: treat every historical Actions run as unavailable.
+          # This still allows the current-run artifact required for publication.
+          gh() {
+            if [[ "${1:-}" == run && "${2:-}" == download && "${3:-}" != "$GITHUB_RUN_ID" ]]; then
+              echo "::error::Historical Actions artifact unavailable (simulated)"
+              return 1
+            fi
+            command gh "$@"
+          }
           gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name qt-saved-path-overflow-qualification --dir "$RUNNER_TEMP/qt-evidence"
           test -s "$RUNNER_TEMP/qt-evidence/measurements.json"
+          echo "HISTORICAL_ARTIFACTS_UNAVAILABLE_SIMULATED: current-run evidence fetched successfully"
       - name: Obtain and independently verify immutable original Qt baseline
         shell: bash
         env:
