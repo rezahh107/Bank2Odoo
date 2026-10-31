@@ -84,8 +84,15 @@ def snapshot(app, w, out: Path, label: str, records: list[dict]):
     app.processEvents()
     # A product UI at 650x520 scrolls; preserve both positions without
     # replacing real widget geometry or drawing a reconstructed picture.
-    for view in ("top", "bottom"):
-        if view == "bottom":
+    for view in ("top", "action", "bottom"):
+        if view == "action":
+            # Bottom of the whole document may hide the result/action in the
+            # middle of the workspace. Capture the actual task-action viewport.
+            w.scroll.ensureWidgetVisible(w.convert_button, 0, 8)
+            w.scroll.ensureWidgetVisible(
+                getattr(w, "result_state", w.status), 0, 8)
+            app.processEvents()
+        elif view == "bottom":
             w.scroll.verticalScrollBar().setValue(
                 w.scroll.verticalScrollBar().maximum())
             app.processEvents()
@@ -390,7 +397,7 @@ def main() -> None:
         f"Baseline: {BASE_SHA}\nFeature checkout HEAD: {metadata['actual_checkout_head']}\n"
         f"GitHub event SHA (may be PR merge commit): {metadata['github_event_sha']}\n"
         f"Cases: {len(metadata['cases'])}; before/after × light/dark × three window sizes.\n"
-        "Each case saves 13 states × 2 scroll positions at original QWidget.grab resolution, including cancellation request during a real held worker.\n"
+        "Each case saves 13 states × 3 actual scroll positions (top, task-action, bottom) at native QWidget.grab resolution, including cancellation request during a real held worker.\n"
         f"Native restoration audit: {len(metadata['palette_restoration'])} Qt style/scheme cases.\n"
         "The NOT_PROVEN financial result is computed with a fictional two-row statement.\n"
         "ColorScheme was set by an application-only TEST override, NOT by the real OS.\n"
