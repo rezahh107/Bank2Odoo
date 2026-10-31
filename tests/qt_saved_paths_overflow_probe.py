@@ -47,7 +47,23 @@ def measure(w, app, case, output):
        "saved_label_rect":rect(w.saved_paths),
        "result_rect":rect(w._result_column),"input_rect":rect(w._input_column),
        "action_rect":rect(w.convert_button),"state_rect":rect(w.result_state),
-       "saved":w._saved, "source_file_fictional":True}
+       "saved":w._saved, "source_file_fictional":True,
+       "columns_minimum_size_hint":{
+            "input":size(w._input_column.minimumSizeHint()),
+            "result":size(w._result_column.minimumSizeHint())},
+       "group_boxes":{
+            box.title():{"minimum":size(box.minimumSizeHint()), "preferred":size(box.sizeHint()),"rect":rect(box)}
+            for box in w.findChildren(__import__("PySide6.QtWidgets",fromlist=["QGroupBox"]).QGroupBox)
+       },
+       "widget_min_hints":{
+            "source_picker":size(w.select_button.minimumSizeHint()),
+            "path":size(w.path_field.minimumSizeHint()),
+            "journal":size(w.journal.minimumSizeHint()),
+            "source_unit":size(w.source_unit.minimumSizeHint()),
+            "approval":size(w.approved.minimumSizeHint()),
+            "primary_action":size(w.convert_button.minimumSizeHint()),
+            "directory_button":size(w.directory_button.minimumSizeHint()),
+            "output_path":size(w.output_directory.minimumSizeHint())}}
     pm=w.grab(); name=case+".png"
     if pm.isNull() or not pm.save(str(output/name),"PNG"):
         raise RuntimeError("PNG grab failed: "+name)
@@ -119,6 +135,6 @@ def main():
     (args.output/"measurements.json").write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding="utf-8")
     for x in data:
         print(x["case"],"H",x["hscroll"],"content",x["content"],"viewport",x["viewport"],
-              "labelMin",x["saved_label_min_hint"],"columns",x["input_rect"],x["result_rect"])
+              "labelMin",x["saved_label_min_hint"],"groups",[(k,v["minimum"][0]) for k,v in x["group_boxes"].items()],"columns",x["input_rect"],x["result_rect"])
     print("QUALIFIED_CASES",len(data))
 if __name__=="__main__":main()
