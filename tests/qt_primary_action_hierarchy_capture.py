@@ -257,6 +257,31 @@ def main():
         "raster quality, or human accountant UX acceptance.\n",
         encoding="utf-8",
     )
+    # Compact visual review thumbnails originate from the *saved native Qt
+    # renders* above. Full-resolution originals remain in the CI artifact.
+    # These prints allow independent human/LLM review without a separate
+    # mockup or any bank data. Size bounded for GitHub Actions log limits.
+    if os.getenv("QT_PRIMARY_LOG_PREVIEWS") == "1":
+        import base64
+        from PySide6.QtCore import QByteArray, QBuffer, QIODevice
+        from PySide6.QtGui import QImage
+        for variant in PHASES:
+            for scheme in ("light", "dark"):
+                label = f"{variant}_{scheme}_940x830_initial_top.png"
+                preview = QImage(str(args.output / label))
+                if preview.isNull():
+                    raise RuntimeError("Missing native Qt screenshot: " + label)
+                preview = preview.scaledToWidth(
+                    620, Qt.TransformationMode.SmoothTransformation
+                )
+                data = QByteArray()
+                buffer = QBuffer(data)
+                if not buffer.open(QIODevice.OpenModeFlag.WriteOnly):
+                    raise RuntimeError("Cannot create preview buffer")
+                if not preview.save(buffer, "JPEG", 67):
+                    raise RuntimeError("Cannot encode Qt preview")
+                print("QT_PRIMARY_PREVIEW|" + variant + "|" + scheme + "|"
+                      + base64.b64encode(bytes(data)).decode("ascii"))
     print("PRIMARY_ACTION_HIERARCHY_QT_CASES:", len(report["cases"]))
     print("NEGATIVE_CONTROL:", [
         c.get("negative_control_conflicting_convert")
