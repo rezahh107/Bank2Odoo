@@ -839,7 +839,7 @@ class AccountantUiTests(unittest.TestCase):
         self.window.path_field.setText(very_long)
         self.window.output_directory.setText(very_long + "/output")
         for width, height, direction in (
-            (940, 830, QBoxLayout.Direction.RightToLeft),
+            (940, 830, QBoxLayout.Direction.LeftToRight),
             (650, 520, QBoxLayout.Direction.TopToBottom),
             (600, 480, QBoxLayout.Direction.TopToBottom),
         ):
@@ -850,6 +850,33 @@ class AccountantUiTests(unittest.TestCase):
                 self.app.processEvents()
                 self.assertEqual(self.window._workspace.direction(), direction,
                                  f"Measured breakpoint={self.window._workspace_breakpoint}, parts={self.window._workspace_measurements}, viewport={self.window.scroll.viewport().width()}")
+                viewport = self.window.scroll.viewport()
+                input_rect = self.window._input_column.geometry()
+                result_rect = self.window._result_column.geometry()
+                if direction == QBoxLayout.Direction.LeftToRight:
+                    self.assertGreater(input_rect.center().x(), result_rect.center().x(),
+                                       "RTL accountant entry must render on the right")
+                    # Real adversarial control: deliberately reverse the Qt
+                    # horizontal mechanism and require geometry to detect it.
+                    self.window._workspace.setDirection(QBoxLayout.Direction.RightToLeft)
+                    self.window._workspace.invalidate()
+                    self.window._workspace.activate()
+                    self.app.processEvents()
+                    reversed_input = self.window._input_column.geometry()
+                    reversed_result = self.window._result_column.geometry()
+                    self.assertLess(reversed_input.center().x(),
+                                    reversed_result.center().x(),
+                                    "Reversed-order negative control was not detected")
+                    self.window._workspace.setDirection(QBoxLayout.Direction.LeftToRight)
+                    self.window._workspace.invalidate()
+                    self.window._workspace.activate()
+                    self.app.processEvents()
+                    self.assertGreater(self.window._input_column.geometry().center().x(),
+                                       self.window._result_column.geometry().center().x())
+                else:
+                    self.assertLess(input_rect.center().y(), result_rect.center().y(),
+                                    "Narrow accountant stages must stack top-to-bottom")
+                self.assertEqual(self.window.scroll.horizontalScrollBar().maximum(), 0)
                 content = self.window.scroll.widget()
                 for control in (
                     self.window.source_unit, self.window.target_unit,
@@ -950,7 +977,7 @@ class AccountantUiTests(unittest.TestCase):
                     self.window.scroll.verticalScrollBar().maximum())
                 self.app.processEvents()
                 self.assertEqual(h.maximum(), 0, "Vertical scroll changed horizontal range")
-                if self.window._workspace.direction() == QBoxLayout.Direction.RightToLeft:
+                if self.window._workspace.direction() == QBoxLayout.Direction.LeftToRight:
                     vp = self.window.scroll.viewport()
                     for column in (self.window._input_column, self.window._result_column):
                         x = column.mapTo(vp, QPoint(0, 0)).x()
