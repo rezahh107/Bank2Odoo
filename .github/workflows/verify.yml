@@ -169,7 +169,7 @@ jobs:
           PYTHONFAULTHANDLER: "1"
         shell: pwsh
         run: |
-          git fetch --no-tags --depth=1 origin d06b35f41ac46936716b186fb1dfac33da983eb9
+          git fetch --no-tags --depth=1 origin 1ff8057945abacf1ae8a2532ac37b9fe9dd43361
           uv run --locked python -m tests.qt_theme_pilot_capture --output "$env:RUNNER_TEMP/bank2odoo-dark-pilot"
           if ($LASTEXITCODE -ne 0) { throw "Dark pilot capture failed" }
       - name: Upload synthetic dark theme pilot images and environment
@@ -179,7 +179,190 @@ jobs:
           path: ${{ runner.temp }}/bank2odoo-dark-pilot/
           retention-days: 14
           if-no-files-found: error
+      - name: Diagnose fictional saved-path overflow on native Windows QPA
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONFAULTHANDLER: "1"
+        shell: pwsh
+        run: |
+          uv run --locked python -m tests.qt_saved_paths_overflow_probe --output "$env:RUNNER_TEMP/bank2odoo-overflow-qualification"
+          if ($LASTEXITCODE -ne 0) { throw "Saved paths probe failed" }
+      - name: Upload diagnostic measurements and original-resolution PNGs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: qt-saved-path-overflow-qualification
+          path: ${{ runner.temp }}/bank2odoo-overflow-qualification/
+          retention-days: 14
+          if-no-files-found: warn
       - name: Offline Qt window creation smoke
         env:
           QT_QPA_PLATFORM: offscreen
         run: uv run --offline --locked python -c "from PySide6.QtWidgets import QApplication; from bank2odoo.ui.window import MainWindow; app=QApplication([]); w=MainWindow(); assert 'Bank2Odoo' in w.windowTitle(); w.close(); print('offline Qt window OK')"
+
+  publish-curated-overflow-evidence:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'diagnostic/qt-saved-path-overflow-20261031'
+    needs: verify-windows
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Check out isolated non-release evidence branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: evidence/qt-saved-path-overflow-pr11-20261031
+      - name: Download original synthetic Qt PNGs from successful verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/qt-evidence"
+          # Negative control: treat every historical Actions run as unavailable.
+          # This still allows the current-run artifact required for publication.
+          gh() {
+            if [[ "${1:-}" == run && "${2:-}" == download && "${3:-}" != "$GITHUB_RUN_ID" ]]; then
+              echo "::error::Historical Actions artifact unavailable (simulated)"
+              return 1
+            fi
+            command gh "$@"
+          }
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name qt-saved-path-overflow-qualification --dir "$RUNNER_TEMP/qt-evidence"
+          test -s "$RUNNER_TEMP/qt-evidence/measurements.json"
+          echo "HISTORICAL_ARTIFACTS_UNAVAILABLE_SIMULATED: current-run evidence fetched successfully"
+      - name: Obtain and independently verify immutable original Qt baseline
+        shell: bash
+        env:
+          BASELINE_COMMIT: 2161ffdc7053b2c76e42b283b44f2b2f18efa84e
+        run: |
+          set -euo pipefail
+          baseline="$RUNNER_TEMP/qt-baseline"
+          mkdir -p "$baseline"
+          # Never use a historical expiring Actions artifact or the mutable
+          # evidence-branch HEAD as the authority for baseline bytes.
+          git fetch --no-tags --depth=1 origin "$BASELINE_COMMIT"
+          manifest="$RUNNER_TEMP/qt-baseline-pinned.sha256"
+          # The original Windows artifact used CRLF; Git's pinned JSON blob
+          # has LF-only line endings. Verify the actual pinned Git bytes
+          # (git blob 8295fe048fd8bae6a782ee0c63fd3891ffc5362b);
+          # the six binary PNG hashes are unchanged.
+          cat > "$manifest" <<'SHA256'
+          b745815eb50c1c709f9f77b05e66927f1a0df653ab05efbd6a6ee731f66daebe  baseline_measurements.json
+          4f308061c1a6b71d4df09796d94796ddb5c8013e83fa04ff50c8232a013b0b3a  baseline_dark_600x480_long_after.png
+          954afd999f6c71eddadb5716ce5c38f2a8462c86519055df8023f3fbfd0ae37c  baseline_dark_650x520_long_after.png
+          814f239a0de0f6237f716e1fd08195b9ae76860204e69d1d6d74cb50916fa75f  baseline_dark_940x830_long_after.png
+          cf7634da965e5e27f8c25e39b4f903ee1a3a9ef2395aef803a15f8f0f9468f2b  baseline_light_600x480_long_after.png
+          f96d6079382aad32b8433b986a4adc52bd76e9369bc9d1ca39f1fc88e2d8bb08  baseline_light_650x520_long_after.png
+          45230e4dee072e5ab19205ce0e4bd6b882357670c0ab100f650885cc2f68c100  baseline_light_940x830_long_after.png
+          SHA256
+          for name in baseline_measurements.json \
+                      baseline_dark_600x480_long_after.png \
+                      baseline_dark_650x520_long_after.png \
+                      baseline_dark_940x830_long_after.png \
+                      baseline_light_600x480_long_after.png \
+                      baseline_light_650x520_long_after.png \
+                      baseline_light_940x830_long_after.png; do
+            git show "$BASELINE_COMMIT:evidence/qt-overflow-pr11/$name" > "$baseline/$name"
+          done
+          (cd "$baseline" && sha256sum --check --strict "$manifest")
+          echo "PINNED_BASELINE_VERIFIED: commit=$BASELINE_COMMIT, 7 files SHA-256 match"
+      - name: Falsify corrupted and missing pinned baseline before publishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline="$RUNNER_TEMP/qt-baseline"
+          manifest="$RUNNER_TEMP/qt-baseline-pinned.sha256"
+          negative="$RUNNER_TEMP/qt-baseline-negative"
+          mkdir -p "$negative"
+          cp "$baseline"/* "$negative/"
+          # The same verifier used for real publication must reject a byte change.
+          printf '\nTAMPERED\n' >> "$negative/baseline_measurements.json"
+          if (cd "$negative" && sha256sum --check --status --strict "$manifest"); then
+            echo "::error::Altered pinned baseline was accepted"; exit 1
+          fi
+          echo "EXPECTED_REJECTION: baseline_measurements.json hash mismatch"
+          cp "$baseline/baseline_measurements.json" "$negative/"
+          rm "$negative/baseline_dark_600x480_long_after.png"
+          if (cd "$negative" && sha256sum --check --status --strict "$manifest"); then
+            echo "::error::Missing pinned baseline PNG was accepted"; exit 1
+          fi
+          echo "EXPECTED_REJECTION: missing pinned baseline PNG"
+          (cd "$baseline" && sha256sum --check --status --strict "$manifest")
+          echo "PINNED_BASELINE_VALID_CONTROL: PASS"
+      - name: Curate native PNGs and machine-readable environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          source="$RUNNER_TEMP/qt-evidence"
+          dest="evidence/qt-overflow-pr11"
+          mkdir -p "$dest"
+          cp "$source/measurements.json" "$dest/"
+          cp "$RUNNER_TEMP/qt-baseline/baseline_measurements.json" "$dest/baseline_measurements.json"
+          cp "$source/contact_light.png" "$source/contact_dark.png" "$dest/"
+          for theme in light dark; do
+            for geometry in 940x830 650x520 600x480; do
+              for state in production_after legacy_long_injected_after; do
+                cp "$source/$theme"_"$geometry"_"$state.png" "$dest/"
+              done
+              cp "$RUNNER_TEMP/qt-baseline/baseline_${theme}_${geometry}_long_after.png" "$dest/baseline_${theme}_${geometry}_long_after.png"
+            done
+          done
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d=Path("evidence/qt-overflow-pr11")
+          data=json.loads((d/"measurements.json").read_text(encoding="utf-8"))
+          (d/"environment.json").write_text(json.dumps(data["environment"],ensure_ascii=False,indent=2),encoding="utf-8")
+          cases={x["case"]:x for x in data["cases"]}
+          baseline=json.loads((d/"baseline_measurements.json").read_text(encoding="utf-8"))
+          old_cases={x["case"]:x for x in baseline["cases"]}
+          rows=[
+              "# Qt saved-path overflow: synthetic Windows QPA measurements",
+              "",
+              "Review-only diagnostic and correction of Draft PR #10; no real bank files.",
+              "Original-size Qt QWidget PNGs included. Contact sheets are resized overview.",
+              "Exact verified checkout: "+data["environment"]["checkout_head"],
+              "Qt QPA windows, simulated Light/Dark. NOT a physical Windows 11 acceptance.",
+              "",
+              "| Scheme | Requested | Actual | Viewport | H-scroll original PR10 | H-scroll fixed | H-scroll injected old label |",
+              "|---|---|---|---|---:|---:|---:|"]
+          for theme in ("light","dark"):
+              for size in ("940x830","650x520","600x480"):
+                  base=theme+"_"+size+"_"
+                  good=cases[base+"production_after"]
+                  bad=cases[base+"legacy_long_injected_after"]
+                  actual_old=old_cases[base+"long_after"]
+                  rows.append(f"| {theme} | {size} | {good['window']} | {good['viewport']} | {actual_old['hscroll']['maximum']} | {good['hscroll']['maximum']} | {bad['hscroll']['maximum']} |")
+          rows+=["", "Actual PRE-FIX PR10 images: CI 41183845090, original unmodified product plus test-only probe.",
+                 "![Original PR10, light 940x830](baseline_light_940x830_long_after.png)",
+                 "![Repaired, light 940x830](light_940x830_production_after.png)",
+                 "![Original PR10, dark 650x520](baseline_dark_650x520_long_after.png)",
+                 "![Repaired, dark 650x520](dark_650x520_production_after.png)",
+                 "", "Root cause 1: unbounded full mixed-script path displayed by wrapped QLabel inflates minimum column width.",
+                 "Root cause 2: overly long saved-button caption independently inflates wide results column.",
+                 "Remedy: short saved status, full paths in separate bounded read-only selectable LTR QLineEdits, short saved action.",
+                 "Expected-red automated regression: run 41184158401; fixed result: current PR #11 checks.",
+                 "NOT PROVEN: accountant Windows 11, physical DPI at 100/125/150%, AT/user acceptance.",""]
+          (d/"summary.md").write_text("\n".join(rows),encoding="utf-8")
+          PY
+          (cd "$dest" && sha256sum *.png *.json summary.md > SHA256SUMS.txt)
+      - name: Commit synthetic evidence outside main and PR #10
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add evidence/qt-overflow-pr11
+          git diff --cached --check
+          if git diff --cached --quiet --exit-code; then
+            echo "EVIDENCE_UNCHANGED: verified curated evidence already matches the branch; no commit needed"
+          else
+            diff_status=$?
+            if [ "$diff_status" -ne 1 ]; then
+              echo "::error::Cannot inspect staged evidence (git diff exit $diff_status)"
+              exit "$diff_status"
+            fi
+            git commit -m "Publish synthetic Qt PR11 overflow comparison and full-size PNGs"
+            git push origin HEAD:refs/heads/evidence/qt-saved-path-overflow-pr11-20261031
+          fi

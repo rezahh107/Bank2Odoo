@@ -10,10 +10,10 @@ from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import QEventLoop, Qt, QTimer, QThread
+from PySide6.QtCore import QEventLoop, Qt, QTimer, QThread, QPoint
 from PySide6.QtTest import QTest
 from shiboken6 import isValid
-from PySide6.QtWidgets import QApplication, QFormLayout, QGroupBox, QStyle, QStyleFactory
+from PySide6.QtWidgets import QApplication, QFormLayout, QGroupBox, QStyle, QStyleFactory, QBoxLayout
 
 from bank2odoo.ui.window import MainWindow, _Job, human_error, preferred_style_key, latin
 from bank2odoo.core.engine import Context
@@ -184,7 +184,7 @@ class AccountantUiTests(unittest.TestCase):
         for width, height in ((940, 830), (650, 520), (600, 480)):
             self.window.resize(width, height)
             self.app.processEvents()
-            for widget in (self.window.approved, self.window.save_button):
+            for widget in (self.window.approved, self.window.convert_button, self.window.directory_button):
                 self.window.scroll.ensureWidgetVisible(widget)
                 self.app.processEvents()
                 viewport = self.window.scroll.viewport()
@@ -349,8 +349,8 @@ class AccountantUiTests(unittest.TestCase):
         result = self._convert()
         self.assertEqual(result.balance_status, "PASS: 1 consecutive balance transitions")
         self.assertEqual(len(result.rows), 2)
-        self.assertIn("منطبق", self.window.summary.text())
-        self.assertIn("75", self.window.summary.text())
+        self.assertIn("منطبق", self.window._metrics["balance"].text())
+        self.assertIn("75", self.window._metrics["net"].text())
         self.assertIn("نامزد بررسی", self.window.status.text())
         self.window.output_directory.setText(str(self.private))
         self._save()
@@ -368,8 +368,8 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIn(f"Producing application version: Bank2Odoo {VERSION}\n", report)
         self.assertIn('"csv_row": 2', report)
         self.assertIn("REVIEW CANDIDATE ONLY", report)
-        self.assertIn(str(csv_path), self.window.saved_paths.text())
-        self.assertIn(str(report_path), self.window.saved_paths.text())
+        self.assertEqual(self.window.saved_csv_path.text(), str(csv_path))
+        self.assertEqual(self.window.saved_report_path.text(), str(report_path))
         self.assertFalse(self.window.save_button.isEnabled())
         self._save()
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
@@ -378,7 +378,7 @@ class AccountantUiTests(unittest.TestCase):
         statement(self.source, not_proven=True)
         result = self._convert()
         self.assertTrue(result.balance_status.startswith("NOT_PROVEN"))
-        self.assertIn("احراز نشده", self.window.summary.text())
+        self.assertIn("احراز نشده", self.window._metrics["balance"].text())
         self.assertNotIn("خطا:", self.window.status.text())
         statement(self.source, duplicate=True)
         self._select(self.source)
@@ -391,7 +391,8 @@ class AccountantUiTests(unittest.TestCase):
 
     def test_change_after_conversion_invalidates_candidate(self):
         self._convert()
-        self.assertTrue(self.window.save_button.isEnabled())
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertIn("انتخاب پوشه", self.window.convert_button.text())
         self.window.journal.setText("ژورنال تغییرکرده")
         self.assertFalse(self.window.approved.isChecked())
         self.assertIsNone(self.window.result)
@@ -630,6 +631,9 @@ class AccountantUiTests(unittest.TestCase):
             self._save()
         self.assertIn("خطای ذخیره", self.window.status.text())
         self.assertNotIn("دو فایل ایجاد شدند", self.window.saved_paths.text())
+        self.assertFalse(self.window.saved_path_fields.isVisible())
+        self.assertFalse(self.window.saved_csv_path.text())
+        self.assertFalse(self.window.saved_report_path.text())
         self.assertEqual(list(self.private.glob("Bank2Odoo_*")), [])
         text = self.window.status.text()
         self.window._thread_finished()  # orphaned/late callback, no active sender
@@ -711,7 +715,8 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(calls, [5000, 0, 0, 0])
         self.assertEqual(outcomes, ["convert"])
         self.assertIsNotNone(self.window.result)
-        self.assertTrue(self.window.save_button.isEnabled())
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertIn("انتخاب پوشه", self.window.convert_button.text())
 
     def test_persistent_failed_join_blocks_then_recovers_without_double_save(self):
         self._convert()
@@ -825,6 +830,145 @@ class AccountantUiTests(unittest.TestCase):
         before = {path.name: path.read_bytes() for path in paths}
         self._save()  # An already-saved candidate must not overwrite the pair.
         self.assertEqual(before, {path.name: path.read_bytes() for path in paths})
+
+
+    def test_workspace_responsive_columns_and_long_mixed_direction_paths(self):
+        self.assertEqual(self.window.source_unit.accessibleName(), "واحد پول فایل بانک")
+        self.assertEqual(self.window.target_unit.accessibleName(), "واحد پول ژورنال مقصد")
+        very_long = "C:/Private/" + ("مسیر_ساختگی_" * 24) + "statement_2026_10_IRR_A" + "f" * 64 + ".csv"
+        self.window.path_field.setText(very_long)
+        self.window.output_directory.setText(very_long + "/output")
+        for width, height, direction in (
+            (940, 830, QBoxLayout.Direction.RightToLeft),
+            (650, 520, QBoxLayout.Direction.TopToBottom),
+            (600, 480, QBoxLayout.Direction.TopToBottom),
+        ):
+            with self.subTest(size=(width, height)):
+                self.window.resize(width, height)
+                self.app.processEvents()
+                self.window._reflow_workspace()
+                self.app.processEvents()
+                self.assertEqual(self.window._workspace.direction(), direction,
+                                 f"Measured breakpoint={self.window._workspace_breakpoint}, parts={self.window._workspace_measurements}, viewport={self.window.scroll.viewport().width()}")
+                content = self.window.scroll.widget()
+                for control in (
+                    self.window.source_unit, self.window.target_unit,
+                    self.window.journal, self.window.path_field,
+                    self.window.approved, self.window.convert_button,
+                    self.window.output_directory, self.window.directory_button,
+                ):
+                    x = control.mapTo(content, QPoint(0, 0)).x()
+                    self.assertGreaterEqual(x, 0, control.objectName())
+                    self.assertLessEqual(x + control.width(), content.width() + 1,
+                                         f"Horizontal clipping: {control}, {width}px")
+        self.assertEqual(self.window.path_field.text(), very_long)
+        self.assertFalse(self.window.approved.isChecked())
+
+    def test_primary_action_tracks_real_candidate_folder_and_saved_pair(self):
+        self._convert()
+        self.assertTrue(self.window.result_state.text().startswith("PASS"))
+        self.window.resize(650, 520)
+        self.app.processEvents()
+        self.window._reflow_workspace()
+        self.window._reveal_result()
+        self.app.processEvents()
+        viewport = self.window.scroll.viewport()
+        for target in (self.window.convert_button, self.window.result_state):
+            point = target.mapTo(viewport, QPoint(0, 0))
+            self.assertGreaterEqual(point.y(), 0, "Result/action above viewport")
+            self.assertLessEqual(point.y() + target.height(), viewport.height(),
+                                 "Result/action clipped below narrow viewport")
+        self.assertIn("انتخاب پوشه", self.window.convert_button.text())
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertIs(self.app.focusWidget(), self.window.convert_button)
+        with patch("bank2odoo.ui.window.QFileDialog.getExistingDirectory",
+                   return_value=str(self.private)) as picker:
+            self.window.convert_button.click()
+        picker.assert_called_once()
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertTrue(self.window.save_button.isEnabled())
+        self.assertEqual(self.window.convert_button.text(), "ذخیره CSV و گزارش کنترل")
+        self.window.convert_button.click()
+        self._wait_operation(self.window.save_done)
+        self.assertTrue(self.window._saved)
+        self.assertFalse(self.window.convert_button.isEnabled())
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
+        self.assertIn("Odoo", self.window.result_state.text())
+        self.assertIn("control.txt", self.window.saved_report_path.text())
+
+    def test_financial_edit_and_approval_revocation_clear_stale_success(self):
+        self._convert()
+        self.window.output_directory.setText(str(self.private))
+        self._save()
+        self.assertIn("ذخیره هر دو فایل موفق بود", self.window.status.text())
+        self.window.target_unit.setCurrentIndex(self.window.target_unit.findData("TOMAN"))
+        self.assertIsNone(self.window.result)
+        self.assertFalse(self.window.approved.isChecked())
+        self.assertIsNone(self.window._approved_digest)
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertNotIn("موفق بود", self.window.status.text())
+        self.assertNotIn("دو فایل ایجاد شدند", self.window.saved_paths.text())
+        self.assertIn("معتبر نیست", self.window.result_state.text())
+        self.assertEqual(self.window.convert_button.text(), "اعتبارسنجی و تبدیل")
+        self.window.start_conversion()
+        self.assertIsNone(self.window._thread)
+        self.assertIn("تأیید", self.window.status.text())
+
+    def test_not_proven_never_claims_complete_balance_or_approved_import(self):
+        statement(self.source, not_proven=True)
+        self._convert()
+        self.assertTrue(self.window.result_state.text().startswith("NOT_PROVEN"))
+        self.assertNotIn("PASS", self.window.result_state.text())
+        self.assertIn("احراز نشده", self.window._metrics["balance"].text())
+        self.assertIn("پوشه", self.window.convert_button.text())
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertNotIn("تأیید حسابداری انجام شد", self.window.status.text())
+
+    def test_long_saved_paths_keep_zero_horizontal_scroll_and_full_copyable_paths(self):
+        """Negative control: the pre-fix multiline QLabel expands the central canvas."""
+        from PySide6.QtWidgets import QBoxLayout
+        from PySide6.QtCore import QPoint
+        self._convert()  # Real fictional PASS, real worker.
+        private = self.private / ("مسیر_ساختگی_" * 5)
+        private.mkdir()
+        self.window.output_directory.setText(str(private))
+        self._save()  # Real fictional paired save.
+        paths = sorted(private.glob("Bank2Odoo_*"))
+        self.assertEqual(len(paths), 2)
+        for width, height in ((940, 830), (650, 520), (600, 480)):
+            with self.subTest(width=width):
+                self.window.resize(width, height)
+                self.app.processEvents()
+                self.window._reflow_workspace()
+                self.app.processEvents()
+                self.window._reveal_result()
+                self.app.processEvents()
+                h = self.window.scroll.horizontalScrollBar()
+                self.assertEqual(h.maximum(), 0,
+                                 f"Qt body wider than viewport after saved path: {width}")
+                self.window.scroll.verticalScrollBar().setValue(
+                    self.window.scroll.verticalScrollBar().maximum())
+                self.app.processEvents()
+                self.assertEqual(h.maximum(), 0, "Vertical scroll changed horizontal range")
+                if self.window._workspace.direction() == QBoxLayout.Direction.RightToLeft:
+                    vp = self.window.scroll.viewport()
+                    for column in (self.window._input_column, self.window._result_column):
+                        x = column.mapTo(vp, QPoint(0, 0)).x()
+                        self.assertGreaterEqual(x, 0)
+                        self.assertLessEqual(x + column.width(), vp.width())
+        csv = next(path for path in paths if path.suffix == ".csv")
+        report = next(path for path in paths if path.suffix == ".txt")
+        for control, path in ((self.window.saved_csv_path, csv),
+                              (self.window.saved_report_path, report)):
+            self.assertTrue(control.isReadOnly())
+            self.assertEqual(control.text(), str(path))
+            self.assertEqual(control.layoutDirection(), Qt.LayoutDirection.LeftToRight)
+            control.setFocus()
+            control.selectAll()
+            QTest.keyClick(control, Qt.Key.Key_C, Qt.KeyboardModifier.ControlModifier)
+            self.assertEqual(self.app.clipboard().text(), str(path))
+        self.assertNotEqual(self.window.saved_csv_path.accessibleName(),
+                            self.window.saved_report_path.accessibleName())
 
     def test_error_summary_does_not_dump_source_fields(self):
         detail = "Invalid/ambiguous numeric format: 'customer-private-value'"

@@ -15,8 +15,9 @@ from PySide6.QtGui import QColor, QFont, QFontDatabase, QFontInfo, QPalette
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QFileDialog, QFormLayout, QFrame,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox,
+    QBoxLayout, QGridLayout,
     QPlainTextEdit, QProgressBar, QPushButton, QScrollArea, QSpinBox,
-    QProxyStyle, QStyle, QStyleFactory, QVBoxLayout, QWidget,
+    QProxyStyle, QStyle, QStyleFactory, QSizePolicy, QVBoxLayout, QWidget,
 )
 
 from bank2odoo.banks.reader import read_statement
@@ -302,6 +303,7 @@ class MainWindow(QMainWindow):
         self._selected_digest: str | None = None
         self._approved_digest: str | None = None
         self._saved = False
+        self._ui_busy = False
         self._last_detail = ""
         self._presentation_ready = False
         self._presentation_refresh_queued = False
@@ -325,8 +327,8 @@ class MainWindow(QMainWindow):
         body = QWidget()
         scroll.setWidget(body)
         root = QVBoxLayout(body)
-        root.setContentsMargins(26, 24, 26, 28)
-        root.setSpacing(19)
+        root.setContentsMargins(18, 18, 18, 20)
+        root.setSpacing(12)
 
         self.heading = QLabel("آماده‌سازی گردش بانک برای Odoo")
         root.addWidget(self.heading)
@@ -366,7 +368,6 @@ class MainWindow(QMainWindow):
         self.detected = QLabel("بانک/قالب: هنوز فایلی بررسی نشده است.")
         self.detected.setWordWrap(True)
         source_layout.addWidget(self.detected)
-        root.addWidget(source_box)
 
         context_box = QGroupBox("۲. اطلاعات مالی — با مسئولیت حسابدار")
         context_layout = QVBoxLayout(context_box)
@@ -385,10 +386,11 @@ class MainWindow(QMainWindow):
             combo.addItem("انتخاب واحد…", None)
             combo.addItem("ریال (IRR)", "IRR")
             combo.addItem("تومان (TOMAN)", "TOMAN")
-            combo.setAccessibleName("واحد پول")
             combo.setMinimumHeight(38)
             combo.setMaximumWidth(390)
             combo.currentIndexChanged.connect(self._context_changed)
+        self.source_unit.setAccessibleName("واحد پول فایل بانک")
+        self.target_unit.setAccessibleName("واحد پول ژورنال مقصد")
         form.addRow("واحد پول فایل بانک:", self.source_unit)
         form.addRow("واحد پول ژورنال مقصد:", self.target_unit)
         self.journal = QLineEdit()
@@ -441,7 +443,6 @@ class MainWindow(QMainWindow):
         approval_hint.setWordWrap(True)
         approval_layout.addWidget(approval_hint)
         context_layout.addWidget(approval_panel)
-        root.addWidget(context_box)
 
         review_box = QGroupBox("۳. تبدیل و بررسی نتیجه")
         review_layout = QVBoxLayout(review_box)
@@ -452,7 +453,7 @@ class MainWindow(QMainWindow):
         self.convert_button = QPushButton("اعتبارسنجی و تبدیل")
         self.convert_button.setObjectName("primaryConversion")
         self.convert_button.setMinimumHeight(44)
-        self.convert_button.clicked.connect(self.start_conversion)
+        self.convert_button.clicked.connect(self._next_action)
         actions.addWidget(self.convert_button)
         self.cancel_button = QPushButton("درخواست توقف")
         self.cancel_button.setMinimumHeight(40)
@@ -470,6 +471,38 @@ class MainWindow(QMainWindow):
         self.status.setObjectName("status")
         self.status.setWordWrap(True)
         review_layout.addWidget(self.status)
+        self.result_state = QLabel("هنوز تبدیل انجام نشده است")
+        self.result_state.setAccessibleName("وضعیت واقعی تبدیل و شواهد مانده")
+        self.result_state.setWordWrap(True)
+        review_layout.addWidget(self.result_state)
+        metrics = QGridLayout()
+        metrics.setHorizontalSpacing(14)
+        metrics.setVerticalSpacing(8)
+        self._metrics = {}
+        for row, (key, title) in enumerate((
+            ("movements", "تعداد گردش‌ها"),
+            ("debit", "برداشت"),
+            ("credit", "واریز"),
+            ("net", "خالص مبدأ / مقصد"),
+            ("balance", "شواهد مانده"),
+            ("issues", "موارد نیازمند بررسی"),
+        )):
+            caption = QLabel(title + ":")
+            caption.setWordWrap(True)
+            value = QLabel("—")
+            value.setWordWrap(True)
+            value.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            value.setAccessibleName(title)
+            # QLabel with wrapped Persian/Latin values can report a very small
+            # preferred row height under Windows11 QStyle. Never let Qt squeeze
+            # the evidence to half a glyph when the adjacent summary grows.
+            line = self.fontMetrics().height()
+            metrics.setRowMinimumHeight(row, line * (2 if key in ("net", "balance") else 1) + 8)
+            metrics.addWidget(caption, row, 0)
+            metrics.addWidget(value, row, 1)
+            self._metrics[key] = value
+        metrics.setColumnStretch(1, 1)
+        review_layout.addLayout(metrics)
         self.summary = QLabel("هنوز خروجی برای بررسی تولید نشده است.")
         self.summary.setWordWrap(True)
         self.summary.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -486,7 +519,6 @@ class MainWindow(QMainWindow):
         self.details.setMinimumHeight(110)
         self.details.setAccessibleName("جزئیات فنی تبدیل و کنترل")
         review_layout.addWidget(self.details)
-        root.addWidget(review_box)
 
         save_box = QGroupBox("۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی")
         save_layout = QVBoxLayout(save_box)
@@ -501,6 +533,7 @@ class MainWindow(QMainWindow):
         self.output_directory.setPlaceholderText("هنوز پوشه‌ای انتخاب نشده است")
         self.output_directory.setAccessibleName("پوشه خصوصی خروجی")
         self.output_directory.setReadOnly(True)
+        self.output_directory.textChanged.connect(self._sync_actions)
         output_row.addWidget(self.output_directory, 1)
         self.directory_button = QPushButton("انتخاب پوشه…")
         self.directory_button.setMinimumHeight(40)
@@ -511,16 +544,154 @@ class MainWindow(QMainWindow):
         self.save_button.setMinimumHeight(44)
         self.save_button.clicked.connect(self.save_files)
         self.save_button.setEnabled(False)
-        save_layout.addWidget(self.save_button, alignment=Qt.AlignmentFlag.AlignRight)
+        # Retained for scripted legacy calls; the task-oriented primary button
+        # above is the only visible save trigger in the pilot.
+        self.save_button.setVisible(False)
         self.saved_paths = QLabel("هر دو فایل باید در یک پوشه خصوصی و بیرون از پوشه برنامه ذخیره شوند.")
         self.saved_paths.setWordWrap(True)
         self.saved_paths.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.saved_paths.setFocusPolicy(Qt.FocusPolicy.TabFocus)
         save_layout.addWidget(self.saved_paths)
+        # Full technical paths live in bounded, individually copyable native
+        # controls. A wrapped QLabel containing an unbroken LTR filename made
+        # the entire result column demand thousands of logical pixels.
+        self.saved_path_fields = QWidget(save_box)
+        path_layout = QVBoxLayout(self.saved_path_fields)
+        path_layout.setContentsMargins(0, 0, 0, 0)
+        path_layout.setSpacing(6)
+        self.saved_csv_path = QLineEdit()
+        self.saved_report_path = QLineEdit()
+        for caption, field, accessible in (
+            ("مسیر کامل CSV نامزد:", self.saved_csv_path, "مسیر کامل فایل CSV نامزد"),
+            ("مسیر کامل گزارش کنترل خصوصی:", self.saved_report_path,
+             "مسیر کامل گزارش کنترل خصوصی"),
+        ):
+            title = QLabel(caption)
+            title.setWordWrap(True)
+            path_layout.addWidget(title)
+            field.setReadOnly(True)
+            field.setMinimumWidth(0)
+            field.setMinimumHeight(36)
+            field.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+            field.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+            field.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            field.setAccessibleName(accessible)
+            path_layout.addWidget(field)
+        self.saved_path_fields.hide()
+        save_layout.addWidget(self.saved_path_fields)
         next_step = QLabel(GENERAL_REVIEW)
         next_step.setWordWrap(True)
         save_layout.addWidget(next_step)
-        root.addWidget(save_box)
+        # The same four native groups form two logical work areas; no duplicated
+        # financial widgets or stylesheet-based visual reordering.
+        self._input_column = QWidget(body)
+        self._result_column = QWidget(body)
+        input_layout = QVBoxLayout(self._input_column)
+        result_layout = QVBoxLayout(self._result_column)
+        for layout in (input_layout, result_layout):
+            layout.setContentsMargins(0, 0, 0, 0)
+            layout.setSpacing(12)
+        input_layout.addWidget(source_box)
+        input_layout.addWidget(context_box)
+        result_layout.addWidget(review_box)
+        result_layout.addWidget(save_box)
+        input_layout.addStretch()
+        result_layout.addStretch()
+        self._workspace = QBoxLayout(QBoxLayout.Direction.RightToLeft)
+        self._workspace.setSpacing(12)
+        self._workspace.addWidget(self._input_column, 1)
+        self._workspace.addWidget(self._result_column, 1)
+        root.addLayout(self._workspace)
         root.addStretch(1)
+        self._reflow_workspace()
+
+    def _reflow_workspace(self) -> None:
+        """Use actual Persian font/widget metrics, not a CSS or fixed viewport guess."""
+        if not hasattr(self, "_workspace"):
+            return
+        fm = self.fontMetrics()
+        # Paths are copyable, horizontally scrollable QLineEdits. Reserve
+        # space for a readable basename, not the entire arbitrarily long path.
+        # Also measure Persian form labels, buttons and their action row.
+        input_required = max(
+            # Use independent control widths, not a fixed breakpoint.
+            fm.horizontalAdvance("واحد پول ژورنال مقصد:")
+            + self.source_unit.sizeHint().width() + 85,
+            self.select_button.sizeHint().width()
+            + fm.horizontalAdvance("statement.csv") + 60,
+        )
+        result_required = max(
+            # Keep the output action row usable alongside the input column.
+            self.directory_button.sizeHint().width()
+            + fm.horizontalAdvance("private/output") + 55,
+            self.convert_button.sizeHint().width()
+            + self.cancel_button.sizeHint().width() + 70,
+        )
+        self._workspace_breakpoint = input_required + result_required + 12
+        self._workspace_measurements = (input_required, result_required,
+                                        self._input_column.minimumSizeHint().width(),
+                                        self._result_column.minimumSizeHint().width())
+        available = self.scroll.viewport().width()
+        target = (QBoxLayout.Direction.RightToLeft
+                  if available >= self._workspace_breakpoint
+                  else QBoxLayout.Direction.TopToBottom)
+        if self._workspace.direction() != target:
+            self._workspace.setDirection(target)
+            self._workspace.invalidate()
+            self.scroll.widget().updateGeometry()
+            # The scroll bars are recalculated after the new Qt layout turn.
+            # A result already on screen must remain findable after a resize.
+            if self.result is not None:
+                QTimer.singleShot(0, self._reveal_result)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        if hasattr(self, "_workspace"):
+            QTimer.singleShot(0, self._reflow_workspace)
+
+    def _next_action(self) -> None:
+        if self._thread is not None or self._saved:
+            return
+        if self.result is None:
+            self.start_conversion()
+        elif not self.output_directory.text().strip():
+            self._browse_directory()
+        else:
+            self.save_files()
+
+    def _sync_actions(self, *_args: object) -> None:
+        if not hasattr(self, "save_button"):
+            return
+        active = self._thread is not None or self._ui_busy
+        has_result = self.result is not None
+        has_folder = bool(self.output_directory.text().strip())
+        self.save_button.setEnabled(
+            not active and has_result and has_folder and not self._saved
+        )
+        self.directory_button.setEnabled(not active and not self._saved)
+        self.convert_button.setEnabled(not active and not self._saved)
+        if self._saved:
+            caption = "ذخیره شد"
+        elif has_result and has_folder:
+            caption = "ذخیره CSV و گزارش کنترل"
+        elif has_result:
+            caption = "انتخاب پوشهٔ خصوصی خروجی…"
+        else:
+            caption = "اعتبارسنجی و تبدیل"
+        self.convert_button.setText(caption)
+        self._apply_theme_controls()
+
+    def _reveal_result(self) -> None:
+        """Keep the outcome and its single next action together, including narrow mode."""
+        # Place the action first, then give the outcome itself breathing room
+        # in the narrow viewport. Otherwise focusing the action can push the
+        # second line of NOT_PROVEN below the visible edge.
+        self._workspace.activate()
+        self.scroll.widget().layout().activate()
+        self.scroll.ensureWidgetVisible(self.convert_button, 0, 18)
+        self.scroll.ensureWidgetVisible(self.result_state, 0, 64)
+        if self.convert_button.isEnabled():
+            self.convert_button.setFocus(Qt.FocusReason.OtherFocusReason)
 
     def _apply_surface_palette(self) -> None:
         """Pair paint surfaces with their text roles from the current Qt palette."""
@@ -608,12 +779,24 @@ class MainWindow(QMainWindow):
         self._last_detail = detail
         self.details.setPlainText(detail or "جزئیات بیشتری برای نمایش وجود ندارد.")
 
+    def _clear_saved_path_fields(self) -> None:
+        self.saved_path_fields.hide()
+        self.saved_csv_path.clear()
+        self.saved_report_path.clear()
+
     def _invalidate(self) -> None:
+        self._clear_saved_path_fields()
         self.result = None
         self._saved = False
-        self.save_button.setEnabled(False)
         self.saved_paths.setText("هنوز خروجی جدیدی ذخیره نشده است.")
         self.summary.setText("پس از تأیید زمینه مالی، تبدیل را اجرا کنید.")
+        self.result_state.setText("نیازمند تبدیل تازه — نتیجه قبلی معتبر نیست")
+        for label in self._metrics.values():
+            label.setText("—")
+        # Do not leave an earlier "saved" or "conversion succeeded" status
+        # after source/financial context or SHA-bound approval was revoked.
+        self._set_message("زمینه یا تأیید تغییر کرد؛ نتیجه قبلی معتبر نیست. دوباره تأیید و تبدیل کنید.")
+        self._sync_actions()
 
     def _revoke_approval(self) -> None:
         self._approved_digest = None
@@ -743,6 +926,7 @@ class MainWindow(QMainWindow):
         self._begin("convert", path=self.source, context=context, stop=self._stop)
 
     def _set_busy(self, active: bool) -> None:
+        self._ui_busy = active
         self.busy.setVisible(active)
         self.cancel_button.setEnabled(active and self._job_state is not None
                                       and self._job_state["kind"] == "convert")
@@ -752,7 +936,7 @@ class MainWindow(QMainWindow):
             widget.setEnabled(not active)
         if not active:
             self._update_units()
-        self.save_button.setEnabled(not active and self.result is not None and not self._saved)
+        self._sync_actions()
 
     def cancel_conversion(self) -> None:
         if (self._thread is not None and self._job_state is not None
@@ -768,32 +952,54 @@ class MainWindow(QMainWindow):
             return
         self.result = result
         good = result.balance_status.startswith("PASS")
+        self.result_state.setText(
+            ("PASS — انطباق در انتقال‌های قابل‌آزمون؛ نه تأیید حسابداری"
+             if good else
+             "NOT_PROVEN — شواهد کافی برای اثبات کامل مانده موجود نیست")
+        )
+        self._metrics["movements"].setText(latin(len(result.rows)))
+        self._metrics["debit"].setText(
+            latin(format(result.debit_total, "f")) + " " + result.source_unit)
+        self._metrics["credit"].setText(
+            latin(format(result.credit_total, "f")) + " " + result.source_unit)
+        self._metrics["net"].setText(
+            latin(format(result.net, "f")) + " " + result.source_unit
+            + " / " + latin(format(exact_sum(m.converted for m in result.rows), "f"))
+            + " " + result.target_unit)
+        self._metrics["balance"].setText(
+            "منطبق در انتقال‌های قابل‌آزمون" if good else
+            "احراز نشده؛ لزوماً مغایرت نیست")
+        self._metrics["issues"].setText(latin(len(result.issues)))
         check = ("منطبق در انتقال‌های قابل‌آزمون؛ هنوز تأیید حسابدار نیست."
                  if good else "احراز نشده؛ لزوماً مغایرت نیست. بررسی حسابدار لازم است.")
+        # Totals and balance evidence already have distinct selectable rows.
+        # The narrative is reserved for unresolved checks, not a second,
+        # space-consuming copy of all six metrics.
         self.summary.setText(
-            f"بانک: {BANK_LABELS[result.bank]}  |  تعداد: {latin(len(result.rows))} گردش\n"
-            f"برداشت: {latin(format(result.debit_total, 'f'))} {result.source_unit}  |  "
-            f"واریز: {latin(format(result.credit_total, 'f'))} {result.source_unit}\n"
-            f"خالص: {latin(format(result.net, 'f'))} {result.source_unit}  |  "
-            f"خالص مقصد: {latin(format(exact_sum(m.converted for m in result.rows), 'f'))} {result.target_unit}\n"
-            f"کنترل مانده: {check}\n"
-            f"موارد نیازمند بررسی: {latin(len(result.issues))}"
-            + ("\n" + "\n".join("• " + issue_label(x) for x in result.issues[:4])
-               if result.issues else "")
+            "موارد نیازمند بررسی:\n"
+            + ("\n".join("• " + issue_label(issue) for issue in result.issues[:4])
+               if result.issues
+               else "مورد اضافی گزارش نشده؛ بررسی مستقل حسابدار همچنان لازم است.")
         )
         self._set_message("تبدیل انجام شد: نامزد بررسی تهیه شده، اما هنوز ذخیره یا تأیید نشده است.",
                           "Balance: " + result.balance_status + "\n" + "\n".join(result.issues))
-        self.save_button.setEnabled(True)
+        self._sync_actions()
+        self._reveal_result()
 
     @Slot(str)
     def _failed(self, detail: str) -> None:
         self._set_message("خطا: " + human_error(detail), detail)
         self.summary.setText("خروجی تولید نشد؛ فایل نامزد قابل ذخیره نیست.")
+        self.result_state.setText("ERROR — تبدیل انجام نشد")
+        self._sync_actions()
+        self._reveal_result()
  
 
     @Slot()
     def _cancelled(self) -> None:
         self._set_message("توقف درخواست‌شده انجام شد؛ خروجی جدیدی تولید یا ذخیره نشد.")
+        self.result_state.setText("توقف درخواست‌شده — نتیجه‌ای منتشر نشد")
+        self._reveal_result()
 
 
     def _wait_for_thread(self, thread: QThread, timeout_ms: int) -> bool:
@@ -869,16 +1075,21 @@ class MainWindow(QMainWindow):
                 self._success(value)
         elif kind == "save":
             if error is not None:
+                self._clear_saved_path_fields()
                 self.saved_paths.setText("ذخیره کامل نشد؛ فایل‌ها را در پوشه مقصد بررسی کنید.")
                 self._set_message("خطای ذخیره: " + human_error(error, saving=True), error)
             else:
                 csv_path, report_path = value
                 self._saved = True
-                self.saved_paths.setText(
-                    f"دو فایل ایجاد شدند:\nCSV: {latin(csv_path)}\nگزارش کنترل خصوصی: {latin(report_path)}"
-                )
+                self.saved_csv_path.setText(str(csv_path))
+                self.saved_report_path.setText(str(report_path))
+                self.saved_path_fields.show()
+                self.saved_paths.setText("دو فایل ایجاد شدند؛ مسیرهای کامل زیر قابل انتخاب و کپی هستند.")
                 self._set_message("ذخیره هر دو فایل موفق بود. نامزد هنوز مجوز ورود به Odoo نیست.")
+                self.result_state.setText("ذخیره انجام شد — بررسی مستقل حسابدار/Odoo لازم است")
         self._set_busy(False)
+        if kind in ("convert", "save"):
+            self._reveal_result()
         if kind == "detect":
             self.detection_done.emit()
         elif kind == "convert":
