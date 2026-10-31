@@ -151,6 +151,15 @@ class AccountantUiTests(unittest.TestCase):
         QTest.qWait(30)
         self.assertEqual(w._workspace.direction(), QBoxLayout.Direction.TopToBottom)
         self.assertEqual(w.scroll.horizontalScrollBar().maximum(), 0)
+        for control in (w.output_directory, w.directory_button):
+            self.assertTrue(control.isVisible())
+            x = control.mapTo(w.scroll.widget(), QPoint(0, 0)).x()
+            self.assertGreaterEqual(x, 0)
+            self.assertLessEqual(x + control.width(), w.scroll.widget().width() + 1)
+            w.scroll.ensureWidgetVisible(control)
+            self.app.processEvents()
+            visible_center = control.mapTo(w.scroll.viewport(), control.rect().center())
+            self.assertTrue(w.scroll.viewport().rect().contains(visible_center))
         w.journal.setText("ژورنال دیگری")
         self.assertIsNone(w.result)
         self.assertFalse(w.approved.isChecked())
@@ -253,13 +262,26 @@ class AccountantUiTests(unittest.TestCase):
         for width, height in ((940, 830), (650, 520), (600, 480)):
             self.window.resize(width, height)
             self.app.processEvents()
-            for widget in (self.window.approved, self.window.convert_button, self.window.directory_button):
+            for widget in (self.window.approved, self.window.convert_button):
                 self.window.scroll.ensureWidgetVisible(widget)
                 self.app.processEvents()
                 viewport = self.window.scroll.viewport()
                 target = widget.mapTo(viewport, widget.rect().center())
                 self.assertTrue(viewport.rect().contains(target),
-                                "Critical control should be scroll-reachable at this size")
+                                "Available control must be scroll-reachable at this size")
+        # Folder selection is intentionally progressive, not available before
+        # conversion. Prove the actual control becomes reachable after a result.
+        self._convert()
+        for width, height in ((940, 830), (650, 520), (600, 480)):
+            self.window.resize(width, height)
+            self.app.processEvents()
+            widget = self.window.directory_button
+            self.assertTrue(widget.isVisible())
+            self.window.scroll.ensureWidgetVisible(widget)
+            self.app.processEvents()
+            target = widget.mapTo(self.window.scroll.viewport(), widget.rect().center())
+            self.assertTrue(self.window.scroll.viewport().rect().contains(target),
+                            "Private-folder action must be reachable once conversion succeeds")
 
     def test_confirmation_mouse_keyboard_disabled_and_revocation(self):
         self._select(self.source)
@@ -953,6 +975,10 @@ class AccountantUiTests(unittest.TestCase):
                     self.window.approved, self.window.convert_button,
                     self.window.output_directory, self.window.directory_button,
                 ):
+                    # Hidden future-step controls have no current layout
+                    # geometry; geometry only matters once they are shown.
+                    if not control.isVisible():
+                        continue
                     x = control.mapTo(content, QPoint(0, 0)).x()
                     self.assertGreaterEqual(x, 0, control.objectName())
                     self.assertLessEqual(x + control.width(), content.width() + 1,
