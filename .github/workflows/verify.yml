@@ -239,7 +239,7 @@ jobs:
               for state in production_after legacy_long_injected_after; do
                 cp "$source/$theme"_"$geometry"_"$state.png" "$dest/"
               done
-              cp "$RUNNER_TEMP/qt-baseline/$theme"_"$geometry"_long_after.png" "$dest/baseline_$theme"_"$geometry"_long_after.png"
+              cp "$RUNNER_TEMP/qt-baseline/${theme}_${geometry}_long_after.png" "$dest/baseline_${theme}_${geometry}_long_after.png"
             done
           done
           python3 - <<'PY'
