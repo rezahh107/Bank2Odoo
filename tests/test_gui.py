@@ -368,8 +368,8 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIn(f"Producing application version: Bank2Odoo {VERSION}\n", report)
         self.assertIn('"csv_row": 2', report)
         self.assertIn("REVIEW CANDIDATE ONLY", report)
-        self.assertIn(str(csv_path), self.window.saved_paths.text())
-        self.assertIn(str(report_path), self.window.saved_paths.text())
+        self.assertEqual(self.window.saved_csv_path.text(), str(csv_path))
+        self.assertEqual(self.window.saved_report_path.text(), str(report_path))
         self.assertFalse(self.window.save_button.isEnabled())
         self._save()
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
@@ -631,6 +631,9 @@ class AccountantUiTests(unittest.TestCase):
             self._save()
         self.assertIn("خطای ذخیره", self.window.status.text())
         self.assertNotIn("دو فایل ایجاد شدند", self.window.saved_paths.text())
+        self.assertFalse(self.window.saved_path_fields.isVisible())
+        self.assertFalse(self.window.saved_csv_path.text())
+        self.assertFalse(self.window.saved_report_path.text())
         self.assertEqual(list(self.private.glob("Bank2Odoo_*")), [])
         text = self.window.status.text()
         self.window._thread_finished()  # orphaned/late callback, no active sender
@@ -891,7 +894,7 @@ class AccountantUiTests(unittest.TestCase):
         self.assertFalse(self.window.convert_button.isEnabled())
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
         self.assertIn("Odoo", self.window.result_state.text())
-        self.assertIn("control.txt", self.window.saved_paths.text())
+        self.assertIn("control.txt", self.window.saved_report_path.text())
 
     def test_financial_edit_and_approval_revocation_clear_stale_success(self):
         self._convert()
