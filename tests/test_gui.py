@@ -921,6 +921,52 @@ class AccountantUiTests(unittest.TestCase):
         self.assertFalse(self.window.save_button.isEnabled())
         self.assertNotIn("تأیید حسابداری انجام شد", self.window.status.text())
 
+    def test_long_saved_paths_keep_zero_horizontal_scroll_and_full_copyable_paths(self):
+        """Negative control: the pre-fix multiline QLabel expands the central canvas."""
+        from PySide6.QtWidgets import QBoxLayout
+        from PySide6.QtCore import QPoint
+        self._convert()  # Real fictional PASS, real worker.
+        private = self.private / ("مسیر_ساختگی_" * 5)
+        private.mkdir()
+        self.window.output_directory.setText(str(private))
+        self._save()  # Real fictional paired save.
+        paths = sorted(private.glob("Bank2Odoo_*"))
+        self.assertEqual(len(paths), 2)
+        for width, height in ((940, 830), (650, 520), (600, 480)):
+            with self.subTest(width=width):
+                self.window.resize(width, height)
+                self.app.processEvents()
+                self.window._reflow_workspace()
+                self.app.processEvents()
+                self.window._reveal_result()
+                self.app.processEvents()
+                h = self.window.scroll.horizontalScrollBar()
+                self.assertEqual(h.maximum(), 0,
+                                 f"Qt body wider than viewport after saved path: {width}")
+                self.window.scroll.verticalScrollBar().setValue(
+                    self.window.scroll.verticalScrollBar().maximum())
+                self.app.processEvents()
+                self.assertEqual(h.maximum(), 0, "Vertical scroll changed horizontal range")
+                if self.window._workspace.direction() == QBoxLayout.Direction.RightToLeft:
+                    vp = self.window.scroll.viewport()
+                    for column in (self.window._input_column, self.window._result_column):
+                        x = column.mapTo(vp, QPoint(0, 0)).x()
+                        self.assertGreaterEqual(x, 0)
+                        self.assertLessEqual(x + column.width(), vp.width())
+        csv = next(path for path in paths if path.suffix == ".csv")
+        report = next(path for path in paths if path.suffix == ".txt")
+        for control, path in ((self.window.saved_csv_path, csv),
+                              (self.window.saved_report_path, report)):
+            self.assertTrue(control.isReadOnly())
+            self.assertEqual(control.text(), str(path))
+            self.assertEqual(control.layoutDirection(), Qt.LayoutDirection.LeftToRight)
+            control.setFocus()
+            control.selectAll()
+            QTest.keyClick(control, Qt.Key.Key_C, Qt.KeyboardModifier.ControlModifier)
+            self.assertEqual(self.app.clipboard().text(), str(path))
+        self.assertNotEqual(self.window.saved_csv_path.accessibleName(),
+                            self.window.saved_report_path.accessibleName())
+
     def test_error_summary_does_not_dump_source_fields(self):
         detail = "Invalid/ambiguous numeric format: 'customer-private-value'"
         self.assertNotIn("customer-private-value", human_error(detail))
