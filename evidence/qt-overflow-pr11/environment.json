@@ -1,0 +1,13 @@
+{
+  "platform": "Windows-2025Server-10.0.26100-SP0",
+  "python": "3.13.12 (main, Feb  3 2026, 22:53:26) [MSC v.1944 64 bit (AMD64)]",
+  "qpa": "windows",
+  "qt": "6.11.2",
+  "pyside6": "6.11.2",
+  "checkout_head": "f58530c86db140096850ffb2b3c23c3274cfd68e",
+  "effective_style_final": "fusion",
+  "font": "Tahoma",
+  "scale_factor": null,
+  "physical_windows11_verified": false,
+  "actual_os_scheme_verified": false
+}

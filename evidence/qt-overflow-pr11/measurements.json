@@ -1,0 +1,6750 @@
+{
+  "environment": {
+    "platform": "Windows-2025Server-10.0.26100-SP0",
+    "python": "3.13.12 (main, Feb  3 2026, 22:53:26) [MSC v.1944 64 bit (AMD64)]",
+    "qpa": "windows",
+    "qt": "6.11.2",
+    "pyside6": "6.11.2",
+    "checkout_head": "f58530c86db140096850ffb2b3c23c3274cfd68e",
+    "effective_style_final": "fusion",
+    "font": "Tahoma",
+    "scale_factor": null,
+    "physical_windows11_verified": false,
+    "actual_os_scheme_verified": false
+  },
+  "cases": [
+    {
+      "case": "light_940x830_production_before",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        928,
+        749
+      ],
+      "content": [
+        928,
+        1055
+      ],
+      "body_min_hint": [
+        797,
+        983
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 306,
+        "value": 0
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        503,
+        776,
+        388,
+        36
+      ],
+      "result_rect": [
+        484,
+        143,
+        426,
+        892
+      ],
+      "input_rect": [
+        18,
+        143,
+        454,
+        892
+      ],
+      "action_rect": [
+        805,
+        188,
+        86,
+        44
+      ],
+      "state_rect": [
+        503,
+        292,
+        388,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          295,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            143,
+            454,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            18,
+            307,
+            454,
+            495
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            484,
+            143,
+            426,
+            524
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            301,
+            374
+          ],
+          "rect": [
+            484,
+            679,
+            426,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_940x830_production_before.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_940x830_production_after",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        928,
+        749
+      ],
+      "content": [
+        928,
+        1055
+      ],
+      "body_min_hint": [
+        797,
+        983
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 306,
+        "value": 0
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        503,
+        776,
+        388,
+        36
+      ],
+      "result_rect": [
+        484,
+        143,
+        426,
+        892
+      ],
+      "input_rect": [
+        18,
+        143,
+        454,
+        892
+      ],
+      "action_rect": [
+        805,
+        188,
+        86,
+        44
+      ],
+      "state_rect": [
+        503,
+        292,
+        388,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          295,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            143,
+            454,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            18,
+            307,
+            454,
+            495
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            484,
+            143,
+            426,
+            524
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            301,
+            374
+          ],
+          "rect": [
+            484,
+            679,
+            426,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_940x830_production_after.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_940x830_production_vertical_bottom",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        928,
+        749
+      ],
+      "content": [
+        928,
+        1055
+      ],
+      "body_min_hint": [
+        797,
+        983
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 306,
+        "value": 306
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        503,
+        470,
+        388,
+        36
+      ],
+      "result_rect": [
+        484,
+        -163,
+        426,
+        892
+      ],
+      "input_rect": [
+        18,
+        -163,
+        454,
+        892
+      ],
+      "action_rect": [
+        805,
+        -118,
+        86,
+        44
+      ],
+      "state_rect": [
+        503,
+        -14,
+        388,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          295,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -163,
+            454,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            18,
+            1,
+            454,
+            495
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            484,
+            -163,
+            426,
+            524
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            301,
+            374
+          ],
+          "rect": [
+            484,
+            373,
+            426,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_940x830_production_vertical_bottom.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_940x830_legacy_long_injected_before",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        928,
+        749
+      ],
+      "content": [
+        2453,
+        1037
+      ],
+      "body_min_hint": [
+        2453,
+        983
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1525,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 288,
+        "value": 288
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1913,
+        18
+      ],
+      "saved_label_hint": [
+        1913,
+        72
+      ],
+      "saved_label_rect": [
+        -1022,
+        470,
+        1913,
+        72
+      ],
+      "result_rect": [
+        -1041,
+        -145,
+        1951,
+        874
+      ],
+      "input_rect": [
+        -1507,
+        -145,
+        454,
+        874
+      ],
+      "action_rect": [
+        805,
+        -100,
+        86,
+        44
+      ],
+      "state_rect": [
+        -1022,
+        -14,
+        1913,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          1951,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            -1507,
+            -145,
+            454,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            -1507,
+            19,
+            454,
+            495
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            -1041,
+            -145,
+            1951,
+            506
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            1951,
+            302
+          ],
+          "preferred": [
+            1951,
+            356
+          ],
+          "rect": [
+            -1041,
+            373,
+            1951,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_940x830_legacy_long_injected_before.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_940x830_legacy_long_injected_after",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        928,
+        749
+      ],
+      "content": [
+        2453,
+        1037
+      ],
+      "body_min_hint": [
+        2453,
+        983
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1525,
+        "value": 995
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 288,
+        "value": 170
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1913,
+        18
+      ],
+      "saved_label_hint": [
+        1913,
+        72
+      ],
+      "saved_label_rect": [
+        -27,
+        588,
+        1913,
+        72
+      ],
+      "result_rect": [
+        -46,
+        -27,
+        1951,
+        874
+      ],
+      "input_rect": [
+        -512,
+        -27,
+        454,
+        874
+      ],
+      "action_rect": [
+        1800,
+        18,
+        86,
+        44
+      ],
+      "state_rect": [
+        -27,
+        104,
+        1913,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          1951,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            -512,
+            -27,
+            454,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            -512,
+            137,
+            454,
+            495
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            -46,
+            -27,
+            1951,
+            506
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            1951,
+            302
+          ],
+          "preferred": [
+            1951,
+            356
+          ],
+          "rect": [
+            -46,
+            491,
+            1951,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_940x830_legacy_long_injected_after.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_940x830_production_restored_after",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        928,
+        749
+      ],
+      "content": [
+        928,
+        1055
+      ],
+      "body_min_hint": [
+        797,
+        983
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 306,
+        "value": 170
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        503,
+        606,
+        388,
+        36
+      ],
+      "result_rect": [
+        484,
+        -27,
+        426,
+        892
+      ],
+      "input_rect": [
+        18,
+        -27,
+        454,
+        892
+      ],
+      "action_rect": [
+        805,
+        18,
+        86,
+        44
+      ],
+      "state_rect": [
+        503,
+        122,
+        388,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          295,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -27,
+            454,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            18,
+            137,
+            454,
+            495
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            484,
+            -27,
+            426,
+            524
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            301,
+            374
+          ],
+          "rect": [
+            484,
+            509,
+            426,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_940x830_production_restored_after.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_650x520_production_before",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        638,
+        520
+      ],
+      "content": [
+        638,
+        1672
+      ],
+      "body_min_hint": [
+        490,
+        1582
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1152,
+        "value": 841
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        588,
+        564,
+        18
+      ],
+      "result_rect": [
+        18,
+        -27,
+        602,
+        838
+      ],
+      "input_rect": [
+        18,
+        -680,
+        602,
+        641
+      ],
+      "action_rect": [
+        515,
+        18,
+        86,
+        44
+      ],
+      "state_rect": [
+        37,
+        104,
+        564,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          295,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -680,
+            602,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            18,
+            -516,
+            602,
+            477
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            18,
+            -27,
+            602,
+            506
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            301,
+            374
+          ],
+          "rect": [
+            18,
+            491,
+            602,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_650x520_production_before.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_650x520_production_after",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        638,
+        520
+      ],
+      "content": [
+        638,
+        1672
+      ],
+      "body_min_hint": [
+        490,
+        1582
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1152,
+        "value": 841
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        588,
+        564,
+        18
+      ],
+      "result_rect": [
+        18,
+        -27,
+        602,
+        838
+      ],
+      "input_rect": [
+        18,
+        -680,
+        602,
+        641
+      ],
+      "action_rect": [
+        515,
+        18,
+        86,
+        44
+      ],
+      "state_rect": [
+        37,
+        104,
+        564,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          295,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -680,
+            602,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            18,
+            -516,
+            602,
+            477
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            18,
+            -27,
+            602,
+            506
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            301,
+            374
+          ],
+          "rect": [
+            18,
+            491,
+            602,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_650x520_production_after.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_650x520_production_vertical_bottom",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        638,
+        520
+      ],
+      "content": [
+        638,
+        1672
+      ],
+      "body_min_hint": [
+        490,
+        1582
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1152,
+        "value": 1152
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        277,
+        564,
+        18
+      ],
+      "result_rect": [
+        18,
+        -338,
+        602,
+        838
+      ],
+      "input_rect": [
+        18,
+        -991,
+        602,
+        641
+      ],
+      "action_rect": [
+        515,
+        -293,
+        86,
+        44
+      ],
+      "state_rect": [
+        37,
+        -207,
+        564,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          295,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -991,
+            602,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            18,
+            -827,
+            602,
+            477
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            18,
+            -338,
+            602,
+            506
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            301,
+            374
+          ],
+          "rect": [
+            18,
+            180,
+            602,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_650x520_production_vertical_bottom.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_650x520_legacy_long_injected_before",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        638,
+        520
+      ],
+      "content": [
+        1990,
+        1654
+      ],
+      "body_min_hint": [
+        1990,
+        1582
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1352,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1134,
+        "value": 1134
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1916,
+        18
+      ],
+      "saved_label_hint": [
+        1916,
+        72
+      ],
+      "saved_label_rect": [
+        -1315,
+        241,
+        1916,
+        72
+      ],
+      "result_rect": [
+        -1334,
+        -374,
+        1954,
+        874
+      ],
+      "input_rect": [
+        -1334,
+        -991,
+        1954,
+        605
+      ],
+      "action_rect": [
+        515,
+        -329,
+        86,
+        44
+      ],
+      "state_rect": [
+        -1315,
+        -243,
+        1916,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          1954,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            -1334,
+            -991,
+            1954,
+            134
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            -1334,
+            -845,
+            1954,
+            459
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            -1334,
+            -374,
+            1954,
+            506
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            1954,
+            302
+          ],
+          "preferred": [
+            1954,
+            356
+          ],
+          "rect": [
+            -1334,
+            144,
+            1954,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_650x520_legacy_long_injected_before.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_650x520_legacy_long_injected_after",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        638,
+        520
+      ],
+      "content": [
+        1990,
+        1654
+      ],
+      "body_min_hint": [
+        1990,
+        1582
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1352,
+        "value": 675
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1134,
+        "value": 787
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1916,
+        18
+      ],
+      "saved_label_hint": [
+        1916,
+        72
+      ],
+      "saved_label_rect": [
+        -640,
+        588,
+        1916,
+        72
+      ],
+      "result_rect": [
+        -659,
+        -27,
+        1954,
+        874
+      ],
+      "input_rect": [
+        -659,
+        -644,
+        1954,
+        605
+      ],
+      "action_rect": [
+        1190,
+        18,
+        86,
+        44
+      ],
+      "state_rect": [
+        -640,
+        104,
+        1916,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          1954,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            -659,
+            -644,
+            1954,
+            134
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            -659,
+            -498,
+            1954,
+            459
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            -659,
+            -27,
+            1954,
+            506
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            1954,
+            302
+          ],
+          "preferred": [
+            1954,
+            356
+          ],
+          "rect": [
+            -659,
+            491,
+            1954,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_650x520_legacy_long_injected_after.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_650x520_production_restored_after",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        638,
+        520
+      ],
+      "content": [
+        638,
+        1672
+      ],
+      "body_min_hint": [
+        490,
+        1582
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1152,
+        "value": 787
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        642,
+        564,
+        18
+      ],
+      "result_rect": [
+        18,
+        27,
+        602,
+        838
+      ],
+      "input_rect": [
+        18,
+        -626,
+        602,
+        641
+      ],
+      "action_rect": [
+        515,
+        72,
+        86,
+        44
+      ],
+      "state_rect": [
+        37,
+        158,
+        564,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          295,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -626,
+            602,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            18,
+            -462,
+            602,
+            477
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            18,
+            27,
+            602,
+            506
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            301,
+            374
+          ],
+          "rect": [
+            18,
+            545,
+            602,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_650x520_production_restored_after.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_600x480_production_before",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        588,
+        480
+      ],
+      "content": [
+        588,
+        1672
+      ],
+      "body_min_hint": [
+        490,
+        1582
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1192,
+        "value": 841
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        588,
+        514,
+        18
+      ],
+      "result_rect": [
+        18,
+        -27,
+        552,
+        838
+      ],
+      "input_rect": [
+        18,
+        -680,
+        552,
+        641
+      ],
+      "action_rect": [
+        465,
+        18,
+        86,
+        44
+      ],
+      "state_rect": [
+        37,
+        104,
+        514,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          295,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -680,
+            552,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            18,
+            -516,
+            552,
+            477
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            18,
+            -27,
+            552,
+            506
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            301,
+            374
+          ],
+          "rect": [
+            18,
+            491,
+            552,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_600x480_production_before.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_600x480_production_after",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        588,
+        480
+      ],
+      "content": [
+        588,
+        1672
+      ],
+      "body_min_hint": [
+        490,
+        1582
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1192,
+        "value": 841
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        588,
+        514,
+        18
+      ],
+      "result_rect": [
+        18,
+        -27,
+        552,
+        838
+      ],
+      "input_rect": [
+        18,
+        -680,
+        552,
+        641
+      ],
+      "action_rect": [
+        465,
+        18,
+        86,
+        44
+      ],
+      "state_rect": [
+        37,
+        104,
+        514,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          295,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -680,
+            552,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            18,
+            -516,
+            552,
+            477
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            18,
+            -27,
+            552,
+            506
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            301,
+            374
+          ],
+          "rect": [
+            18,
+            491,
+            552,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_600x480_production_after.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_600x480_production_vertical_bottom",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        588,
+        480
+      ],
+      "content": [
+        588,
+        1672
+      ],
+      "body_min_hint": [
+        490,
+        1582
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1192,
+        "value": 1192
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        237,
+        514,
+        18
+      ],
+      "result_rect": [
+        18,
+        -378,
+        552,
+        838
+      ],
+      "input_rect": [
+        18,
+        -1031,
+        552,
+        641
+      ],
+      "action_rect": [
+        465,
+        -333,
+        86,
+        44
+      ],
+      "state_rect": [
+        37,
+        -247,
+        514,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          295,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -1031,
+            552,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            18,
+            -867,
+            552,
+            477
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            18,
+            -378,
+            552,
+            506
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            301,
+            374
+          ],
+          "rect": [
+            18,
+            140,
+            552,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_600x480_production_vertical_bottom.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_600x480_legacy_long_injected_before",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        588,
+        480
+      ],
+      "content": [
+        2002,
+        1654
+      ],
+      "body_min_hint": [
+        2002,
+        1582
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1414,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1174,
+        "value": 1174
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1928,
+        18
+      ],
+      "saved_label_hint": [
+        1928,
+        72
+      ],
+      "saved_label_rect": [
+        -1377,
+        201,
+        1928,
+        72
+      ],
+      "result_rect": [
+        -1396,
+        -414,
+        1966,
+        874
+      ],
+      "input_rect": [
+        -1396,
+        -1031,
+        1966,
+        605
+      ],
+      "action_rect": [
+        465,
+        -369,
+        86,
+        44
+      ],
+      "state_rect": [
+        -1377,
+        -283,
+        1928,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          1966,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            -1396,
+            -1031,
+            1966,
+            134
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            -1396,
+            -885,
+            1966,
+            459
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            -1396,
+            -414,
+            1966,
+            506
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            1966,
+            302
+          ],
+          "preferred": [
+            1966,
+            356
+          ],
+          "rect": [
+            -1396,
+            104,
+            1966,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_600x480_legacy_long_injected_before.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_600x480_legacy_long_injected_after",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        588,
+        480
+      ],
+      "content": [
+        2002,
+        1654
+      ],
+      "body_min_hint": [
+        2002,
+        1582
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1414,
+        "value": 706
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1174,
+        "value": 787
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        1928,
+        18
+      ],
+      "saved_label_hint": [
+        1928,
+        72
+      ],
+      "saved_label_rect": [
+        -671,
+        588,
+        1928,
+        72
+      ],
+      "result_rect": [
+        -690,
+        -27,
+        1966,
+        874
+      ],
+      "input_rect": [
+        -690,
+        -644,
+        1966,
+        605
+      ],
+      "action_rect": [
+        1171,
+        18,
+        86,
+        44
+      ],
+      "state_rect": [
+        -671,
+        104,
+        1928,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          1966,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            -690,
+            -644,
+            1966,
+            134
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            -690,
+            -498,
+            1966,
+            459
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            -690,
+            -27,
+            1966,
+            506
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            1966,
+            302
+          ],
+          "preferred": [
+            1966,
+            356
+          ],
+          "rect": [
+            -690,
+            491,
+            1966,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_600x480_legacy_long_injected_after.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "light_600x480_production_restored_after",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        588,
+        480
+      ],
+      "content": [
+        588,
+        1672
+      ],
+      "body_min_hint": [
+        490,
+        1582
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1192,
+        "value": 787
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 727,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        642,
+        514,
+        18
+      ],
+      "result_rect": [
+        18,
+        27,
+        552,
+        838
+      ],
+      "input_rect": [
+        18,
+        -626,
+        552,
+        641
+      ],
+      "action_rect": [
+        465,
+        72,
+        86,
+        44
+      ],
+      "state_rect": [
+        37,
+        158,
+        514,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          454,
+          587
+        ],
+        "result": [
+          295,
+          820
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            183,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -626,
+            552,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            454,
+            441
+          ],
+          "preferred": [
+            465,
+            477
+          ],
+          "rect": [
+            18,
+            -462,
+            552,
+            477
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            250,
+            506
+          ],
+          "preferred": [
+            382,
+            554
+          ],
+          "rect": [
+            18,
+            27,
+            552,
+            506
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            301,
+            374
+          ],
+          "rect": [
+            18,
+            545,
+            552,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          97,
+          28
+        ],
+        "path": [
+          36,
+          28
+        ],
+        "journal": [
+          36,
+          28
+        ],
+        "source_unit": [
+          150,
+          28
+        ],
+        "approval": [
+          380,
+          30
+        ],
+        "primary_action": [
+          86,
+          28
+        ],
+        "directory_button": [
+          107,
+          28
+        ],
+        "output_path": [
+          36,
+          28
+        ]
+      },
+      "image": "light_600x480_production_restored_after.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_940x830_production_before",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        926,
+        749
+      ],
+      "content": [
+        926,
+        1051
+      ],
+      "body_min_hint": [
+        785,
+        979
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 302,
+        "value": 0
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        491,
+        772,
+        398,
+        36
+      ],
+      "result_rect": [
+        472,
+        141,
+        436,
+        890
+      ],
+      "input_rect": [
+        18,
+        141,
+        442,
+        890
+      ],
+      "action_rect": [
+        817,
+        186,
+        72,
+        44
+      ],
+      "state_rect": [
+        491,
+        290,
+        398,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          295,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            141,
+            442,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            18,
+            305,
+            442,
+            493
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            472,
+            141,
+            436,
+            522
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            300,
+            374
+          ],
+          "rect": [
+            472,
+            675,
+            436,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_940x830_production_before.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_940x830_production_after",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        926,
+        749
+      ],
+      "content": [
+        926,
+        1051
+      ],
+      "body_min_hint": [
+        785,
+        979
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 302,
+        "value": 0
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        491,
+        772,
+        398,
+        36
+      ],
+      "result_rect": [
+        472,
+        141,
+        436,
+        890
+      ],
+      "input_rect": [
+        18,
+        141,
+        442,
+        890
+      ],
+      "action_rect": [
+        817,
+        186,
+        72,
+        44
+      ],
+      "state_rect": [
+        491,
+        290,
+        398,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          295,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            141,
+            442,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            18,
+            305,
+            442,
+            493
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            472,
+            141,
+            436,
+            522
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            300,
+            374
+          ],
+          "rect": [
+            472,
+            675,
+            436,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_940x830_production_after.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_940x830_production_vertical_bottom",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        926,
+        749
+      ],
+      "content": [
+        926,
+        1051
+      ],
+      "body_min_hint": [
+        785,
+        979
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 302,
+        "value": 302
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        491,
+        470,
+        398,
+        36
+      ],
+      "result_rect": [
+        472,
+        -161,
+        436,
+        890
+      ],
+      "input_rect": [
+        18,
+        -161,
+        442,
+        890
+      ],
+      "action_rect": [
+        817,
+        -116,
+        72,
+        44
+      ],
+      "state_rect": [
+        491,
+        -12,
+        398,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          295,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -161,
+            442,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            18,
+            3,
+            442,
+            493
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            472,
+            -161,
+            436,
+            522
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            300,
+            374
+          ],
+          "rect": [
+            472,
+            373,
+            436,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_940x830_production_vertical_bottom.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_940x830_legacy_long_injected_before",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        926,
+        749
+      ],
+      "content": [
+        2451,
+        1033
+      ],
+      "body_min_hint": [
+        2451,
+        979
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1525,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 284,
+        "value": 284
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1923,
+        18
+      ],
+      "saved_label_hint": [
+        1923,
+        72
+      ],
+      "saved_label_rect": [
+        -1034,
+        470,
+        1923,
+        72
+      ],
+      "result_rect": [
+        -1053,
+        -143,
+        1961,
+        872
+      ],
+      "input_rect": [
+        -1507,
+        -143,
+        442,
+        872
+      ],
+      "action_rect": [
+        817,
+        -98,
+        72,
+        44
+      ],
+      "state_rect": [
+        -1034,
+        -12,
+        1923,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          1961,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            -1507,
+            -143,
+            442,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            -1507,
+            21,
+            442,
+            493
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            -1053,
+            -143,
+            1961,
+            504
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            1961,
+            302
+          ],
+          "preferred": [
+            1961,
+            356
+          ],
+          "rect": [
+            -1053,
+            373,
+            1961,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_940x830_legacy_long_injected_before.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_940x830_legacy_long_injected_after",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        926,
+        749
+      ],
+      "content": [
+        2451,
+        1033
+      ],
+      "body_min_hint": [
+        2451,
+        979
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1525,
+        "value": 989
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 284,
+        "value": 168
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1923,
+        18
+      ],
+      "saved_label_hint": [
+        1923,
+        72
+      ],
+      "saved_label_rect": [
+        -45,
+        586,
+        1923,
+        72
+      ],
+      "result_rect": [
+        -64,
+        -27,
+        1961,
+        872
+      ],
+      "input_rect": [
+        -518,
+        -27,
+        442,
+        872
+      ],
+      "action_rect": [
+        1806,
+        18,
+        72,
+        44
+      ],
+      "state_rect": [
+        -45,
+        104,
+        1923,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          1961,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            -518,
+            -27,
+            442,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            -518,
+            137,
+            442,
+            493
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            -64,
+            -27,
+            1961,
+            504
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            1961,
+            302
+          ],
+          "preferred": [
+            1961,
+            356
+          ],
+          "rect": [
+            -64,
+            489,
+            1961,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_940x830_legacy_long_injected_after.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_940x830_production_restored_after",
+      "window": [
+        940,
+        749
+      ],
+      "viewport": [
+        926,
+        749
+      ],
+      "content": [
+        926,
+        1051
+      ],
+      "body_min_hint": [
+        785,
+        979
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 302,
+        "value": 168
+      },
+      "layout": "RightToLeft",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        491,
+        604,
+        398,
+        36
+      ],
+      "result_rect": [
+        472,
+        -27,
+        436,
+        890
+      ],
+      "input_rect": [
+        18,
+        -27,
+        442,
+        890
+      ],
+      "action_rect": [
+        817,
+        18,
+        72,
+        44
+      ],
+      "state_rect": [
+        491,
+        122,
+        398,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          295,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -27,
+            442,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            18,
+            137,
+            442,
+            493
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            472,
+            -27,
+            436,
+            522
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            300,
+            374
+          ],
+          "rect": [
+            472,
+            507,
+            436,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_940x830_production_restored_after.png",
+      "image_actual": [
+        940,
+        749
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_650x520_production_before",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        636,
+        520
+      ],
+      "content": [
+        636,
+        1666
+      ],
+      "body_min_hint": [
+        478,
+        1576
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1146,
+        "value": 837
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        586,
+        562,
+        18
+      ],
+      "result_rect": [
+        18,
+        -27,
+        600,
+        836
+      ],
+      "input_rect": [
+        18,
+        -678,
+        600,
+        639
+      ],
+      "action_rect": [
+        527,
+        18,
+        72,
+        44
+      ],
+      "state_rect": [
+        37,
+        104,
+        562,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          295,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -678,
+            600,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            18,
+            -514,
+            600,
+            475
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            18,
+            -27,
+            600,
+            504
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            300,
+            374
+          ],
+          "rect": [
+            18,
+            489,
+            600,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_650x520_production_before.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_650x520_production_after",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        636,
+        520
+      ],
+      "content": [
+        636,
+        1666
+      ],
+      "body_min_hint": [
+        478,
+        1576
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1146,
+        "value": 837
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        586,
+        562,
+        18
+      ],
+      "result_rect": [
+        18,
+        -27,
+        600,
+        836
+      ],
+      "input_rect": [
+        18,
+        -678,
+        600,
+        639
+      ],
+      "action_rect": [
+        527,
+        18,
+        72,
+        44
+      ],
+      "state_rect": [
+        37,
+        104,
+        562,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          295,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -678,
+            600,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            18,
+            -514,
+            600,
+            475
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            18,
+            -27,
+            600,
+            504
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            300,
+            374
+          ],
+          "rect": [
+            18,
+            489,
+            600,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_650x520_production_after.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_650x520_production_vertical_bottom",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        636,
+        520
+      ],
+      "content": [
+        636,
+        1666
+      ],
+      "body_min_hint": [
+        478,
+        1576
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1146,
+        "value": 1146
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        277,
+        562,
+        18
+      ],
+      "result_rect": [
+        18,
+        -336,
+        600,
+        836
+      ],
+      "input_rect": [
+        18,
+        -987,
+        600,
+        639
+      ],
+      "action_rect": [
+        527,
+        -291,
+        72,
+        44
+      ],
+      "state_rect": [
+        37,
+        -205,
+        562,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          295,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -987,
+            600,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            18,
+            -823,
+            600,
+            475
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            18,
+            -336,
+            600,
+            504
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            300,
+            374
+          ],
+          "rect": [
+            18,
+            180,
+            600,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_650x520_production_vertical_bottom.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_650x520_legacy_long_injected_before",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        636,
+        520
+      ],
+      "content": [
+        2004,
+        1648
+      ],
+      "body_min_hint": [
+        2004,
+        1576
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1368,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1128,
+        "value": 1128
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1930,
+        18
+      ],
+      "saved_label_hint": [
+        1930,
+        72
+      ],
+      "saved_label_rect": [
+        -1331,
+        241,
+        1930,
+        72
+      ],
+      "result_rect": [
+        -1350,
+        -372,
+        1968,
+        872
+      ],
+      "input_rect": [
+        -1350,
+        -987,
+        1968,
+        603
+      ],
+      "action_rect": [
+        527,
+        -327,
+        72,
+        44
+      ],
+      "state_rect": [
+        -1331,
+        -241,
+        1930,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          1968,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            -1350,
+            -987,
+            1968,
+            134
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            -1350,
+            -841,
+            1968,
+            457
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            -1350,
+            -372,
+            1968,
+            504
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            1968,
+            302
+          ],
+          "preferred": [
+            1968,
+            356
+          ],
+          "rect": [
+            -1350,
+            144,
+            1968,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_650x520_legacy_long_injected_before.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_650x520_legacy_long_injected_after",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        636,
+        520
+      ],
+      "content": [
+        2004,
+        1648
+      ],
+      "body_min_hint": [
+        2004,
+        1576
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1368,
+        "value": 683
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1128,
+        "value": 783
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1930,
+        18
+      ],
+      "saved_label_hint": [
+        1930,
+        72
+      ],
+      "saved_label_rect": [
+        -648,
+        586,
+        1930,
+        72
+      ],
+      "result_rect": [
+        -667,
+        -27,
+        1968,
+        872
+      ],
+      "input_rect": [
+        -667,
+        -642,
+        1968,
+        603
+      ],
+      "action_rect": [
+        1210,
+        18,
+        72,
+        44
+      ],
+      "state_rect": [
+        -648,
+        104,
+        1930,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          1968,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            -667,
+            -642,
+            1968,
+            134
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            -667,
+            -496,
+            1968,
+            457
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            -667,
+            -27,
+            1968,
+            504
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            1968,
+            302
+          ],
+          "preferred": [
+            1968,
+            356
+          ],
+          "rect": [
+            -667,
+            489,
+            1968,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_650x520_legacy_long_injected_after.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_650x520_production_restored_after",
+      "window": [
+        650,
+        520
+      ],
+      "viewport": [
+        636,
+        520
+      ],
+      "content": [
+        636,
+        1666
+      ],
+      "body_min_hint": [
+        478,
+        1576
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1146,
+        "value": 783
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        640,
+        562,
+        18
+      ],
+      "result_rect": [
+        18,
+        27,
+        600,
+        836
+      ],
+      "input_rect": [
+        18,
+        -624,
+        600,
+        639
+      ],
+      "action_rect": [
+        527,
+        72,
+        72,
+        44
+      ],
+      "state_rect": [
+        37,
+        158,
+        562,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          295,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -624,
+            600,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            18,
+            -460,
+            600,
+            475
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            18,
+            27,
+            600,
+            504
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            300,
+            374
+          ],
+          "rect": [
+            18,
+            543,
+            600,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_650x520_production_restored_after.png",
+      "image_actual": [
+        650,
+        520
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_600x480_production_before",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        586,
+        480
+      ],
+      "content": [
+        586,
+        1666
+      ],
+      "body_min_hint": [
+        478,
+        1576
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1186,
+        "value": 837
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        586,
+        512,
+        18
+      ],
+      "result_rect": [
+        18,
+        -27,
+        550,
+        836
+      ],
+      "input_rect": [
+        18,
+        -678,
+        550,
+        639
+      ],
+      "action_rect": [
+        477,
+        18,
+        72,
+        44
+      ],
+      "state_rect": [
+        37,
+        104,
+        512,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          295,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -678,
+            550,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            18,
+            -514,
+            550,
+            475
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            18,
+            -27,
+            550,
+            504
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            300,
+            374
+          ],
+          "rect": [
+            18,
+            489,
+            550,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_600x480_production_before.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_600x480_production_after",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        586,
+        480
+      ],
+      "content": [
+        586,
+        1666
+      ],
+      "body_min_hint": [
+        478,
+        1576
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1186,
+        "value": 837
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        586,
+        512,
+        18
+      ],
+      "result_rect": [
+        18,
+        -27,
+        550,
+        836
+      ],
+      "input_rect": [
+        18,
+        -678,
+        550,
+        639
+      ],
+      "action_rect": [
+        477,
+        18,
+        72,
+        44
+      ],
+      "state_rect": [
+        37,
+        104,
+        512,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          295,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -678,
+            550,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            18,
+            -514,
+            550,
+            475
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            18,
+            -27,
+            550,
+            504
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            300,
+            374
+          ],
+          "rect": [
+            18,
+            489,
+            550,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_600x480_production_after.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_600x480_production_vertical_bottom",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        586,
+        480
+      ],
+      "content": [
+        586,
+        1666
+      ],
+      "body_min_hint": [
+        478,
+        1576
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1186,
+        "value": 1186
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        237,
+        512,
+        18
+      ],
+      "result_rect": [
+        18,
+        -376,
+        550,
+        836
+      ],
+      "input_rect": [
+        18,
+        -1027,
+        550,
+        639
+      ],
+      "action_rect": [
+        477,
+        -331,
+        72,
+        44
+      ],
+      "state_rect": [
+        37,
+        -245,
+        512,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          295,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -1027,
+            550,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            18,
+            -863,
+            550,
+            475
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            18,
+            -376,
+            550,
+            504
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            300,
+            374
+          ],
+          "rect": [
+            18,
+            140,
+            550,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_600x480_production_vertical_bottom.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_600x480_legacy_long_injected_before",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        586,
+        480
+      ],
+      "content": [
+        2000,
+        1648
+      ],
+      "body_min_hint": [
+        2000,
+        1576
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1414,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1168,
+        "value": 1168
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1926,
+        18
+      ],
+      "saved_label_hint": [
+        1926,
+        72
+      ],
+      "saved_label_rect": [
+        -1377,
+        201,
+        1926,
+        72
+      ],
+      "result_rect": [
+        -1396,
+        -412,
+        1964,
+        872
+      ],
+      "input_rect": [
+        -1396,
+        -1027,
+        1964,
+        603
+      ],
+      "action_rect": [
+        477,
+        -367,
+        72,
+        44
+      ],
+      "state_rect": [
+        -1377,
+        -281,
+        1926,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          1964,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            -1396,
+            -1027,
+            1964,
+            134
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            -1396,
+            -881,
+            1964,
+            457
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            -1396,
+            -412,
+            1964,
+            504
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            1964,
+            302
+          ],
+          "preferred": [
+            1964,
+            356
+          ],
+          "rect": [
+            -1396,
+            104,
+            1964,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_600x480_legacy_long_injected_before.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_600x480_legacy_long_injected_after",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        586,
+        480
+      ],
+      "content": [
+        2000,
+        1648
+      ],
+      "body_min_hint": [
+        2000,
+        1576
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 1414,
+        "value": 706
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1168,
+        "value": 783
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        1926,
+        18
+      ],
+      "saved_label_hint": [
+        1926,
+        72
+      ],
+      "saved_label_rect": [
+        -671,
+        586,
+        1926,
+        72
+      ],
+      "result_rect": [
+        -690,
+        -27,
+        1964,
+        872
+      ],
+      "input_rect": [
+        -690,
+        -642,
+        1964,
+        603
+      ],
+      "action_rect": [
+        1183,
+        18,
+        72,
+        44
+      ],
+      "state_rect": [
+        -671,
+        104,
+        1926,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          1964,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            -690,
+            -642,
+            1964,
+            134
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            -690,
+            -496,
+            1964,
+            457
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            -690,
+            -27,
+            1964,
+            504
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            1964,
+            302
+          ],
+          "preferred": [
+            1964,
+            356
+          ],
+          "rect": [
+            -690,
+            489,
+            1964,
+            356
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_600x480_legacy_long_injected_after.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    },
+    {
+      "case": "dark_600x480_production_restored_after",
+      "window": [
+        600,
+        480
+      ],
+      "viewport": [
+        586,
+        480
+      ],
+      "content": [
+        586,
+        1666
+      ],
+      "body_min_hint": [
+        478,
+        1576
+      ],
+      "hscroll": {
+        "minimum": 0,
+        "maximum": 0,
+        "value": 0
+      },
+      "vscroll": {
+        "minimum": 0,
+        "maximum": 1186,
+        "value": 783
+      },
+      "layout": "TopToBottom",
+      "breakpoint": 692,
+      "saved_label_min_hint": [
+        62,
+        18
+      ],
+      "saved_label_hint": [
+        122,
+        72
+      ],
+      "saved_label_rect": [
+        37,
+        640,
+        512,
+        18
+      ],
+      "result_rect": [
+        18,
+        27,
+        550,
+        836
+      ],
+      "input_rect": [
+        18,
+        -624,
+        550,
+        639
+      ],
+      "action_rect": [
+        477,
+        72,
+        72,
+        44
+      ],
+      "state_rect": [
+        37,
+        158,
+        512,
+        18
+      ],
+      "saved": true,
+      "source_file_fictional": true,
+      "columns_minimum_size_hint": {
+        "input": [
+          442,
+          585
+        ],
+        "result": [
+          295,
+          818
+        ]
+      },
+      "group_boxes": {
+        "۱. انتخاب گزارش بانکی": {
+          "minimum": [
+            179,
+            134
+          ],
+          "preferred": [
+            316,
+            170
+          ],
+          "rect": [
+            18,
+            -624,
+            550,
+            152
+          ]
+        },
+        "۲. اطلاعات مالی — با مسئولیت حسابدار": {
+          "minimum": [
+            442,
+            439
+          ],
+          "preferred": [
+            465,
+            475
+          ],
+          "rect": [
+            18,
+            -460,
+            550,
+            475
+          ]
+        },
+        "۳. تبدیل و بررسی نتیجه": {
+          "minimum": [
+            234,
+            504
+          ],
+          "preferred": [
+            382,
+            552
+          ],
+          "rect": [
+            18,
+            27,
+            550,
+            504
+          ]
+        },
+        "۴. ذخیره هم‌زمان فایل نامزد و گزارش خصوصی": {
+          "minimum": [
+            295,
+            302
+          ],
+          "preferred": [
+            300,
+            374
+          ],
+          "rect": [
+            18,
+            543,
+            550,
+            320
+          ]
+        }
+      },
+      "widget_min_hints": {
+        "source_picker": [
+          95,
+          26
+        ],
+        "path": [
+          34,
+          26
+        ],
+        "journal": [
+          34,
+          26
+        ],
+        "source_unit": [
+          131,
+          26
+        ],
+        "approval": [
+          370,
+          22
+        ],
+        "primary_action": [
+          72,
+          20
+        ],
+        "directory_button": [
+          105,
+          26
+        ],
+        "output_path": [
+          34,
+          26
+        ]
+      },
+      "image": "dark_600x480_production_restored_after.png",
+      "image_actual": [
+        600,
+        480
+      ],
+      "dpr": 1.0
+    }
+  ],
+  "source": "actual Qt Widgets, fictional statement and real paired-save only"
+}
