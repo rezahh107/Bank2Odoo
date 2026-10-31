@@ -493,6 +493,11 @@ class MainWindow(QMainWindow):
             value.setWordWrap(True)
             value.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             value.setAccessibleName(title)
+            # QLabel with wrapped Persian/Latin values can report a very small
+            # preferred row height under Windows11 QStyle. Never let Qt squeeze
+            # the evidence to half a glyph when the adjacent summary grows.
+            line = self.fontMetrics().height()
+            metrics.setRowMinimumHeight(row, line * (2 if key in ("net", "balance") else 1) + 8)
             metrics.addWidget(caption, row, 0)
             metrics.addWidget(value, row, 1)
             self._metrics[key] = value
@@ -925,16 +930,14 @@ class MainWindow(QMainWindow):
         self._metrics["issues"].setText(latin(len(result.issues)))
         check = ("منطبق در انتقال‌های قابل‌آزمون؛ هنوز تأیید حسابدار نیست."
                  if good else "احراز نشده؛ لزوماً مغایرت نیست. بررسی حسابدار لازم است.")
+        # Totals and balance evidence already have distinct selectable rows.
+        # The narrative is reserved for unresolved checks, not a second,
+        # space-consuming copy of all six metrics.
         self.summary.setText(
-            f"بانک: {BANK_LABELS[result.bank]}  |  تعداد: {latin(len(result.rows))} گردش\n"
-            f"برداشت: {latin(format(result.debit_total, 'f'))} {result.source_unit}  |  "
-            f"واریز: {latin(format(result.credit_total, 'f'))} {result.source_unit}\n"
-            f"خالص: {latin(format(result.net, 'f'))} {result.source_unit}  |  "
-            f"خالص مقصد: {latin(format(exact_sum(m.converted for m in result.rows), 'f'))} {result.target_unit}\n"
-            f"کنترل مانده: {check}\n"
-            f"موارد نیازمند بررسی: {latin(len(result.issues))}"
-            + ("\n" + "\n".join("• " + issue_label(x) for x in result.issues[:4])
-               if result.issues else "")
+            "موارد نیازمند بررسی:\n"
+            + ("\n".join("• " + issue_label(issue) for issue in result.issues[:4])
+               if result.issues
+               else "مورد اضافی گزارش نشده؛ بررسی مستقل حسابدار همچنان لازم است.")
         )
         self._set_message("تبدیل انجام شد: نامزد بررسی تهیه شده، اما هنوز ذخیره یا تأیید نشده است.",
                           "Balance: " + result.balance_status + "\n" + "\n".join(result.issues))
