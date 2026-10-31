@@ -176,9 +176,14 @@ def run_case(app, ui_module, variant, scheme, width, height, source, output):
         # Explicit negative control: resurrect the historically conflicting
         # bright convert style while the source is missing; detector MUST fail.
         if variant == "product":
-            w.set_source(None)
+            # Reset only the UI's input identity for this isolated style
+            # mutation; never start a nonexistent source-detection worker.
+            w._revoke_approval()
+            w.source = None
+            w._selected_digest = None
+            w._invalidate()
             app.processEvents()
-            if w.source is not None:
+            if w.source is not None or w._thread is not None:
                 raise AssertionError("Negative-control setup failed")
             w.convert_button.setStyleSheet(
                 product._PRIMARY_DARK_QSS if scheme == "dark"
