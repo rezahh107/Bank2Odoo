@@ -196,6 +196,23 @@ jobs:
           path: ${{ runner.temp }}/bank2odoo-minimal-ux/
           retention-days: 14
           if-no-files-found: warn
+      - name: Qualify initial primary-action hierarchy on actual Windows Qt
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONFAULTHANDLER: "1"
+        shell: pwsh
+        run: |
+          git fetch --no-tags --depth=1 origin 463c28d1012e8c3e076705223f1ff6d958012e76
+          uv run --locked python -m tests.qt_primary_action_hierarchy_capture --output "$env:RUNNER_TEMP/bank2odoo-primary-action" --baseline-sha 463c28d1012e8c3e076705223f1ff6d958012e76
+          if ($LASTEXITCODE -ne 0) { throw "Native Qt primary-action qualification failed" }
+      - name: Upload full-resolution action-hierarchy variants and evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: qt-primary-action-hierarchy
+          path: ${{ runner.temp }}/bank2odoo-primary-action/
+          retention-days: 14
+          if-no-files-found: warn
       - name: Diagnose fictional saved-path overflow on native Windows QPA
         env:
           QT_QPA_PLATFORM: windows

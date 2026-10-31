@@ -58,6 +58,19 @@ _PRIMARY_DARK_QSS = (
     " QPushButton#primaryConversion:disabled { background-color: #303B47;"
     " color: #B7C4CE; border: 1px solid #303B47; }"
 )
+# The first task is selection, not conversion. These accents are applied
+# by workflow phase; safe guidance clicks never earn visual primacy.
+_SOURCE_DARK_QSS = _PRIMARY_DARK_QSS.replace("primaryConversion", "sourceSelection")
+_SOURCE_LIGHT_QSS = (
+    "QPushButton#sourceSelection { background-color: #125B88;"
+    " color: #FFFFFF; border: 1px solid #125B88; border-radius: 5px; }"
+    " QPushButton#sourceSelection:hover { background-color: #1C75A9; }"
+    " QPushButton#sourceSelection:pressed { background-color: #0C4A70; }"
+    " QPushButton#sourceSelection:focus { border: 2px solid #D18100; }"
+    " QPushButton#sourceSelection:disabled { background-color: #E2E5E8;"
+    " color: #626A70; border: 1px solid #BBC2C8; }"
+)
+_PRIMARY_LIGHT_QSS = _SOURCE_LIGHT_QSS.replace("sourceSelection", "primaryConversion")
 _APPROVAL_DARK_QSS = (
     "QCheckBox#financialApproval::indicator:unchecked {"
     " border: 2px solid #DCE7F0; background-color: #202831; }"
@@ -353,6 +366,7 @@ class MainWindow(QMainWindow):
         source_row = QHBoxLayout()
         source_row.setSpacing(12)
         self.select_button = QPushButton("انتخاب فایل…")
+        self.select_button.setObjectName("sourceSelection")
         self.select_button.setMinimumHeight(40)
         self.select_button.clicked.connect(self._browse_source)
         source_row.addWidget(self.select_button)
@@ -693,7 +707,13 @@ class MainWindow(QMainWindow):
         else:
             caption = "اعتبارسنجی و تبدیل"
         self.convert_button.setText(caption)
-        self.convert_button.setAccessibleName("اقدام اصلی: " + caption)
+        # An enabled validation button can guide missing inputs without being
+        # the primary action before SHA-bound financial approval.
+        ready_to_convert = self._conversion_is_ready_for_emphasis()
+        self.convert_button.setAccessibleName(
+            ("اقدام اصلی: " if has_result or ready_to_convert
+             else "راهنمای تکمیل مراحل: ") + caption
+        )
         # Evidence is shown only when a current conversion exists; failure,
         # cancellation and revoked-result messages remain visible independently.
         self.metrics_panel.setVisible(has_result)
@@ -752,11 +772,36 @@ class MainWindow(QMainWindow):
         # hardcoded navy/red/green on a potentially dark card background.
         self.status.setPalette(QPalette(self.status.parentWidget().palette()))
 
+    def _conversion_is_ready_for_emphasis(self) -> bool:
+        """Presentation-only: engine and SHA-bound approval remain authoritative."""
+        return bool(
+            self.result is not None or (
+                self.source is not None
+                and self._selected_digest is not None
+                and self._approved_digest == self._selected_digest
+                and self.approved.isChecked()
+                and self._missing_input_guidance()[0] is None
+            )
+        )
+
     def _apply_theme_controls(self) -> None:
         pilot = getattr(QApplication.instance(), "_bank2odoo_appearance_pilot", None)
         dark = bool(pilot is not None and pilot.dark)
-        primary = _PRIMARY_DARK_QSS if dark else ""
+        # Choose exactly one accented action in any phase. A missing source
+        # accents selection; approval-incomplete conversion stays clickable
+        # but native/secondary. This creates no additional business state.
+        select = (
+            (_SOURCE_DARK_QSS if dark else _SOURCE_LIGHT_QSS)
+            if self.source is None and not (self._thread is not None or self._ui_busy)
+            else ""
+        )
+        primary = (
+            (_PRIMARY_DARK_QSS if dark else _PRIMARY_LIGHT_QSS)
+            if self._conversion_is_ready_for_emphasis() else ""
+        )
         approval = _APPROVAL_DARK_QSS if dark else ""
+        if self.select_button.styleSheet() != select:
+            self.select_button.setStyleSheet(select)
         if self.convert_button.styleSheet() != primary:
             self.convert_button.setStyleSheet(primary)
         if self.approved.styleSheet() != approval:

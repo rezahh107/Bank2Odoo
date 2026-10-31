@@ -124,6 +124,9 @@ class AccountantUiTests(unittest.TestCase):
         w = self.window
         self.assertTrue(w.convert_button.isVisible())
         self.assertTrue(w.convert_button.isEnabled(), "Guidance-first action stays available")
+        self.assertEqual(w.convert_button.styleSheet(), "")
+        self.assertTrue(w.select_button.styleSheet(), "Source selection must be visually primary")
+        self.assertIn("راهنمای تکمیل مراحل", w.convert_button.accessibleName())
         self.assertFalse(w.metrics_panel.isVisible())
         self.assertFalse(w.summary.isVisible())
         self.assertFalse(w.result_state.isVisible())
