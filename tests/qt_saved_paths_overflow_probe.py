@@ -3,8 +3,8 @@ from __future__ import annotations
 import argparse, csv, json, os, platform, sys, tempfile
 from pathlib import Path
 from PySide6 import __version__ as pyside_version
-from PySide6.QtCore import QPoint, Qt, QEventLoop, QTimer, qVersion
-from PySide6.QtGui import QFontInfo
+from PySide6.QtCore import QPoint, QRect, Qt, QEventLoop, QTimer, qVersion
+from PySide6.QtGui import QColor, QFontInfo, QImage, QPainter
 from PySide6.QtWidgets import QApplication
 from bank2odoo.ui.window import MainWindow, configure_application
 
@@ -142,6 +142,35 @@ def run_case(app, output, theme, width, height):
         finally:
             w.close();app.processEvents()
 
+def make_contact_sheets(output):
+    """Small diagnostic contact sheets; original PNGs remain untouched."""
+    for theme in ("light", "dark"):
+        sheet = QImage(1040, 1240, QImage.Format.Format_ARGB32)
+        sheet.fill(QColor("#f4f5f7"))
+        painter = QPainter(sheet)
+        try:
+            for row, size in enumerate(("940x830", "650x520", "600x480")):
+                for col, phase in enumerate(("production_after", "legacy_long_injected_after")):
+                    name = f"{theme}_{size}_{phase}.png"
+                    picture = QImage(str(output / name))
+                    if picture.isNull():
+                        raise RuntimeError("Missing Qt screenshot " + name)
+                    target_width, target_height = 485, 352
+                    scaled = picture.scaled(target_width, target_height,
+                                            Qt.AspectRatioMode.KeepAspectRatio,
+                                            Qt.TransformationMode.SmoothTransformation)
+                    x = 18 + col * 520 + (target_width-scaled.width()) // 2
+                    y = 28 + row * 400
+                    painter.setPen(QColor("#252525"))
+                    painter.drawText(QRect(x, y, 480, 24),
+                                     Qt.AlignmentFlag.AlignLeft,
+                                     f"{size}: " + ("PRODUCTION" if col == 0 else "LEGACY INJECTED"))
+                    painter.drawImage(x, y + 28, scaled)
+        finally:
+            painter.end()
+        if not sheet.save(str(output / ("contact_" + theme + ".png")), "PNG"):
+            raise RuntimeError("Cannot save Qt contact sheet")
+
 def main():
     p=argparse.ArgumentParser();p.add_argument("--output",required=True,type=Path)
     args=p.parse_args();args.output.mkdir(parents=True,exist_ok=True)
@@ -160,6 +189,7 @@ def main():
              "physical_windows11_verified":False,"actual_os_scheme_verified":False},
              "cases":data,"source":"actual Qt Widgets, fictional statement and real paired-save only"}
     (args.output/"measurements.json").write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding="utf-8")
+    make_contact_sheets(args.output)
     for x in data:
         print(x["case"],"H",x["hscroll"],"content",x["content"],"viewport",x["viewport"],
               "labelMin",x["saved_label_min_hint"],"groups",[v["minimum"][0] for v in x["group_boxes"].values()],"columns",x["input_rect"],x["result_rect"])
