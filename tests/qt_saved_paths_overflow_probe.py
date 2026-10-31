@@ -91,7 +91,7 @@ def run_case(app, output, theme, width, height):
             wait_finished(w,w.save_done,app)
             if not w._saved or "دو فایل ایجاد شدند" not in w.saved_paths.text():
                 raise AssertionError("actual fictional paired-save failed")
-            long_text=w.saved_paths.text()
+            saved_text=w.saved_paths.text()
             results=[]
             prefix=f"{theme}_{width}x{height}_"
             def snap(label, reveal=False, bottom=False):
@@ -99,18 +99,45 @@ def run_case(app, output, theme, width, height):
                     w.scroll.verticalScrollBar().setValue(w.scroll.verticalScrollBar().maximum())
                 if reveal:w._reveal_result()
                 results.append(measure(w,app,prefix+label,output))
+            # Production baseline before/after focus and normal vertical scroll.
             w.scroll.horizontalScrollBar().setValue(0)
-            snap("long_before");snap("long_after",reveal=True)
-            snap("long_vertical_bottom",bottom=True)
-            # Change only visible QLabel text, not save result or file paths.
-            w.saved_paths.setText("دو فایل ایجاد شدند؛ مسیرها فقط در آزمون ساختگی‌اند.")
-            for _ in range(8):app.processEvents()
-            w.scroll.horizontalScrollBar().setValue(0)
-            snap("short_before");snap("short_after",reveal=True)
-            w.saved_paths.setText(long_text)
-            for _ in range(8):app.processEvents()
-            w.scroll.horizontalScrollBar().setValue(0)
-            snap("long_restored_after",reveal=True)
+            snap("production_before");snap("production_after",reveal=True)
+            snap("production_vertical_bottom",bottom=True)
+            if hasattr(w,"saved_csv_path"):
+                paths=list(out.glob("Bank2Odoo_*"))
+                csv_path=next(x for x in paths if x.suffix==".csv")
+                report_path=next(x for x in paths if x.suffix==".txt")
+                if (w.saved_csv_path.text()!=str(csv_path)
+                    or w.saved_report_path.text()!=str(report_path)):
+                    raise AssertionError("Full output paths not exposed exactly")
+                for x in results[-3:]:
+                    if x["hscroll"]["maximum"] != 0:
+                        raise AssertionError("Fixed product retains horizontal overflow: "+x["case"])
+                # Test-only deliberate return of the *legacy* long QLabel,
+                # keeping all other widgets and saved values unchanged.
+                from bank2odoo.ui.window import latin
+                long_text=("دو فایل ایجاد شدند:\\nCSV: "+latin(csv_path)
+                           +"\\nگزارش کنترل خصوصی: "+latin(report_path))
+                w.saved_paths.setText(long_text)
+                for _ in range(8):app.processEvents()
+                w.scroll.horizontalScrollBar().setValue(0)
+                snap("legacy_long_injected_before")
+                snap("legacy_long_injected_after",reveal=True)
+                w.saved_paths.setText(saved_text)
+                for _ in range(8):app.processEvents()
+                w.scroll.horizontalScrollBar().setValue(0)
+                snap("production_restored_after",reveal=True)
+                if results[-1]["hscroll"]["maximum"] != 0:
+                    raise AssertionError("Fixed product did not restore narrow width")
+            else:
+                w.saved_paths.setText("دو فایل ایجاد شدند؛ مسیرها فقط در آزمون ساختگی‌اند.")
+                for _ in range(8):app.processEvents()
+                w.scroll.horizontalScrollBar().setValue(0)
+                snap("short_before");snap("short_after",reveal=True)
+                w.saved_paths.setText(saved_text)
+                for _ in range(8):app.processEvents()
+                w.scroll.horizontalScrollBar().setValue(0)
+                snap("long_restored_after",reveal=True)
             return results
         finally:
             w.close();app.processEvents()
@@ -135,6 +162,6 @@ def main():
     (args.output/"measurements.json").write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding="utf-8")
     for x in data:
         print(x["case"],"H",x["hscroll"],"content",x["content"],"viewport",x["viewport"],
-              "labelMin",x["saved_label_min_hint"],"groups",[(k,v["minimum"][0]) for k,v in x["group_boxes"].items()],"columns",x["input_rect"],x["result_rect"])
+              "labelMin",x["saved_label_min_hint"],"groups",[v["minimum"][0] for v in x["group_boxes"].values()],"columns",x["input_rect"],x["result_rect"])
     print("QUALIFIED_CASES",len(data))
 if __name__=="__main__":main()
