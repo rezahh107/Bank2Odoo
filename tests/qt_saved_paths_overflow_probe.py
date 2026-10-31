@@ -1,6 +1,6 @@
 """Test-only discriminator: saved-path QLabel sizing versus reveal/scroll (fictional data)."""
 from __future__ import annotations
-import argparse, csv, json, os, platform, sys, tempfile
+import argparse, csv, json, os, platform, subprocess, sys, tempfile
 from pathlib import Path
 from PySide6 import __version__ as pyside_version
 from PySide6.QtCore import QPoint, QRect, Qt, QEventLoop, QTimer, qVersion
@@ -184,6 +184,7 @@ def main():
             data.extend(run_case(app,args.output,theme,*size))
     payload={"environment":{"platform":platform.platform(),"python":sys.version,
              "qpa":app.platformName(),"qt":qVersion(),"pyside6":pyside_version,
+             "checkout_head":subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip(),
              "effective_style_final":app.style().objectName(),
              "font":QFontInfo(app.font()).family(),"scale_factor":os.environ.get("QT_SCALE_FACTOR"),
              "physical_windows11_verified":False,"actual_os_scheme_verified":False},
