@@ -738,7 +738,10 @@ class AccountantUiTests(unittest.TestCase):
         self.window._thread_finished()  # orphaned/late callback, no active sender
         self.assertEqual(text, self.window.status.text())
         self.assertIsNone(self.window._thread)
-        self.assertTrue(self.window.save_button.isEnabled())
+        self.assertIsNotNone(self.window.result)
+        self.assertEqual(self.window.output_directory.text(), "")
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertIn("انتخاب پوشه", self.window.convert_button.text())
 
     def _await_join_attempts(self, calls: list[int], count: int) -> None:
         for _ in range(160):
@@ -995,8 +998,10 @@ class AccountantUiTests(unittest.TestCase):
                 candidate = self._convert()
                 expected = self.window.result_state.text()
                 self.assertTrue(expected.startswith("NOT_PROVEN" if not_proven else "PASS"))
-                self.assertIn("نه تأیید حسابداری", expected) if not not_proven else self.assertIn(
-                    "شواهد کافی", expected)
+                if not_proven:
+                    self.assertIn("شواهد کافی", expected)
+                else:
+                    self.assertIn("نه تأیید حسابداری", expected)
                 private = self.private / ("uncertain" if not_proven else "balanced")
                 private.mkdir()
                 self.window.output_directory.setText(str(private))
