@@ -11,6 +11,7 @@ import os
 import platform
 import sys
 import tempfile
+import weakref
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -182,13 +183,19 @@ def application_scheme(app, scheme):
 def apply_layout_variant(w, variant):
     if variant=="baseline":return
     if variant!="horizontal_ltr":raise ValueError(variant)
-    original=w._reflow_workspace
+    # Do not capture a bound method here: window -> closure -> window would
+    # survive until interpreter shutdown, after native Qt style teardown.
+    original=product.MainWindow._reflow_workspace
+    weak_window=weakref.ref(w)
     def reflow():
-        original()
-        if w._workspace.direction()==QBoxLayout.Direction.RightToLeft:
-            w._workspace.setDirection(QBoxLayout.Direction.LeftToRight)
-            w._workspace.invalidate()
-            w.scroll.widget().layout().activate()
+        current=weak_window()
+        if current is None:
+            return
+        original(current)
+        if current._workspace.direction()==QBoxLayout.Direction.RightToLeft:
+            current._workspace.setDirection(QBoxLayout.Direction.LeftToRight)
+            current._workspace.invalidate()
+            current.scroll.widget().layout().activate()
     w._reflow_workspace=reflow
     reflow()
 
