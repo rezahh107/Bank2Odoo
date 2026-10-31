@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox,
     QBoxLayout, QGridLayout,
     QPlainTextEdit, QProgressBar, QPushButton, QScrollArea, QSpinBox,
-    QProxyStyle, QStyle, QStyleFactory, QVBoxLayout, QWidget,
+    QProxyStyle, QStyle, QStyleFactory, QSizePolicy, QVBoxLayout, QWidget,
 )
 
 from bank2odoo.banks.reader import read_statement
@@ -552,6 +552,33 @@ class MainWindow(QMainWindow):
         self.saved_paths.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.saved_paths.setFocusPolicy(Qt.FocusPolicy.TabFocus)
         save_layout.addWidget(self.saved_paths)
+        # Full technical paths live in bounded, individually copyable native
+        # controls. A wrapped QLabel containing an unbroken LTR filename made
+        # the entire result column demand thousands of logical pixels.
+        self.saved_path_fields = QWidget(save_box)
+        path_layout = QVBoxLayout(self.saved_path_fields)
+        path_layout.setContentsMargins(0, 0, 0, 0)
+        path_layout.setSpacing(6)
+        self.saved_csv_path = QLineEdit()
+        self.saved_report_path = QLineEdit()
+        for caption, field, accessible in (
+            ("مسیر کامل CSV نامزد:", self.saved_csv_path, "مسیر کامل فایل CSV نامزد"),
+            ("مسیر کامل گزارش کنترل خصوصی:", self.saved_report_path,
+             "مسیر کامل گزارش کنترل خصوصی"),
+        ):
+            title = QLabel(caption)
+            title.setWordWrap(True)
+            path_layout.addWidget(title)
+            field.setReadOnly(True)
+            field.setMinimumWidth(0)
+            field.setMinimumHeight(36)
+            field.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+            field.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+            field.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            field.setAccessibleName(accessible)
+            path_layout.addWidget(field)
+        self.saved_path_fields.hide()
+        save_layout.addWidget(self.saved_path_fields)
         next_step = QLabel(GENERAL_REVIEW)
         next_step.setWordWrap(True)
         save_layout.addWidget(next_step)
@@ -644,7 +671,7 @@ class MainWindow(QMainWindow):
         self.directory_button.setEnabled(not active and not self._saved)
         self.convert_button.setEnabled(not active and not self._saved)
         if self._saved:
-            caption = "ذخیره شد — کنترل حسابدار و Odoo باقی است"
+            caption = "ذخیره شد"
         elif has_result and has_folder:
             caption = "ذخیره CSV و گزارش کنترل"
         elif has_result:
@@ -752,7 +779,13 @@ class MainWindow(QMainWindow):
         self._last_detail = detail
         self.details.setPlainText(detail or "جزئیات بیشتری برای نمایش وجود ندارد.")
 
+    def _clear_saved_path_fields(self) -> None:
+        self.saved_path_fields.hide()
+        self.saved_csv_path.clear()
+        self.saved_report_path.clear()
+
     def _invalidate(self) -> None:
+        self._clear_saved_path_fields()
         self.result = None
         self._saved = False
         self.saved_paths.setText("هنوز خروجی جدیدی ذخیره نشده است.")
@@ -1042,14 +1075,16 @@ class MainWindow(QMainWindow):
                 self._success(value)
         elif kind == "save":
             if error is not None:
+                self._clear_saved_path_fields()
                 self.saved_paths.setText("ذخیره کامل نشد؛ فایل‌ها را در پوشه مقصد بررسی کنید.")
                 self._set_message("خطای ذخیره: " + human_error(error, saving=True), error)
             else:
                 csv_path, report_path = value
                 self._saved = True
-                self.saved_paths.setText(
-                    f"دو فایل ایجاد شدند:\nCSV: {latin(csv_path)}\nگزارش کنترل خصوصی: {latin(report_path)}"
-                )
+                self.saved_csv_path.setText(str(csv_path))
+                self.saved_report_path.setText(str(report_path))
+                self.saved_path_fields.show()
+                self.saved_paths.setText("دو فایل ایجاد شدند؛ مسیرهای کامل زیر قابل انتخاب و کپی هستند.")
                 self._set_message("ذخیره هر دو فایل موفق بود. نامزد هنوز مجوز ورود به Odoo نیست.")
                 self.result_state.setText("ذخیره انجام شد — بررسی مستقل حسابدار/Odoo لازم است")
         self._set_busy(False)
