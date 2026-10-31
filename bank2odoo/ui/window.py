@@ -1109,6 +1109,11 @@ class MainWindow(QMainWindow):
         elif kind == "save":
             if error is not None:
                 self._clear_saved_path_fields()
+                # Any failed pair needs a fresh explicit destination: a missing
+                # folder, existing output, forbidden checkout or write failure
+                # must not leave the primary action offering an identical retry.
+                # Keep the conversion candidate and its balance evidence.
+                self.output_directory.clear()
                 self.saved_paths.setText("ذخیره کامل نشد؛ فایل‌ها را در پوشه مقصد بررسی کنید.")
                 self._set_message("خطای ذخیره: " + human_error(error, saving=True), error)
             else:
@@ -1119,7 +1124,8 @@ class MainWindow(QMainWindow):
                 self.saved_path_fields.show()
                 self.saved_paths.setText("دو فایل ایجاد شدند؛ مسیرهای کامل زیر قابل انتخاب و کپی هستند.")
                 self._set_message("ذخیره هر دو فایل موفق بود. نامزد هنوز مجوز ورود به Odoo نیست.")
-                self.result_state.setText("ذخیره انجام شد — بررسی مستقل حسابدار/Odoo لازم است")
+                # Storage success belongs in status/saved_paths; retain the
+                # independent PASS/NOT_PROVEN balance qualification.
         self._set_busy(False)
         if kind in ("convert", "save"):
             self._reveal_result()
