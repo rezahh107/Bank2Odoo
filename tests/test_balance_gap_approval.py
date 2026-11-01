@@ -1,6 +1,8 @@
 """Fail-closed balance-gap regression tests; all statement data is synthetic."""
 
 from dataclasses import replace
+from contextlib import redirect_stderr, redirect_stdout
+from io import StringIO
 from decimal import Decimal
 from hashlib import sha256
 from pathlib import Path
@@ -9,9 +11,10 @@ import tempfile
 import unittest
 
 from bank2odoo.core.engine import BalanceGapApproval, Context, convert
+from bank2odoo.cli import main as cli_main
 from bank2odoo.reporting.output import output_csv, save_candidate
 from bank2odoo.validation.financial import StatementError
-from test_conversion import write_melli
+from test_conversion import write_melli, write_mellat
 
 
 def fictional_movements():
@@ -132,6 +135,50 @@ class ApprovedBalanceGapTests(unittest.TestCase):
                 # Test a fresh per-source SHA as well, not just stale-hash rejection.
                 with self.assertRaises(StatementError):
                     self._convert(self._approval())
+
+    def test_cli_requires_complete_approval_and_writes_only_review_candidate(self):
+        approved = self._approval()
+        output = self.folder / "cli_candidate.csv"
+        report = self.folder / "cli_private.txt"
+        args = [
+            "--input", str(self.source), "--output", str(output),
+            "--report", str(report), "--source-unit", "IRR",
+            "--target-unit", "IRR", "--journal", "Synthetic Journal",
+        ]
+        with redirect_stderr(StringIO()):
+            self.assertEqual(cli_main(args + [
+                "--gap-source-sha256", approved.source_sha256,
+            ]), 1)
+        self.assertFalse(output.exists())
+        self.assertFalse(report.exists())
+
+        with redirect_stdout(StringIO()):
+            self.assertEqual(cli_main(args + [
+                "--gap-source-sha256", approved.source_sha256,
+                "--gap-before-row", str(approved.preceding_physical_row),
+                "--gap-after-row", str(approved.following_physical_row),
+                "--gap-residual", str(approved.expected_residual),
+            ]), 0)
+        self.assertTrue(output.is_file())
+        self.assertTrue(report.is_file())
+        self.assertIn("NOT_PROVEN:", report.read_text(encoding="utf-8"))
+
+    def test_mellat_gap_declaration_cannot_bypass_its_strict_balance_controls(self):
+        source = self.folder / "fictional_mellat.csv"
+        write_mellat(source, [
+            ["1", "1405/07/01", "10:00:00", "SYN-1",
+             "واریز ساختگی", "0", "10", "10"],
+            ["2", "1405/07/02", "10:00:00", "SYN-2",
+             "برداشت ساختگی", "5", "0", "5"],
+        ])
+        unsupported = BalanceGapApproval(
+            sha256(source.read_bytes()).hexdigest(), 3, 4, Decimal("1")
+        )
+        with self.assertRaisesRegex(StatementError, "Bank Melli only"):
+            convert(source, Context(
+                "IRR", "IRR", "Synthetic Journal",
+                balance_gap_approval=unsupported,
+            ))
 
     def test_unused_approval_does_not_convert_continuous_chain_into_gap(self):
         # Remove fictional missing interval while keeping both segments internally sound.
