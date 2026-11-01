@@ -117,10 +117,15 @@ def _extract(table: list[tuple[int, list[str]]], bank: str, sheet: str) -> tuple
             f"{header[i] if i < len(header) and str(header[i]).strip() else 'column_'+str(i+1)} [{i+1}]": str(value)
             for i, value in enumerate(cells)
         }
-        if any(str(value).strip() for value in cells[len(header):]):
+        if any(str(value).strip() and
+               (i >= len(header) or not str(header[i]).strip())
+               for i, value in enumerate(cells)):
+            # XLS sheets are rectangular: an extra data cell extends the
+            # apparent header width with an unnamed column. Detect that too.
             fields["source_structure_issue"] = (
-                f"Extra populated source cells beyond header at {sheet}:{physical}; "
-                "raw values retained, column alignment not independently proven"
+                f"Extra populated source cells beyond header or in unnamed columns "
+                f"at {sheet}:{physical}; raw values retained, "
+                "column alignment not independently proven"
             )
         time_index = mapping.get("time")
         raw_time = (str(cells[time_index]) if time_index is not None
