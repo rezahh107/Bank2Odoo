@@ -253,7 +253,7 @@ class ConversionFirstDiagnosticsTests(unittest.TestCase):
                 (write_melli if bank == "melli" else write_mellat)(path, records)
                 original_bytes = path.read_bytes()
                 with self.assertRaisesRegex(
-                    StatementError, "Unmapped populated source column"
+                    StatementError, "Unmapped source column or populated unnamed field"
                 ) as observed:
                     convert(path, Context("IRR", "IRR", "Synthetic Journal"))
                 self.assertIn("Synthetic:7" if bank == "melli" else "CSV:3",
@@ -317,7 +317,7 @@ class ConversionFirstDiagnosticsTests(unittest.TestCase):
         try:
             altered = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
         except StatementError as exc:
-            self.assertRegex(str(exc), "Unmapped populated source column")
+            self.assertRegex(str(exc), "Unmapped source column or populated unnamed field")
         else:
             candidate = self.folder / "mellat_shifted.csv"
             private = self.folder / "mellat_shifted_PRIVATE.txt"
@@ -354,7 +354,7 @@ class ConversionFirstDiagnosticsTests(unittest.TestCase):
         private = self.folder / "mellat_empty_tail_PRIVATE.txt"
         source = self.folder / "mellat_empty_tail_shift.csv"
         write_mellat(source, shifted)
-        with self.assertRaisesRegex(StatementError, "Unmapped populated source column"):
+        with self.assertRaisesRegex(StatementError, "Unmapped source column or populated unnamed field"):
             convert(source, Context("IRR", "IRR", "Synthetic Journal"))
         self.assertFalse(candidate.exists())
         self.assertFalse(private.exists())
@@ -381,7 +381,7 @@ class ConversionFirstDiagnosticsTests(unittest.TestCase):
         try:
             altered = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
         except StatementError as exc:
-            self.assertRegex(str(exc), "Unmapped populated source column")
+            self.assertRegex(str(exc), "Unmapped source column or populated unnamed field")
         else:
             candidate = self.folder / "melli_shifted.csv"
             private = self.folder / "melli_shifted_PRIVATE.txt"
