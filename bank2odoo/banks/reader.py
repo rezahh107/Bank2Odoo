@@ -132,7 +132,7 @@ def _extract(table: list[tuple[int, list[str]]], bank: str, sheet: str) -> tuple
         ]
         if unmapped:
             raise StatementError(
-                f"Unmapped populated source column at {sheet}:{physical}: "
+                f"Unmapped source column or populated unnamed field at {sheet}:{physical}: "
                 f"columns {unmapped}; essential movement alignment not proven"
             )
         time_index = mapping.get("time")
