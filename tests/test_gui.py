@@ -578,6 +578,54 @@ class AccountantUiTests(unittest.TestCase):
         self.assertTrue(any("duplicate" in x.lower() for x in self.window.result.issues))
         self.assertIn("حذف نشده", self.window.summary.text())
 
+    def test_balance_discontinuity_converts_and_remains_saveable_with_warning(self):
+        with self.source.open("w", encoding="utf-8-sig", newline="") as handle:
+            writer = csv.writer(handle)
+            writer.writerow(["Fictional test data — not a bank statement"])
+            writer.writerow(HEADER)
+            writer.writerow(["1", "1405/07/01", "10:00", "A1",
+                             "واریز آزمایشی", "0", "100", "100"])
+            writer.writerow(["2", "1405/07/02", "11:00", "A2",
+                             "کارمزد آزمایشی", "25", "0", "999"])
+        result = self._convert()
+        self.assertEqual(len(result.rows), 2)
+        self.assertTrue(result.balance_status.startswith("NOT_PROVEN:"))
+        self.assertIn("مغایرت مانده", self.window._metrics["balance"].text())
+        self.assertIn("تبدیل انجام شده", self.window.result_state.text())
+        self.assertNotIn("خطا:", self.window.status.text())
+        self.window.output_directory.setText(str(self.private))
+        self._save()
+        self.assertIn("ذخیره هر دو فایل موفق بود", self.window.status.text())
+        paths = list(self.private.glob("Bank2Odoo_*"))
+        self.assertEqual(len(paths), 2)
+        self.assertIn("BALANCE DISCONTINUITY",
+                      next(p for p in paths if p.suffix == ".txt").read_text(encoding="utf-8"))
+        self.assertIn("REVIEW CANDIDATE ONLY",
+                      next(p for p in paths if p.suffix == ".txt").read_text(encoding="utf-8"))
+
+    def test_optional_time_warning_keeps_gui_candidate_saveable(self):
+        with self.source.open("w", encoding="utf-8-sig", newline="") as handle:
+            writer = csv.writer(handle)
+            writer.writerow(["Fictional test data — not a bank statement"])
+            writer.writerow(HEADER)
+            writer.writerow(["1", "1405/07/01", "10:00", "A1",
+                             "واریز آزمایشی", "0", "100", "100"])
+            writer.writerow(["2", "1405/07/02", "not-a-time", "A2",
+                             "کارمزد آزمایشی", "25", "0", "75"])
+        result = self._convert()
+        self.assertEqual(len(result.rows), 2)
+        self.assertIsNone(result.rows[1].time)
+        self.assertIn("Unparseable optional transaction time", "\n".join(result.issues))
+        self.assertNotIn("خطا:", self.window.status.text())
+        self.window.output_directory.setText(str(self.private))
+        self._save()
+        self.assertIn("ذخیره هر دو فایل موفق بود", self.window.status.text())
+        report_path = next(p for p in self.private.glob("Bank2Odoo_*")
+                           if p.suffix == ".txt")
+        report = report_path.read_text(encoding="utf-8")
+        self.assertIn('"source_time_raw": "not-a-time"', report)
+        self.assertIn("REVIEW CANDIDATE ONLY", report)
+
     def test_change_after_conversion_invalidates_candidate(self):
         self._convert()
         self.assertFalse(self.window.save_button.isEnabled())

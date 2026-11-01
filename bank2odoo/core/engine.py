@@ -1,4 +1,4 @@
-"""Headless conversion and independent bank-balance controls."""
+"""Headless statement conversion with optional balance diagnostics."""
 
 from dataclasses import dataclass
 from datetime import date
@@ -51,6 +51,8 @@ class Movement:
     label: str
     reference: str
     kind: str
+    balance_issue: str | None = None
+    time_issue: str | None = None
 
 
 @dataclass(frozen=True)
@@ -82,11 +84,22 @@ def _movement(row: SourceRow, bank: str, context: Context, factor: Decimal) -> M
     if not label:
         raise StatementError("Missing meaningful bank description")
     date_value = jalali_date(f["date"])
-    time = clock(f.get("time", ""))
-    balance = amount(f["balance"], required=False)
-    if balance is not None and balance < 0:
-        # Negative balances can be legitimate overdrafts; preserve them.
-        pass
+    # A malformed, independently extracted time is optional evidence, not a
+    # fabricated midnight or a reason to discard an otherwise valid movement.
+    time_issue = None
+    try:
+        time = clock(f.get("time", ""))
+    except StatementError:
+        time = None
+        time_issue = f"Unparseable optional transaction time at source row {row.physical_row}"
+    # Balance is optional evidence, not a field required to preserve a movement.
+    # The original raw cell remains in SourceRow.original and private trace.
+    balance_issue = f.get("balance_evidence_issue")
+    try:
+        balance = amount(f.get("balance", ""), required=False)
+    except StatementError:
+        balance = None
+        balance_issue = f"Unparseable optional balance at source row {row.physical_row}"
     if bank == "melli":
         raw_amount = amount(f["amount"])
         assert raw_amount is not None
@@ -108,48 +121,87 @@ def _movement(row: SourceRow, bank: str, context: Context, factor: Decimal) -> M
         signed = exact_sub(credit, debit)
     return Movement(row, date_value, time, signed,
                     exact_scaled(signed, factor, context.decimal_places), balance,
-                    label, f.get("reference", ""), f.get("kind", ""))
+                    label, f.get("reference", ""), f.get("kind", ""), balance_issue,
+                    time_issue)
 
 
-def _balances(rows: tuple[Movement, ...]) -> tuple[str, Decimal | None, Decimal | None, str, list[str]]:
-    issues = []
-    if not all(r.balance is not None for r in rows):
-        return "NOT_PROVEN: missing source balances", None, None, "unknown", ["Missing balance(s); no full balance proof"]
+def _balances(
+    rows: tuple[Movement, ...],
+) -> tuple[str, Decimal | None, Decimal | None, str, list[str]]:
+    """Nonblocking diagnostics for optional balance and chronological evidence.
+
+    Every extracted movement is converted regardless of balance continuity.
+    No balance conclusion authorizes accounting acceptance or Odoo import.
+    """
+    issues = [r.balance_issue for r in rows if r.balance_issue is not None]
+    issues.extend(r.time_issue for r in rows if r.time_issue is not None)
+    issues.extend(r.row.fields["source_structure_issue"] for r in rows
+                  if "source_structure_issue" in r.row.fields)
+    missing = [r.row.physical_row for r in rows if r.balance is None]
+    if missing:
+        issues.append(
+            f"Optional source balance unavailable/unusable at {len(missing)} "
+            "movement(s); raw source cells remain in private trace"
+        )
     if len(rows) < 2:
-        return "NOT_PROVEN: one movement", None, None, "unknown", ["One movement cannot establish bank ordering"]
-    # Within equal dates, a missing time prevents asserting either direction.
+        return "NOT_PROVEN: fewer than two movements", None, None, "unknown", issues
+
+    # Do not infer an order from a default midnight time where a same-date
+    # movement lacks its original time; only evidence that is present counts.
     if any(a.date == b.date and (a.time is None or b.time is None)
            for a, b in zip(rows, rows[1:])):
-        return "NOT_PROVEN: incomplete time/order", None, None, "unknown", ["Same-date rows without complete times"]
+        issues.append("Same-date source movements lack complete time/order evidence")
+        return "NOT_PROVEN: incomplete time/order", None, None, "unknown", issues
+
     keys = [(r.date, r.time or (0, 0, 0)) for r in rows]
     forward = all(a <= b for a, b in zip(keys, keys[1:]))
     reverse = all(a >= b for a, b in zip(keys, keys[1:]))
     if forward == reverse:
-        return "NOT_PROVEN: ambiguous or unordered timestamps", None, None, "unknown", ["Chronological source order is unproven"]
+        issues.append("Chronological source order cannot be independently proven from timestamps")
+        return "NOT_PROVEN: ambiguous or unordered timestamps", None, None, "unknown", issues
+    ordering = "oldest-to-newest" if forward else "newest-to-oldest"
+
+    mismatches: list[tuple[int, int, Decimal]] = []
+    checked = 0
+    for previous, current in zip(rows, rows[1:]):
+        if previous.balance is None or current.balance is None:
+            continue
+        # For newest-first statements the signed movement belongs to the
+        # newer row; for oldest-first statements it belongs to the current row.
+        if forward:
+            residual = exact_sub(exact_sub(current.balance, previous.balance), current.signed)
+        else:
+            residual = exact_sub(exact_sub(previous.balance, current.balance), previous.signed)
+        checked += 1
+        if residual != 0:
+            mismatches.append((previous.row.physical_row, current.row.physical_row, residual))
+
+    for before, after, residual in mismatches:
+        issues.append(
+            f"BALANCE DISCONTINUITY (diagnostic, not conversion failure): "
+            f"source rows {before}/{after}; source-unit residual {residual}"
+        )
+    if missing or mismatches:
+        return (
+            f"NOT_PROVEN: {len(mismatches)} balance discontinuity(ies) in "
+            f"{checked} checked transitions; {len(missing)} missing/unusable balance(s)",
+            None, None, ordering, issues,
+        )
+
     if forward:
-        # With oldest first, each current transaction changes previous closing balance.
-        for previous, current in zip(rows, rows[1:]):
-            assert previous.balance is not None and current.balance is not None
-            if exact_sub(current.balance, previous.balance) != current.signed:
-                raise StatementError(f"Consecutive balance mismatch at source rows {previous.row.physical_row}/{current.row.physical_row}")
         first, last = rows[0], rows[-1]
         assert first.balance is not None and last.balance is not None
         opening, closing = exact_sub(first.balance, first.signed), last.balance
-        order = "oldest-to-newest"
     else:
-        # With newest first, prior/newer balance minus current/older balance = prior movement.
-        for newer, older in zip(rows, rows[1:]):
-            assert newer.balance is not None and older.balance is not None
-            if exact_sub(newer.balance, older.balance) != newer.signed:
-                raise StatementError(f"Consecutive balance mismatch at source rows {newer.row.physical_row}/{older.row.physical_row}")
         first, last = rows[0], rows[-1]
         assert first.balance is not None and last.balance is not None
         opening, closing = exact_sub(last.balance, last.signed), first.balance
-        order = "newest-to-oldest"
-    net = exact_sum(r.signed for r in rows)
-    if exact_sub(closing, opening) != net:
-        raise StatementError("Closing minus inferred opening does not equal source movement net")
-    return f"PASS: {len(rows)-1} consecutive balance transitions", opening, closing, order, issues
+
+    # Derived endpoints are diagnostic only, never verified accounting values.
+    if exact_sub(closing, opening) != exact_sum(r.signed for r in rows):
+        issues.append("Inferred balance endpoints disagree with observed signed movements")
+        return "NOT_PROVEN: inferred endpoint mismatch", None, None, ordering, issues
+    return f"PASS: {checked} consecutive balance transitions", opening, closing, ordering, issues
 
 
 def convert(path: Path, context: Context) -> Conversion:
@@ -157,6 +209,7 @@ def convert(path: Path, context: Context) -> Conversion:
     raw = path.read_bytes()
     if not raw:
         raise StatementError("Empty bank statement")
+    source_sha256 = sha256(raw).hexdigest()
     source = read_statement(path, raw)
     rows = []
     for item in source.rows:
@@ -185,7 +238,7 @@ def convert(path: Path, context: Context) -> Conversion:
                           ", ".join(str(m.row.physical_row) for m in group))
     debits = exact_sum(m.signed.copy_abs() for m in movements if m.signed < 0)
     credits = exact_sum(m.signed for m in movements if m.signed > 0)
-    return Conversion(source.bank, path.name, sha256(raw).hexdigest(), source.encoding,
+    return Conversion(source.bank, path.name, source_sha256, source.encoding,
                       source.separator, movements, factor, context.source_unit, context.target_unit,
                       context.journal, debits, credits, exact_sub(credits, debits), balance_status,
                       opening, closing, ordering, tuple(issues), context.decimal_places)

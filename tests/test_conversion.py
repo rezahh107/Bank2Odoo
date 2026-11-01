@@ -150,8 +150,10 @@ class EngineEndToEndTests(unittest.TestCase):
         self.assertIn(f"2026-09-24,کارمزد آزمایشی,-{single}", output_csv(result))
         rows[0][9] = "1"  # Exact arithmetic must detect a one-unit mismatch.
         write_melli(source, rows)
-        with self.assertRaisesRegex(StatementError, "balance mismatch"):
-            convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+        changed = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+        self.assertEqual(len(changed.rows), 2)
+        self.assertTrue(changed.balance_status.startswith("NOT_PROVEN:"))
+        self.assertIn("BALANCE DISCONTINUITY", "\\n".join(changed.issues))
 
     def test_low_context_melli_signed_value_and_inverse_unit_factor(self) -> None:
         from decimal import localcontext
@@ -579,7 +581,7 @@ class EngineEndToEndTests(unittest.TestCase):
         with self.assertRaisesRegex(StatementError, "Invalid/unreadable legacy XLS"):
             convert(source, Context("IRR", "IRR", "S"))
 
-    def test_ambiguous_money_dates_and_balance_mismatch_fail_without_files(self) -> None:
+    def test_ambiguous_essential_money_and_dates_fail_without_files(self) -> None:
         source = self.root / "unsafe.csv"
         template = [
             ["1", "1405/07/01", "10:00:00", "0001", "نمونه", "0", "50", "50"],
@@ -588,7 +590,6 @@ class EngineEndToEndTests(unittest.TestCase):
         variants = [
             (6, "20", "debit/credit"),
             (1, "1400/12/30", "Impossible Jalali"),
-            (7, "21", "balance mismatch"),
             (5, "-30", "debit/credit"),
         ]
         for column, replacement, message in variants:

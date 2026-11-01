@@ -73,6 +73,21 @@ Journal name are entered context, **not verified against Odoo**. Never guess
 IRR/TOMAN from bank data. Destination `--decimal-places` must reflect confirmed
 Journal/currency precision; amounts requiring rounding are rejected.
 
+**Converter, not auditor (Owner decision 2026-11-01):** The converter emits
+all valid observed movements and a private trace even when consecutive bank
+balances disagree, balance cells are missing/invalid, or a historical interval
+is omitted from the source statement. A balance mismatch produces explicit
+**nonblocking diagnostics**, never an accounting PASS or an inference that
+missing movements were imported. The legacy four-parameter `--gap-*`
+exception approval has been removed from both conversion and CLI: no
+balance-gap declaration is required for a REVIEW CANDIDATE ONLY.
+
+Source identification, essential columns, Jalali dates, signed movement
+amounts/directions, exact Decimal scaling and confirmed monetary context remain
+fail-closed. Optional balance data and raw source values stay in the PRIVATE
+trace for a later accountant review. Odoo import and reconciliation are outside
+the converter's authority.
+
 The CSV follows the bank's **source row order**. The report records its order,
 physical source rows, original columns/IDs, dates/times, exact source-byte SHA,
 amounts, balances, tentative associations and outstanding decisions.
@@ -81,8 +96,8 @@ classification, rounding or unit conversion. The report is UTF-8 text with
 human-readable headings and JSON trace lines; treat it as sensitive.
 
 The converter refuses incomplete/contradictory monetary data, invalid dates,
-unknown types, misaligned bank balances, missing units and existing output
-files. Incomplete balance support is reported as `NOT_PROVEN`, **never PASS**.
+unknown types, missing units and existing output
+files. Incomplete or conflicting balance support is reported as `NOT_PROVEN`, **never accounting PASS**, and does not independently block conversion.
 A successful conversion only provides a **review candidate**; it does not mean
 accountant approval, absence of previously imported duplicates, or safety of
 live Odoo import. Before import, confirm source/journal/account, currency,
@@ -138,8 +153,11 @@ all public changes.
 ## Source policy and evidence limits
 
 Authoritative, private Owner documents (do not copy their private financial
-content into GitHub): Bank2Odoo GOAL_AUTHORITY v1.1.13 and NESTEC Bank
-Melli/Mellat CSV Conversion Guide v1.0.1. Their published behavior contract is
+content into GitHub): Bank2Odoo GOAL_AUTHORITY **v1.1.26, section 36**
+(**Converter, Not Auditor**; supersedes the previous blocking-balance policy)
+and NESTEC Bank Melli/Mellat CSV Conversion Guide v1.0.1. Earlier Owner
+authority revisions, including v1.1.13, are historical references only.
+The currently adopted conversion contract is
 `Date,Label,Amount` only, exact Decimal amounts, validated Jalali conversion,
 per-row trace and explicit review-only status.
 

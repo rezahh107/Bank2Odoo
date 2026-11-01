@@ -42,6 +42,6 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Conversion NOT completed; no approved Odoo import: {exc}", file=sys.stderr)
         return 1
     print(f"REVIEW CANDIDATE ONLY: {len(result.rows)} {result.bank} transactions; "
-          f"balance check: {result.balance_status}. CSV and PRIVATE report written. "
+          f"balance diagnostic (not accounting approval): {result.balance_status}. CSV and PRIVATE report written. "
           "No Odoo import or journal verification performed.")
     return 0

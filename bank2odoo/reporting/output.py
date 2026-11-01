@@ -28,6 +28,7 @@ def control_report(result: Conversion) -> str:
         "# Bank2Odoo — PRIVATE accountant control report",
         f"Producing application version: Bank2Odoo {VERSION}",
         "STATUS: REVIEW CANDIDATE ONLY — NOT authorized for live Odoo import",
+        "Conversion completed for observed movements; balance diagnostics are optional evidence, NOT accounting approval.",
         "No Odoo connection, journal validation, duplicate-import check, or accountant approval performed.",
         f"Source filename: {result.filename}",
         f"SHA-256 exact source bytes: {result.sha256}",
@@ -40,7 +41,8 @@ def control_report(result: Conversion) -> str:
         f"Debit total ({result.source_unit}): {result.debit_total}; credit total: {result.credit_total}; net: {result.net}",
         f"Converted net ({result.target_unit}): {exact_sum(m.converted for m in result.rows)}",
         f"Source row order: {result.ordering}; Output order: unchanged source order",
-        f"Balance check: {result.balance_status}",
+        f"Balance check: {result.balance_status}",  # Preserved for legacy private report readers.
+        "Balance diagnostics do not block conversion of otherwise valid observed movements.",
         "Inferred opening/closing (source units; not independently attested): " +
         f"{result.opening if result.opening is not None else 'NOT_PROVEN'} / " +
         f"{result.closing if result.closing is not None else 'NOT_PROVEN'}",
@@ -58,9 +60,11 @@ def control_report(result: Conversion) -> str:
         trace = {"csv_row": i, "source_physical_row": m.row.physical_row,
                  "sheet": m.row.sheet, "source_report_row": m.row.fields.get("report_row", ""),
                  "source_jalali_date": m.row.fields["date"], "source_time": m.row.fields.get("time", ""),
+                 "source_time_raw": m.row.raw_time, "time_evidence_issue": m.time_issue,
                  "gregorian_date": m.date.isoformat(), "reference": m.reference,
                  "transaction_type": m.kind, "source_signed": str(m.signed),
                  "source_balance": str(m.balance) if m.balance is not None else None,
+                 "balance_evidence_issue": m.balance_issue,
                  "dest_amount": format(m.converted, "f"), "dest_label": m.label,
                  "original_columns": m.row.original}
         lines.append(json.dumps(trace, ensure_ascii=False, sort_keys=True))

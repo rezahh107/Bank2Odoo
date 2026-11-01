@@ -11,16 +11,16 @@ OLE_MAGIC = bytes.fromhex("D0CF11E0A1B11AE1")
 
 REQUIRED = {
     "melli": {"date": ("تاریخ",), "kind": ("نوع",), "amount": ("مبلغ",),
-              "balance": ("مانده",), "description": ("شرح", "توضیحات")},
+              "description": ("شرح", "توضیحات")},
     "mellat": {"date": ("تاریخ",), "debit": ("مبلغ گردش بدهکار",),
-               "credit": ("مبلغ گردش بستانکار",), "balance": ("مانده",),
+               "credit": ("مبلغ گردش بستانکار",),
                "description": ("شرح",)},
 }
 OPTIONAL = {
-    "melli": {"time": ("زمان", "ساعت"), "report_row": ("ردیف",),
+    "melli": {"balance": ("مانده",), "time": ("زمان", "ساعت"), "report_row": ("ردیف",),
               "reference": ("شماره پیگیری",), "details": ("اطلاعات تکمیلی",),
               "notes": ("توضیحات",)},
-    "mellat": {"time": ("زمان", "ساعت"), "report_row": ("ردیف",),
+    "mellat": {"balance": ("مانده",), "time": ("زمان", "ساعت"), "report_row": ("ردیف",),
                "reference": ("شماره سریال",), "details": ("واریز کننده/ذینفع", "واریز کننده / ذینفع")},
 }
 
@@ -31,6 +31,7 @@ class SourceRow:
     sheet: str
     fields: dict[str, str]
     original: dict[str, str]
+    raw_time: str | None = None  # Decoded source cell, without conversion normalization.
 
 
 @dataclass(frozen=True)
@@ -61,6 +62,11 @@ def _column_map(headers: list[str], bank: str) -> dict[str, int] | None:
     for key, options in OPTIONAL[bank].items():
         indexes = [i for i, item in enumerate(names) if item in {normalized_header(a) for a in options}]
         if len(indexes) > 1:
+            if key == "balance":
+                # Balance is diagnostic-only. Retain ambiguous raw columns in
+                # the trace rather than choosing one or blocking movements.
+                cols["ambiguous_balance_header"] = -1
+                continue
             raise StatementError(f"Duplicate/ambiguous {bank} optional header {key}")
         if indexes:
             cols[key] = indexes[0]
@@ -97,12 +103,42 @@ def _extract(table: list[tuple[int, list[str]]], bank: str, sheet: str) -> tuple
             continue
         if seen_footer:
             raise StatementError(f"Unexpected data after total/footer at {sheet}:{physical}")
-        fields = {key: str(cells[i]).strip() if i < len(cells) else "" for key, i in mapping.items()}
+        fields = {key: str(cells[i]).strip() if i < len(cells) else ""
+                  for key, i in mapping.items() if i >= 0}
+        if "ambiguous_balance_header" in mapping:
+            fields["balance_evidence_issue"] = (
+                f"Duplicate/ambiguous optional balance headers at {sheet}:{physical}"
+            )
         if not fields["date"]:
             raise StatementError(f"Missing transaction date or unidentified footer at {sheet}:{physical}")
-        original = {f"{header[i] if str(header[i]).strip() else 'column_'+str(i+1)} [{i+1}]": str(value)
-                    for i, value in enumerate(cells)}
-        result.append(SourceRow(physical, sheet, fields, original))
+        # Source records need not have a universal fixed width. Preserve
+        # additional decoded cells without indexing beyond the header row.
+        original = {
+            f"{header[i] if i < len(header) and str(header[i]).strip() else 'column_'+str(i+1)} [{i+1}]": str(value)
+            for i, value in enumerate(cells)
+        }
+        # A nonblank cell with no corresponding named header is positive
+        # evidence that the row cannot safely be mapped. Inserting a cell
+        # before financial columns can otherwise turn a credit into a debit
+        # even when every displaced value is syntactically valid.
+        # Do not assume a bank-wide fixed width. The detected header owns
+        # this row's columns: any additional CSV field (even an empty final
+        # field after a shift) has no header identity. Named trailing fields
+        # are supported; populated unnamed XLS columns are not.
+        unmapped = [
+            i + 1 for i, value in enumerate(cells)
+            if i >= len(header) or
+            (str(value).strip() and not str(header[i]).strip())
+        ]
+        if unmapped:
+            raise StatementError(
+                f"Unmapped source column or populated unnamed field at {sheet}:{physical}: "
+                f"columns {unmapped}; essential movement alignment not proven"
+            )
+        time_index = mapping.get("time")
+        raw_time = (str(cells[time_index]) if time_index is not None
+                    and time_index < len(cells) else None)
+        result.append(SourceRow(physical, sheet, fields, original, raw_time))
     if not result:
         raise StatementError(f"No transactions below {bank} header in {sheet}")
     return tuple(result)
@@ -113,7 +149,9 @@ def _xls_text(cell: object) -> str:
     # decoded cell faithfully with str(), never apply a guessed money format.
     if isinstance(cell, float) and cell.is_integer():
         return str(int(cell))
-    return str(cell).strip()
+    # Raw provenance must retain significant whitespace. _extract() normalizes
+    # conversion-facing fields separately; never strip the original XLS cell.
+    return str(cell)
 
 
 def _read_melli(raw: bytes) -> Source:
