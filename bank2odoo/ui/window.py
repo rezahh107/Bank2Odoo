@@ -655,10 +655,17 @@ class MainWindow(QMainWindow):
             self.convert_button.sizeHint().width()
             + self.cancel_button.sizeHint().width() + 70,
         )
-        self._workspace_breakpoint = input_required + result_required + 12
+        input_minimum = self._input_column.minimumSizeHint().width()
+        result_minimum = self._result_column.minimumSizeHint().width()
+        margins = self.scroll.widget().layout().contentsMargins()
+        native_minimum = (input_minimum + result_minimum
+                          + self._workspace.spacing()
+                          + margins.left() + margins.right())
+        self._workspace_breakpoint = max(
+            input_required + result_required + 12, native_minimum
+        )
         self._workspace_measurements = (input_required, result_required,
-                                        self._input_column.minimumSizeHint().width(),
-                                        self._result_column.minimumSizeHint().width())
+                                        input_minimum, result_minimum)
         available = self.scroll.viewport().width()
         target = (QBoxLayout.Direction.LeftToRight
                   if available >= self._workspace_breakpoint
