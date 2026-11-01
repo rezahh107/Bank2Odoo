@@ -1,0 +1,119 @@
+# PUBLIC-ONLY handoff. No source bank statements, Golden files, or private reports.
+# Create a temporary branch named ci-public-dependencies-bank2odoo from the exact
+# PR #16 HEAD, then add this workflow file as its only change.
+name: Bank2Odoo public locked dependencies - isolated handoff
+
+on:
+  push:
+    branches:
+      - ci-public-dependencies-bank2odoo
+
+permissions:
+  contents: read
+
+jobs:
+  package-public-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout temporary branch and complete public history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact PR #16 ancestor and bounded workflow-only diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=6c0530fca07b5fe62e88cba22a9bda9becd18c67
+          test "$(git rev-parse HEAD^)" = "$base"
+          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/public-dependencies-bank2odoo.yml"
+          # Require a tracked clean tree; no files are copied from external input.
+          test -z "$(git status --porcelain)"
+
+      - name: Setup Python 3.13 (public runtime only)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.10.0'
+          enable-cache: false
+
+      - name: Resolve and verify exact locked public dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv sync --locked --no-dev
+          uv run --locked --offline --no-dev python - <<'PY'
+          import importlib.metadata as md
+          import sys
+          assert sys.version_info[:2] == (3, 13)
+          for name, version in (
+              ('xlrd', '2.0.2'),
+              ('persiantools', '6.2.0'),
+              ('PySide6-Essentials', '6.11.2'),
+          ):
+              assert md.version(name) == version, (name, md.version(name))
+          print('Public pinned runtime verified: Python 3.13 / xlrd / persiantools / PySide6-Essentials')
+          PY
+
+      - name: Export hashed locked requirements and download public Linux wheels
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public-only/wheels public-only/source
+          uv export --locked --no-dev --format requirements-txt --no-emit-project \
+            --output-file public-only/requirements.locked.txt
+          python -m pip download --require-hashes --only-binary=:all: \
+            --dest public-only/wheels -r public-only/requirements.locked.txt
+          # Only these exact public source paths are archived at the two pinned commits.
+          git archive --format=tar.gz \
+            --output=public-only/source/Bank2Odoo_baseline_public.tar.gz \
+            74a6ec9e0703ab8441cb2cdbb234f5d6c54bf158 \
+            bank2odoo pyproject.toml uv.lock
+          git archive --format=tar.gz \
+            --output=public-only/source/Bank2Odoo_PR16_public.tar.gz \
+            6c0530fca07b5fe62e88cba22a9bda9becd18c67 \
+            bank2odoo pyproject.toml uv.lock
+
+      - name: Audit artifact file allowlist and write public hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          root = Path('public-only')
+          allowed = {'requirements.locked.txt',
+                     'source/Bank2Odoo_baseline_public.tar.gz',
+                     'source/Bank2Odoo_PR16_public.tar.gz'}
+          files = [p for p in root.rglob('*') if p.is_file()]
+          assert files
+          for p in files:
+              path = p.relative_to(root).as_posix()
+              assert path in allowed or path.startswith('wheels/') and path.endswith('.whl'), path
+          assert len(list((root / 'wheels').glob('*.whl'))) >= 3
+          evidence = {'kind': 'PUBLIC_DEPENDENCIES_ONLY',
+                      'private_bank_files_included': False,
+                      'python': '3.13',
+                      'source_baseline': '74a6ec9e0703ab8441cb2cdbb234f5d6c54bf158',
+                      'source_pr16': '6c0530fca07b5fe62e88cba22a9bda9becd18c67',
+                      'files': {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+                                for p in sorted(files)}}
+          (root / 'public-manifest.json').write_text(json.dumps(evidence, indent=2) + '\n')
+          print('Public wheel files:', len(list((root / 'wheels').glob('*.whl'))))
+          PY
+
+      - name: Upload public-only Linux Python 3.13 wheelhouse
+        uses: actions/upload-artifact@v4
+        with:
+          name: bank2odoo-public-locked-py313-linux-wheels
+          path: public-only/
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
