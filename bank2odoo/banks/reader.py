@@ -11,16 +11,16 @@ OLE_MAGIC = bytes.fromhex("D0CF11E0A1B11AE1")
 
 REQUIRED = {
     "melli": {"date": ("تاریخ",), "kind": ("نوع",), "amount": ("مبلغ",),
-              "balance": ("مانده",), "description": ("شرح", "توضیحات")},
+              "description": ("شرح", "توضیحات")},
     "mellat": {"date": ("تاریخ",), "debit": ("مبلغ گردش بدهکار",),
-               "credit": ("مبلغ گردش بستانکار",), "balance": ("مانده",),
+               "credit": ("مبلغ گردش بستانکار",),
                "description": ("شرح",)},
 }
 OPTIONAL = {
-    "melli": {"time": ("زمان", "ساعت"), "report_row": ("ردیف",),
+    "melli": {"balance": ("مانده",), "time": ("زمان", "ساعت"), "report_row": ("ردیف",),
               "reference": ("شماره پیگیری",), "details": ("اطلاعات تکمیلی",),
               "notes": ("توضیحات",)},
-    "mellat": {"time": ("زمان", "ساعت"), "report_row": ("ردیف",),
+    "mellat": {"balance": ("مانده",), "time": ("زمان", "ساعت"), "report_row": ("ردیف",),
                "reference": ("شماره سریال",), "details": ("واریز کننده/ذینفع", "واریز کننده / ذینفع")},
 }
 
