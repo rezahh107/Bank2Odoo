@@ -94,6 +94,71 @@ class ApprovedBalanceGapTests(unittest.TestCase):
         self.assertEqual([r["csv_row"] for r in trace], [2, 3, 4, 5])
         self.assertEqual([r["dest_amount"] for r in trace], ["10", "20", "-5", "5"])
 
+    def test_equal_gap_boundary_timestamps_fail_closed_before_cli_output(self):
+        # Reproduce PRI-FND-001 with authentic synthetic BIFF8 data and exact
+        # source identity. Outer movements remain strictly newer/older.
+        self.rows[2][1] = self.rows[1][1]
+        self.rows[2][2] = self.rows[1][2]  # Same complete HH:MM:SS.
+        self._write()
+        approval = self._approval()  # Fresh SHA and correct residual/boundary.
+        with self.assertRaisesRegex(
+                StatementError, "gap boundary requires strictly descending timestamps"):
+            self._convert(approval)
+
+        candidate = self.folder / "ambiguous_candidate.csv"
+        report = self.folder / "ambiguous_private_trace.txt"
+        args = [
+            "--input", str(self.source), "--output", str(candidate),
+            "--report", str(report), "--source-unit", "IRR",
+            "--target-unit", "IRR", "--journal", "Synthetic Journal",
+            "--gap-source-sha256", approval.source_sha256,
+            "--gap-before-row", str(approval.preceding_physical_row),
+            "--gap-after-row", str(approval.following_physical_row),
+            "--gap-residual", str(approval.expected_residual),
+        ]
+        failure = StringIO()
+        with redirect_stderr(failure):
+            self.assertEqual(cli_main(args), 1)
+        self.assertIn("strictly descending timestamps", failure.getvalue())
+        self.assertFalse(candidate.exists())
+        self.assertFalse(report.exists())
+
+    def test_distinct_gap_boundary_times_same_day_remain_valid(self):
+        # Strict timestamp precedence, not a global strict-date requirement.
+        self.rows[2][1] = self.rows[1][1]
+        self.rows[2][2] = "11:59:59"
+        self._write()
+        result = self._convert(self._approval())
+        self.assertEqual(len(result.rows), 4)
+        self.assertEqual(result.ordering, "newest-to-oldest")
+        self.assertEqual(result.balance_status,
+                         "NOT_PROVEN: explicitly declared historical gap; "
+                         "1+1 strict within-segment transitions")
+        self.assertEqual((result.opening, result.closing), (None, None))
+        self.assertEqual([r.row.physical_row for r in result.rows], [7, 8, 9, 10])
+        candidate = self.folder / "same_day_candidate.csv"
+        report = self.folder / "same_day_trace.txt"
+        save_candidate(result, candidate, report)
+        self.assertEqual(len(candidate.read_text(encoding="utf-8").splitlines()), 5)
+        self.assertIn("NOT_PROVEN", report.read_text(encoding="utf-8"))
+
+    def test_verified_equal_timestamps_within_both_segments_remain_valid(self):
+        # Time ties WITHIN independently balance-verified segments are not
+        # equivalent to a tie at the excluded gap boundary.
+        self.rows[0][1] = self.rows[1][1]
+        self.rows[0][2] = self.rows[1][2]
+        self.rows[3][1] = self.rows[2][1]
+        self.rows[3][2] = self.rows[2][2]
+        self._write()
+        result = self._convert(self._approval())
+        self.assertEqual(len(result.rows), 4)
+        self.assertEqual(result.ordering, "newest-to-oldest")
+        self.assertIn("1+1 strict within-segment transitions", result.balance_status)
+        self.assertTrue(result.balance_status.startswith("NOT_PROVEN:"))
+        self.assertIsNone(result.opening)
+        self.assertIsNone(result.closing)
+        self.assertEqual([r.row.physical_row for r in result.rows], [7, 8, 9, 10])
+
     def test_wrong_sha_boundary_and_residual_are_rejected(self):
         original = self._approval()
         mismatched = [
