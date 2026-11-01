@@ -121,12 +121,14 @@ def _extract(table: list[tuple[int, list[str]]], bank: str, sheet: str) -> tuple
         # evidence that the row cannot safely be mapped. Inserting a cell
         # before financial columns can otherwise turn a credit into a debit
         # even when every displaced value is syntactically valid.
-        # Do not assume a fixed total width: documented/named trailing
-        # columns remain valid, and empty extra cells are harmless.
+        # Do not assume a bank-wide fixed width. The detected header owns
+        # this row's columns: any additional CSV field (even an empty final
+        # field after a shift) has no header identity. Named trailing fields
+        # are supported; populated unnamed XLS columns are not.
         unmapped = [
             i + 1 for i, value in enumerate(cells)
-            if str(value).strip() and
-            (i >= len(header) or not str(header[i]).strip())
+            if i >= len(header) or
+            (str(value).strip() and not str(header[i]).strip())
         ]
         if unmapped:
             raise StatementError(
