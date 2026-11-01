@@ -235,7 +235,9 @@ class ConversionFirstDiagnosticsTests(unittest.TestCase):
         self.assertIn("POSSIBLE duplicate, retained", "\n".join(converted.issues))
         self.assertIn("NOT_PROVEN", converted.balance_status)
 
-    def test_extra_source_cells_preserve_provenance_without_index_error(self):
+    def test_unmapped_source_cells_fail_closed_without_index_error(self):
+        # A populated cell outside named headers cannot be admitted only
+        # because essential fields happen to remain parseable.
         for bank in ("melli", "mellat"):
             with self.subTest(bank=bank):
                 records = [row.copy() for row in (
@@ -249,16 +251,46 @@ class ConversionFirstDiagnosticsTests(unittest.TestCase):
                 records[0].append("EXTRA_SYNTHETIC_CELL")
                 path = self.folder / ("extra_" + bank + (".xls" if bank == "melli" else ".csv"))
                 (write_melli if bank == "melli" else write_mellat)(path, records)
-                converted = convert(path, Context("IRR", "IRR", "Synthetic Journal"))
+                original_bytes = path.read_bytes()
+                with self.assertRaisesRegex(
+                    StatementError, "Unmapped populated source column"
+                ) as observed:
+                    convert(path, Context("IRR", "IRR", "Synthetic Journal"))
+                self.assertIn("Synthetic:7" if bank == "melli" else "CSV:3",
+                              str(observed.exception))
+                self.assertEqual(path.read_bytes(), original_bytes)
+                self.assertFalse((self.folder / (bank + "_candidate.csv")).exists())
+
+    def test_populated_named_trailing_fields_remain_convertible(self):
+        # Both supported formats have named supplemental columns outside
+        # the essential financial mapping; these are NOT an extra row cell.
+        for bank in ("melli", "mellat"):
+            with self.subTest(bank=bank):
+                records = [row.copy() for row in (
+                    movements() if bank == "melli" else [
+                        ["1", "1405/07/01", "10:00:00", "S1", "واریز", "0", "10", "10"],
+                        ["2", "1405/07/02", "11:00:00", "S2", "برداشت", "5", "0", "5"],
+                    ]
+                )]
+                width = len(MELLI_HEADER) if bank == "melli" else 12
+                records[0].extend([""] * (width - len(records[0]) - 1))
+                records[0].append("NAMED_EXTRA_SYNTH")
+                source = self.folder / ("named_trailing_" + bank + (".xls" if bank == "melli" else ".csv"))
+                (write_melli if bank == "melli" else write_mellat)(source, records)
+                converted = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
                 self.assertEqual(len(converted.rows), len(records))
-                self.assertIn("Extra populated source cells beyond header",
-                              "\n".join(converted.issues))
-                self.assertIn("EXTRA_SYNTHETIC_CELL",
-                              converted.rows[0].row.original[f"column_{header_width+1} [{header_width+1}]"])
-                csv_path = self.folder / ("extra_" + bank + "_candidate.csv")
-                report_path = self.folder / ("extra_" + bank + "_PRIVATE.txt")
+                self.assertEqual([row.row.physical_row for row in converted.rows],
+                                 list(range(7, 7 + len(records))) if bank == "melli"
+                                 else list(range(3, 3 + len(records))))
+                self.assertIn("NAMED_EXTRA_SYNTH", converted.rows[0].row.original.values())
+                csv_path = self.folder / ("named_trailing_" + bank + "_candidate.csv")
+                report_path = self.folder / ("named_trailing_" + bank + "_PRIVATE.txt")
                 save_candidate(converted, csv_path, report_path)
-                self.assertIn("EXTRA_SYNTHETIC_CELL", report_path.read_text("utf-8"))
+                trace = [json.loads(line) for line in report_path.read_text("utf-8").splitlines()
+                         if line.startswith("{")]
+                self.assertIn("NAMED_EXTRA_SYNTH", trace[0]["original_columns"].values())
+                self.assertEqual(len(trace), len(records))
+                self.assertEqual(csv_path.read_text("utf-8"), output_csv(converted))
 
     def test_mellat_inserted_cell_cannot_change_credit_to_debit(self):
         # Source-width anomaly: a legitimate +900 source credit is shifted
