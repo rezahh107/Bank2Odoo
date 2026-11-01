@@ -60,6 +60,7 @@ def control_report(result: Conversion) -> str:
         trace = {"csv_row": i, "source_physical_row": m.row.physical_row,
                  "sheet": m.row.sheet, "source_report_row": m.row.fields.get("report_row", ""),
                  "source_jalali_date": m.row.fields["date"], "source_time": m.row.fields.get("time", ""),
+                 "source_time_raw": m.row.raw_time, "time_evidence_issue": m.time_issue,
                  "gregorian_date": m.date.isoformat(), "reference": m.reference,
                  "transaction_type": m.kind, "source_signed": str(m.signed),
                  "source_balance": str(m.balance) if m.balance is not None else None,
