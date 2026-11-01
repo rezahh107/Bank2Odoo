@@ -1,0 +1,48 @@
+name: Public-only headless offline runtime handoff (temporary)
+on:
+  push:
+    branches:
+      - chore/public-offline-handoff-20261101
+
+permissions:
+  contents: read
+
+jobs:
+  package-public-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact merged main (public sources only)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: f58743742851787c55b5c9145257f035940985be
+          persist-credentials: false
+
+      - name: Download only pinned public pure-Python headless wheels and archive exact code
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "f58743742851787c55b5c9145257f035940985be"
+          mkdir -p handoff/wheels
+          python3 -m pip download --disable-pip-version-check --only-binary=:all: --no-deps --dest handoff/wheels xlrd==2.0.2 persiantools==6.2.0
+          cd handoff
+          printf '%s  %s\n' \
+            'ea762c3d29f4cca48d82df517b6d89fbce4db3107f9d78713e48cd321d5c9aa9' \
+            'wheels/xlrd-2.0.2-py2.py3-none-any.whl' \
+            '02d0f1c9f8784b20700f23ef96f01706e8cc1b9bf9fe105b3a6c44492f4d61c6' \
+            'wheels/persiantools-6.2.0-py3-none-any.whl' > expected_sha.txt
+          sha256sum --check expected_sha.txt
+          cd ..
+          git archive --format=tar.gz --prefix=bank2odoo_exact_main/ -o handoff/bank2odoo_exact_main.tar.gz HEAD
+          git rev-parse HEAD > handoff/SOURCE_COMMIT.txt
+          (cd handoff && sha256sum bank2odoo_exact_main.tar.gz wheels/*.whl > bundle_sha256.txt)
+          test "$(find handoff/wheels -maxdepth 1 -name '*.whl' | wc -l)" -eq 2
+          printf 'PUBLIC CODE AND PYPI WHEELS ONLY. No financial data. No Odoo.\n' > handoff/README_PUBLIC.txt
+
+      - name: Upload short-lived public-only dependency handoff
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: bank2odoo-public-headless-handoff-20261101
+          path: handoff/
+          if-no-files-found: error
+          retention-days: 1
