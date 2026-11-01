@@ -117,15 +117,21 @@ def _extract(table: list[tuple[int, list[str]]], bank: str, sheet: str) -> tuple
             f"{header[i] if i < len(header) and str(header[i]).strip() else 'column_'+str(i+1)} [{i+1}]": str(value)
             for i, value in enumerate(cells)
         }
-        if any(str(value).strip() and
-               (i >= len(header) or not str(header[i]).strip())
-               for i, value in enumerate(cells)):
-            # XLS sheets are rectangular: an extra data cell extends the
-            # apparent header width with an unnamed column. Detect that too.
-            fields["source_structure_issue"] = (
-                f"Extra populated source cells beyond header or in unnamed columns "
-                f"at {sheet}:{physical}; raw values retained, "
-                "column alignment not independently proven"
+        # A nonblank cell with no corresponding named header is positive
+        # evidence that the row cannot safely be mapped. Inserting a cell
+        # before financial columns can otherwise turn a credit into a debit
+        # even when every displaced value is syntactically valid.
+        # Do not assume a fixed total width: documented/named trailing
+        # columns remain valid, and empty extra cells are harmless.
+        unmapped = [
+            i + 1 for i, value in enumerate(cells)
+            if str(value).strip() and
+            (i >= len(header) or not str(header[i]).strip())
+        ]
+        if unmapped:
+            raise StatementError(
+                f"Unmapped populated source column at {sheet}:{physical}: "
+                f"columns {unmapped}; essential movement alignment not proven"
             )
         time_index = mapping.get("time")
         raw_time = (str(cells[time_index]) if time_index is not None
