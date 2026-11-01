@@ -231,6 +231,8 @@ def convert(path: Path, context: Context) -> Conversion:
         raise StatementError("Empty bank statement")
     source_sha256 = sha256(raw).hexdigest()
     source = read_statement(path, raw)
+    if context.balance_gap_approval is not None and source.bank != "melli":
+        raise StatementError("Historical gap declaration is supported for Bank Melli only")
     rows = []
     for item in source.rows:
         try:
