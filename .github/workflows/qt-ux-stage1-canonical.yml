@@ -103,6 +103,17 @@ jobs:
                   ]
                   if not records or any(not (folder / record["file"]).is_file() for record in records):
                       raise RuntimeError("Missing original-resolution PNG")
+                  requested = case["requested_size"]
+                  for item in records:
+                      pixel_size = ([item["width"], item["height"]] if theme else
+                                    [item["native_width"], item["native_height"]])
+                      dpr = item["device_pixel_ratio"] if theme else item["dpr"]
+                      if pixel_size != [round(v * dpr) for v in requested]:
+                          raise RuntimeError(
+                              f"INVALID_GEOMETRY: requested={requested}, captured={pixel_size}, "
+                              f"dpr={dpr}, file={item['file']}")
+                  if not theme and case["actual_postshow_widget_size"] != requested:
+                      raise RuntimeError("Post-show QWidget dimensions mismatch")
               font_runtime.assert_widget_font(app)
               if QFontInfo(app.font()).family() != "Vazirmatn":
                   raise RuntimeError("Application font changed from canonical")
@@ -128,6 +139,8 @@ jobs:
               "Real Bank2Odoo MainWindow QWidget.grab originals on Windows GitHub runner.\n"
               "Bundled, SHA-256-verified Vazirmatn v33.003 Regular/SemiBold via pinned Lab.\n"
               "Light/Dark via QStyleHints override, NOT actual Windows OS theme.\n"
+              "Post-show native Qt resize plus strict original-PNG geometry assertions.\n"
+              "The 940x830 window extends beyond the 1024x768 runner screen; QWidget.grab is not a physical display photograph.\n"
               "No physical Windows11, real DPI scaling, per-glyph identity or accountant acceptance.\n"
               f"Current whole-window cases: {count_theme}; current action cases: {count_primary}.\n",
               encoding="utf-8")
