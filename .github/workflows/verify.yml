@@ -33,6 +33,11 @@ jobs:
         run: uv python install 3.13
       - name: Sync exact locked environment
         run: uv sync --locked
+      - name: Focused financial-context primary-action Qt regressions
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONFAULTHANDLER: "1"
+        run: uv run --locked python -m unittest -v tests.test_gui.AccountantUiTests.test_authoritative_preflight_factor_matrix_and_recovery tests.test_gui_dark_pilot.DarkThemePilotTests.test_invalid_factor_is_secondary_but_corrected_factor_primary_across_themes
       - name: Run automated verification
         env:
           QT_QPA_PLATFORM: offscreen
@@ -194,6 +199,24 @@ jobs:
         with:
           name: qt-minimal-ux-before-after
           path: ${{ runner.temp }}/bank2odoo-minimal-ux/
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Qualify initial primary-action hierarchy on actual Windows Qt
+        env:
+          QT_QPA_PLATFORM: windows
+          QT_PRIMARY_LOG_PREVIEWS: "1"
+          PYTHONFAULTHANDLER: "1"
+        shell: pwsh
+        run: |
+          git fetch --no-tags --depth=1 origin 463c28d1012e8c3e076705223f1ff6d958012e76
+          uv run --locked python -m tests.qt_primary_action_hierarchy_capture --output "$env:RUNNER_TEMP/bank2odoo-primary-action" --baseline-sha 463c28d1012e8c3e076705223f1ff6d958012e76
+          if ($LASTEXITCODE -ne 0) { throw "Native Qt primary-action qualification failed" }
+      - name: Upload full-resolution action-hierarchy variants and evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: qt-primary-action-hierarchy
+          path: ${{ runner.temp }}/bank2odoo-primary-action/
           retention-days: 14
           if-no-files-found: warn
       - name: Diagnose fictional saved-path overflow on native Windows QPA

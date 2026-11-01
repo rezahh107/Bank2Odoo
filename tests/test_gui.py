@@ -124,6 +124,9 @@ class AccountantUiTests(unittest.TestCase):
         w = self.window
         self.assertTrue(w.convert_button.isVisible())
         self.assertTrue(w.convert_button.isEnabled(), "Guidance-first action stays available")
+        self.assertEqual(w.convert_button.styleSheet(), "")
+        self.assertTrue(w.select_button.styleSheet(), "Source selection must be visually primary")
+        self.assertIn("راهنمای تکمیل مراحل", w.convert_button.accessibleName())
         self.assertFalse(w.metrics_panel.isVisible())
         self.assertFalse(w.summary.isVisible())
         self.assertFalse(w.result_state.isVisible())
@@ -136,6 +139,93 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIs(self.app.focusWidget(), w.select_button)
         self.assertIsNone(w._thread)
         self.assertIsNone(w.result)
+
+    def test_selected_source_guides_financial_review_without_false_stale_claim(self):
+        w = self.window
+        self._select(self.source)
+        w.source_unit.setCurrentIndex(w.source_unit.findData("IRR"))
+        w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
+        w.journal.setText("ژورنال آزمایشی")
+        self.assertIsNone(w.result)
+        self.assertFalse(w.approved.isChecked())
+        self.assertIn("گام بعد: اطلاعات مالی", w.status.text())
+        self.assertNotIn("نتیجه قبلی معتبر نیست", w.status.text())
+        self.assertTrue(w.convert_button.isEnabled())
+        self.assertEqual(w.convert_button.styleSheet(), "")
+        self.assertEqual(w.select_button.styleSheet(), "")
+
+
+    def test_authoritative_preflight_factor_matrix_and_recovery(self):
+        """Real widgets: rejected factors never earn primary styling or conversion."""
+        w = self.window
+        self.assertIsNone(w.source)
+        self.assertTrue(w.select_button.styleSheet())
+        self.assertFalse(w.convert_button.styleSheet())
+        self.assertTrue(w.convert_button.isEnabled())
+        self._select(self.source)
+        self.assertFalse(w.approved.isChecked())
+        self.assertFalse(w.select_button.styleSheet())
+        self.assertFalse(w.convert_button.styleSheet())
+
+        matrix = (
+            ("IRR", "IRR", "", 0, True),
+            ("TOMAN", "IRR", "10", 0, True),
+            ("TOMAN", "IRR", "11", 0, False),
+            ("TOMAN", "IRR", "not-a-number", 0, False),
+            ("TOMAN", "IRR", "NaN", 0, False),
+            ("IRR", "TOMAN", "0.1", 1, True),
+            ("IRR", "TOMAN", "0.2", 1, False),
+        )
+        for source, target, factor, places, valid in matrix:
+            with self.subTest(source=source, target=target, factor=factor):
+                w.approved.setChecked(False)
+                w.source_unit.setCurrentIndex(w.source_unit.findData(source))
+                w.target_unit.setCurrentIndex(w.target_unit.findData(target))
+                w.journal.setText("ژورنال ساختگی")
+                w.precision.setValue(places)
+                if w.factor.isEnabled():
+                    w.factor.setText(factor)
+                w.approved.setChecked(True)
+                self.assertTrue(w.approved.isChecked())
+                self.assertEqual(w._selected_digest, w._approved_digest)
+                self.assertEqual(w._conversion_is_ready_for_emphasis(), valid)
+                self.assertEqual(bool(w.convert_button.styleSheet()), valid)
+                self.assertFalse(w.select_button.styleSheet())
+                self.assertTrue(w.convert_button.isEnabled(),
+                                "Incomplete/invalid context must retain safe guidance")
+                if valid:
+                    self.assertIn("اقدام اصلی", w.convert_button.accessibleName())
+                else:
+                    self.assertIn("راهنمای تکمیل", w.convert_button.accessibleName())
+                    self.assertIn("ضریب تبدیل", w.status.text())
+                    self.assertNotIn("اعتبارسنجی و تبدیل را اجرا", w.status.text())
+                    w.convert_button.click()
+                    self.assertIsNone(w._thread)
+                    self.assertIsNone(w.result)
+                    self.assertFalse(w.save_button.isEnabled())
+                    self.assertIn("ضریب", w.status.text())
+                    self.assertIs(self.app.focusWidget(), w.factor)
+                    self.assertFalse(w.convert_button.styleSheet())
+
+        # Regression guard: simply suppressing all emphasis would fail the
+        # positive matrix rows above. The user can fix the invalid value and
+        # complete the real conversion/save without selecting a new source.
+        w.factor.setText("0.1")  # Earlier 0.2 was rejected, changing it revokes approval.
+        self.assertFalse(w.approved.isChecked())
+        self.assertFalse(w.convert_button.styleSheet())
+        w.approved.setChecked(True)
+        self.assertTrue(w.convert_button.styleSheet())
+        w.start_conversion()
+        self._wait_conversion()
+        self.assertIsNotNone(w.result)
+        self.assertEqual(str(w.result.factor), "0.1")
+        self.assertTrue(w.result.balance_status.startswith("PASS"))
+        w.output_directory.setText(str(self.private))
+        self._save()
+        self.assertTrue(w._saved)
+        self.assertFalse(w.convert_button.isEnabled())
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
+        self.assertIn("نه تأیید حسابداری", w.result_state.text())
 
     def test_progressive_review_distinguishes_result_uncertainty_and_stale(self):
         w = self.window

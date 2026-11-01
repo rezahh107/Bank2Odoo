@@ -58,6 +58,23 @@ _PRIMARY_DARK_QSS = (
     " QPushButton#primaryConversion:disabled { background-color: #303B47;"
     " color: #B7C4CE; border: 1px solid #303B47; }"
 )
+# The first task is selection, not conversion. These accents are applied
+# by workflow phase; safe guidance clicks never earn visual primacy.
+_SOURCE_DARK_QSS = _PRIMARY_DARK_QSS.replace("primaryConversion", "sourceSelection")
+_SOURCE_LIGHT_QSS = (
+    "QPushButton#sourceSelection { background-color: #125B88;"
+    " color: #FFFFFF; border: 1px solid #125B88; border-radius: 5px; }"
+    " QPushButton#sourceSelection:hover { background-color: #1C75A9; }"
+    " QPushButton#sourceSelection:pressed { background-color: #0C4A70; }"
+    " QPushButton#sourceSelection:focus { border: 2px solid #D18100; }"
+    " QPushButton#sourceSelection:disabled { background-color: #E2E5E8;"
+    " color: #626A70; border: 1px solid #BBC2C8; }"
+)
+_PRIMARY_LIGHT_QSS = _SOURCE_LIGHT_QSS.replace("sourceSelection", "primaryConversion")
+_INVALID_FACTOR_GUIDANCE = (
+    "ضریب تبدیل با واحدهای انتخاب‌شده سازگار نیست؛ "
+    "مقدار را اصلاح و دوباره تأیید کنید."
+)
 _APPROVAL_DARK_QSS = (
     "QCheckBox#financialApproval::indicator:unchecked {"
     " border: 2px solid #DCE7F0; background-color: #202831; }"
@@ -353,6 +370,7 @@ class MainWindow(QMainWindow):
         source_row = QHBoxLayout()
         source_row.setSpacing(12)
         self.select_button = QPushButton("انتخاب فایل…")
+        self.select_button.setObjectName("sourceSelection")
         self.select_button.setMinimumHeight(40)
         self.select_button.clicked.connect(self._browse_source)
         source_row.addWidget(self.select_button)
@@ -452,6 +470,7 @@ class MainWindow(QMainWindow):
         actions.setSpacing(12)
         self.convert_button = QPushButton("اعتبارسنجی و تبدیل")
         self.convert_button.setObjectName("primaryConversion")
+        self.convert_button.setAccessibleName("راهنمای تکمیل مراحل: اعتبارسنجی و تبدیل")
         self.convert_button.setMinimumHeight(44)
         self.convert_button.clicked.connect(self._next_action)
         actions.addWidget(self.convert_button)
@@ -693,7 +712,13 @@ class MainWindow(QMainWindow):
         else:
             caption = "اعتبارسنجی و تبدیل"
         self.convert_button.setText(caption)
-        self.convert_button.setAccessibleName("اقدام اصلی: " + caption)
+        # An enabled validation button can guide missing inputs without being
+        # the primary action before SHA-bound financial approval.
+        ready_to_convert = self._conversion_is_ready_for_emphasis()
+        self.convert_button.setAccessibleName(
+            ("اقدام اصلی: " if has_result or ready_to_convert
+             else "راهنمای تکمیل مراحل: ") + caption
+        )
         # Evidence is shown only when a current conversion exists; failure,
         # cancellation and revoked-result messages remain visible independently.
         self.metrics_panel.setVisible(has_result)
@@ -752,11 +777,34 @@ class MainWindow(QMainWindow):
         # hardcoded navy/red/green on a potentially dark card background.
         self.status.setPalette(QPalette(self.status.parentWidget().palette()))
 
+    def _conversion_is_ready_for_emphasis(self) -> bool:
+        """Match primary styling to the existing authoritative financial preflight."""
+        if self.result is not None:
+            return True  # Review/save actions follow an actual conversion result.
+        try:
+            self._context()
+        except StatementError:
+            return False
+        return True
+
     def _apply_theme_controls(self) -> None:
         pilot = getattr(QApplication.instance(), "_bank2odoo_appearance_pilot", None)
         dark = bool(pilot is not None and pilot.dark)
-        primary = _PRIMARY_DARK_QSS if dark else ""
+        # Choose exactly one accented action in any phase. A missing source
+        # accents selection; approval-incomplete conversion stays clickable
+        # but native/secondary. This creates no additional business state.
+        select = (
+            (_SOURCE_DARK_QSS if dark else _SOURCE_LIGHT_QSS)
+            if self.source is None and not (self._thread is not None or self._ui_busy)
+            else ""
+        )
+        primary = (
+            (_PRIMARY_DARK_QSS if dark else _PRIMARY_LIGHT_QSS)
+            if self._conversion_is_ready_for_emphasis() else ""
+        )
         approval = _APPROVAL_DARK_QSS if dark else ""
+        if self.select_button.styleSheet() != select:
+            self.select_button.setStyleSheet(select)
         if self.convert_button.styleSheet() != primary:
             self.convert_button.setStyleSheet(primary)
         if self.approved.styleSheet() != approval:
@@ -828,7 +876,12 @@ class MainWindow(QMainWindow):
             label.setText("—")
         # Do not leave an earlier "saved" or "conversion succeeded" status
         # after source/financial context or SHA-bound approval was revoked.
-        self._set_message("زمینه یا تأیید تغییر کرد؛ نتیجه قبلی معتبر نیست. دوباره تأیید و تبدیل کنید.")
+        if had_result:
+            self._set_message("زمینه یا تأیید تغییر کرد؛ نتیجه قبلی معتبر نیست. دوباره تأیید و تبدیل کنید.")
+        elif self.source is None:
+            self._set_message("گام بعد: فایل گزارش بانک را انتخاب کنید.")
+        else:
+            self._set_message("گام بعد: اطلاعات مالی را تکمیل و شخصاً تأیید کنید.")
         self._sync_actions()
 
     def _revoke_approval(self) -> None:
@@ -848,6 +901,15 @@ class MainWindow(QMainWindow):
         else:
             self._approved_digest = self._selected_digest if checked else None
         self._invalidate()
+        if checked:
+            if self._conversion_is_ready_for_emphasis():
+                self._set_message(
+                    "گام بعد: اعتبارسنجی و تبدیل را اجرا کنید؛ نتیجه هنوز تولید یا بررسی نشده است."
+                )
+            elif self.factor.isEnabled() and self._missing_input_guidance()[0] is None:
+                # Completed but financially rejected: never tell the user
+                # they are ready, or merely ask for approval already given.
+                self._set_message(_INVALID_FACTOR_GUIDANCE)
 
     def _update_units(self) -> None:
         left, right = self.source_unit.currentData(), self.target_unit.currentData()
@@ -947,6 +1009,12 @@ class MainWindow(QMainWindow):
             context = self._context()
         except StatementError as exc:
             widget, guidance = self._missing_input_guidance()
+            if widget is None and self.factor.isEnabled():
+                # All required fields are present, but Context.factor()
+                # rejected the value. Reuse that validation, not a UI copy
+                # of its numeric/unit rules; guide correction to the field.
+                widget = self.factor
+                guidance = _INVALID_FACTOR_GUIDANCE
             self._set_message("تبدیل آغاز نشد: " + (guidance or human_error(str(exc))),
                               str(exc))
             if widget is not None:
