@@ -86,7 +86,7 @@ def _movement(row: SourceRow, bank: str, context: Context, factor: Decimal) -> M
     time = clock(f.get("time", ""))
     # Balance is optional evidence, not a field required to preserve a movement.
     # The original raw cell remains in SourceRow.original and private trace.
-    balance_issue = None
+    balance_issue = f.get("balance_evidence_issue")
     try:
         balance = amount(f.get("balance", ""), required=False)
     except StatementError:
