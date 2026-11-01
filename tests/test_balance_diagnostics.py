@@ -160,6 +160,166 @@ class ConversionFirstDiagnosticsTests(unittest.TestCase):
         self.assertTrue(result.balance_status.startswith("NOT_PROVEN"))
         self.assertEqual([m.row.physical_row for m in result.rows], [7, 8, 9, 10])
 
+    def test_optional_time_values_keep_both_banks_csv_and_trace(self):
+        # The conversion columns do not contain time; raw decoded time is
+        # preserved privately, including whitespace for XLS and CSV.
+        melli = movements()
+        mellat = [
+            ["1", "1405/07/01", "10:00:00", "SYN-1", "واریز ساختگی", "0", "10", "10"],
+            ["2", "1405/07/02", "11:00:00", "SYN-2", "کارمزد ساختگی", "5", "0", "5"],
+        ]
+        for bank in ("melli", "mellat"):
+            with self.subTest(bank=bank):
+                baseline = self.folder / ("baseline_" + bank + (".xls" if bank == "melli" else ".csv"))
+                changed = self.folder / ("changed_" + bank + (".xls" if bank == "melli" else ".csv"))
+                writer = write_melli if bank == "melli" else write_mellat
+                original = melli if bank == "melli" else mellat
+                writer(baseline, original)
+                expected = output_csv(convert(baseline, Context("IRR", "IRR", "Synthetic Journal")))
+                for name, value, malformed in (
+                    ("valid", "11:03:02", False),
+                    ("missing", "", False),
+                    ("malformed", " not-a-clock ", True),
+                    ("impossible", "25:61:99", True),
+                ):
+                    with self.subTest(kind=name):
+                        records = [row.copy() for row in original]
+                        records[1][2] = value
+                        writer(changed, records)
+                        converted = convert(changed, Context("IRR", "IRR", "Synthetic Journal"))
+                        self.assertEqual(output_csv(converted), expected)
+                        self.assertEqual(len(converted.rows), len(original))
+                        self.assertEqual([m.row.physical_row for m in converted.rows],
+                                         list(range(7, 7 + len(original))) if bank == "melli"
+                                         else list(range(3, 3 + len(original))))
+                        self.assertEqual(converted.rows[1].time_issue is not None, malformed)
+                        if malformed:
+                            self.assertIsNone(converted.rows[1].time)
+                            self.assertIn("Unparseable optional transaction time",
+                                          "\n".join(converted.issues))
+                        csv_path, report_path = self._save(converted, bank + "_" + name)
+                        trace = [json.loads(line) for line in report_path.read_text("utf-8").splitlines()
+                                 if line.startswith("{")]
+                        self.assertEqual(trace[1]["source_time_raw"], value)
+                        self.assertEqual(trace[1]["source_time"], value.strip())
+                        self.assertEqual(trace[1]["time_evidence_issue"] is not None, malformed)
+                        self.assertEqual([row["csv_row"] for row in trace],
+                                         list(range(2, 2 + len(original))))
+                        self.assertIn("REVIEW CANDIDATE ONLY",
+                                      report_path.read_text("utf-8"))
+                        self.assertEqual(csv_path.read_text("utf-8"), expected)
+
+    def test_mixed_and_same_date_unusable_times_deny_order_certainty(self):
+        self.rows[1][1] = self.rows[0][1]
+        self.rows[1][2] = "malformed"
+        self.rows[2][2] = ""
+        self._write()
+        result = self._convert()
+        self.assertEqual(len(result.rows), 4)
+        self.assertEqual(result.ordering, "unknown")
+        self.assertIn("NOT_PROVEN: incomplete time/order", result.balance_status)
+        self.assertIn("Unparseable optional transaction time at source row 8",
+                      "\n".join(result.issues))
+        self.assertEqual([m.row.physical_row for m in result.rows], [7, 8, 9, 10])
+
+    def test_duplicate_with_unknown_time_remains_possible_and_retained(self):
+        records = [
+            ["1", "1405/07/01", "unparseable", "SYN", "هزینه ساختگی", "5", "0", "10"],
+            ["2", "1405/07/01", "invalid", "SYN", "هزینه ساختگی", "5", "0", "5"],
+        ]
+        path = self.folder / "possible_duplicates.csv"
+        write_mellat(path, records)
+        converted = convert(path, Context("IRR", "IRR", "Synthetic Journal"))
+        self.assertEqual(len(converted.rows), 2)
+        self.assertEqual([m.time for m in converted.rows], [None, None])
+        self.assertIn("POSSIBLE duplicate, retained", "\n".join(converted.issues))
+        self.assertIn("NOT_PROVEN", converted.balance_status)
+
+    def test_extra_source_cells_preserve_provenance_without_index_error(self):
+        for bank in ("melli", "mellat"):
+            with self.subTest(bank=bank):
+                records = [row.copy() for row in (
+                    movements() if bank == "melli" else [
+                        ["1", "1405/07/01", "10:00:00", "S1", "واریز", "0", "10", "10"],
+                        ["2", "1405/07/02", "11:00:00", "S2", "برداشت", "5", "0", "5"],
+                    ]
+                )]
+                header_width = len(MELLI_HEADER) if bank == "melli" else 12
+                records[0].extend([""] * (header_width - len(records[0])))
+                records[0].append("EXTRA_SYNTHETIC_CELL")
+                path = self.folder / ("extra_" + bank + (".xls" if bank == "melli" else ".csv"))
+                (write_melli if bank == "melli" else write_mellat)(path, records)
+                converted = convert(path, Context("IRR", "IRR", "Synthetic Journal"))
+                self.assertEqual(len(converted.rows), len(records))
+                self.assertIn("Extra populated source cells beyond header",
+                              "\n".join(converted.issues))
+                self.assertIn("EXTRA_SYNTHETIC_CELL",
+                              converted.rows[0].row.original[f"column_{header_width+1} [{header_width+1}]"])
+                csv_path = self.folder / ("extra_" + bank + "_candidate.csv")
+                report_path = self.folder / ("extra_" + bank + "_PRIVATE.txt")
+                save_candidate(converted, csv_path, report_path)
+                self.assertIn("EXTRA_SYNTHETIC_CELL", report_path.read_text("utf-8"))
+
+    def test_missing_essential_source_cell_still_fails_closed(self):
+        for bank in ("melli", "mellat"):
+            with self.subTest(bank=bank):
+                records = [row.copy() for row in (
+                    movements() if bank == "melli" else [
+                        ["1", "1405/07/01", "10:00:00", "S1", "واریز", "0", "10", "10"],
+                        ["2", "1405/07/02", "11:00:00", "S2", "برداشت", "5", "0", "5"],
+                    ]
+                )]
+                records[0][1] = ""  # Necessary date absent, not optional time.
+                path = self.folder / ("missing_date_" + bank + (".xls" if bank == "melli" else ".csv"))
+                (write_melli if bank == "melli" else write_mellat)(path, records)
+                with self.assertRaises(StatementError):
+                    convert(path, Context("IRR", "IRR", "Synthetic Journal"))
+
+    def test_reordered_optional_columns_follow_header_not_position(self):
+        # Swap timestamp and reference in both header and each row. Mapping
+        # by header must preserve conversion, original timestamp and identity.
+        for bank in ("melli", "mellat"):
+            with self.subTest(bank=bank):
+                records = [r.copy() for r in (
+                    movements() if bank == "melli" else [
+                        ["1", "1405/07/01", "10:00:00", "S1", "واریز", "0", "10", "10"],
+                        ["2", "1405/07/02", "11:00:00", "S2", "برداشت", "5", "0", "5"],
+                    ]
+                )]
+                path = self.folder / ("reorder_" + bank + (".xls" if bank == "melli" else ".csv"))
+                if bank == "melli":
+                    book = xlwt.Workbook()
+                    sheet = book.add_sheet("Synthetic")
+                    headers = MELLI_HEADER.copy()
+                    headers[2], headers[5] = headers[5], headers[2]
+                    for i, title in enumerate(headers):
+                        sheet.write(5, i, title)
+                    for i, row in enumerate(records, 6):
+                        row[2], row[5] = row[5], row[2]
+                        for j, value in enumerate(row):
+                            sheet.write(i, j, value)
+                    book.save(str(path))
+                    expected_times = ["12:00:00"] * 4
+                else:
+                    # CSV fixture uses the existing serializer, then exchanges
+                    # its header and source cells with the same movement count.
+                    import csv
+                    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+                        writer = csv.writer(handle)
+                        writer.writerow(["Synthetic only"])
+                        headers = ["رديف", "تاریخ", "زمان", "شماره سریال", "شرح",
+                                   "مبلغ گردش بدهکار", "مبلغ گردش بستانکار", "مانده"]
+                        headers[2], headers[3] = headers[3], headers[2]
+                        writer.writerow(headers)
+                        for row in records:
+                            row[2], row[3] = row[3], row[2]
+                            writer.writerow(row)
+                    expected_times = ["10:00:00", "11:00:00"]
+                result = convert(path, Context("IRR", "IRR", "Synthetic Journal"))
+                self.assertEqual(len(result.rows), len(records))
+                self.assertEqual([m.row.raw_time for m in result.rows], expected_times)
+                self.assertTrue(all(m.time_issue is None for m in result.rows))
+
     def test_essential_fields_still_fail_closed(self):
         for column, invalid in ((1, "1400/12/30"), (3, "نامعلوم"),
                                 (4, "0"), (4, "bad decimal"), (7, "")):
