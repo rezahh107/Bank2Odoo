@@ -239,6 +239,8 @@ def issue_label(issue: str) -> str:
         return "گردش احتمالاً تکراری یافت شد، اما حذف نشده است."
     if "shared-reference" in issue.lower() or "shared-ref" in issue.lower():
         return "چند گردش مرجع مشترک دارند؛ ارتباطشان تأیید نشده است."
+    if "balance discontinuity" in issue.lower():
+        return "مغایرت مانده در گردش‌های گزارش ثبت شد؛ تبدیل ادامه یافته است."
     if "balance" in issue.lower() or "order" in issue.lower():
         return "شواهد موجود برای اثبات کامل ترتیب یا مانده کافی نیست."
     return "موردی برای بررسی حسابدار در گزارش کنترل ثبت شده است."
@@ -1053,10 +1055,13 @@ class MainWindow(QMainWindow):
             return
         self.result = result
         good = result.balance_status.startswith("PASS")
+        discontinuity = "balance discontinuity" in result.balance_status
         self.result_state.setText(
-            ("PASS — انطباق در انتقال‌های قابل‌آزمون؛ نه تأیید حسابداری"
+            ("PASS — شواهد ماندهٔ مشاهده‌شده سازگار است؛ نه تأیید حسابداری"
              if good else
-             "NOT_PROVEN — شواهد کافی برای اثبات کامل مانده موجود نیست")
+             "NOT_PROVEN — مغایرت مانده در گزارش خصوصی ثبت شد؛ تبدیل انجام شده است"
+             if discontinuity else
+             "NOT_PROVEN — شواهد کافی برای اثبات کامل مانده موجود نیست؛ تبدیل انجام شده است")
         )
         self._metrics["movements"].setText(latin(len(result.rows)))
         self._metrics["debit"].setText(
@@ -1069,10 +1074,9 @@ class MainWindow(QMainWindow):
             + " " + result.target_unit)
         self._metrics["balance"].setText(
             "منطبق در انتقال‌های قابل‌آزمون" if good else
+            "مغایرت مانده؛ تبدیل معتبر مسدود نشد" if discontinuity else
             "احراز نشده؛ لزوماً مغایرت نیست")
         self._metrics["issues"].setText(latin(len(result.issues)))
-        check = ("منطبق در انتقال‌های قابل‌آزمون؛ هنوز تأیید حسابدار نیست."
-                 if good else "احراز نشده؛ لزوماً مغایرت نیست. بررسی حسابدار لازم است.")
         # Totals and balance evidence already have distinct selectable rows.
         # The narrative is reserved for unresolved checks, not a second,
         # space-consuming copy of all six metrics.
