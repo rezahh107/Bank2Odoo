@@ -1,0 +1,66 @@
+name: Bank2Odoo Stage 2 responsive layout qualification (evidence only)
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/qt-stage2-layout-qualification.yml'
+      - 'tests/qt_stage2_responsive_qualification.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-native-breakpoint:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact qualification branch (production remains unchanged)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: bank2odoo
+          persist-credentials: false
+      - name: Check out immutable canonical Vazirmatn runtime contract
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: rezahh107/UI-UX-Test-Lab
+          ref: 6e9da83efe2208e8dac5cf293d3fc9f4e14796b9
+          path: qt-lab
+          persist-credentials: false
+      - name: Install pinned Python runtime and locked dependencies
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.10.0"
+      - name: Install Python 3.13
+        run: uv python install 3.13
+      - name: Sync Bank2Odoo exact locked dependency graph
+        working-directory: bank2odoo
+        run: uv sync --locked
+      - name: Fail-closed canonical Vazirmatn font preflight
+        working-directory: bank2odoo
+        shell: pwsh
+        env:
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+          QT_QPA_PLATFORM: windows
+        run: |
+          uv run --locked python -m adapters.qt_style_probe.font_runtime --require-system-absent
+          if ($LASTEXITCODE -ne 0) { throw "Bundled canonical font failure" }
+      - name: Execute native Qt baseline and controlled counterfactuals
+        working-directory: bank2odoo
+        shell: pwsh
+        env:
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+          QT_QPA_PLATFORM: windows
+          PYTHONFAULTHANDLER: "1"
+        run: |
+          uv run --locked python -m tests.qt_stage2_responsive_qualification
+          if ($LASTEXITCODE -ne 0) { throw "Native Stage2 qualification failed" }
+      - name: Upload diagnostic measurements and original QWidget.grab PNGs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bank2odoo-stage2-responsive-breakpoint-qualification
+          path: ${{ runner.temp }}/bank2odoo-stage2-layout-qualification/
+          retention-days: 14
+          if-no-files-found: warn
