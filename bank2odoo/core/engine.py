@@ -207,14 +207,14 @@ def _balances(
         before_count = approved_index
         after_count = len(rows) - approved_index - 2
         issues.append(
-            f"OWNER-APPROVED HISTORICAL GAP ONLY: source rows "
+            f"DECLARED HISTORICAL GAP (not independently attested by software): source rows "
             f"{approval.preceding_physical_row}/{approval.following_physical_row}; "
             f"source-unit residual {approval.expected_residual}. "
             f"Verified {before_count}+{after_count} within-segment transitions; "
             "whole-period opening/closing and continuity NOT_PROVEN."
         )
         return (
-            f"NOT_PROVEN: approved historical gap; "
+            f"NOT_PROVEN: explicitly declared historical gap; "
             f"{before_count}+{after_count} strict within-segment transitions",
             None, None, order, issues,
         )
