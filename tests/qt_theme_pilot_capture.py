@@ -203,7 +203,6 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
             raise AssertionError("Synthetic source failed detection")
         w.source_unit.setCurrentIndex(w.source_unit.findData("IRR"))
         w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
-        w.journal.setText("ژورنال ساختگی")
         grab("approval_unchecked")
         w.approved.setChecked(True)
         if not w.approved.isChecked() or w._approved_digest != w._selected_digest:
