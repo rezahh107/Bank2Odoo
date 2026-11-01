@@ -73,23 +73,20 @@ Journal name are entered context, **not verified against Odoo**. Never guess
 IRR/TOMAN from bank data. Destination `--decimal-places` must reflect confirmed
 Journal/currency precision; amounts requiring rounding are rejected.
 
-**Explicit historical balance gaps (review-only):** By default, every observed
-consecutive balance transition must reconcile; an unexplained mismatch still
-fails the conversion. A source with a separately documented, previously imported
-interval can use the four *optional* CLI arguments
-`--gap-source-sha256`, `--gap-before-row`, `--gap-after-row` and
-`--gap-residual` only after authorized private review of the exact source bytes,
-physical row boundary and residual in **source** monetary units. All four are
-required together; the approved source hash must match the current input.
-The sole declared boundary can be excluded from adjacency verification only when
-its exact residual matches and both segments contain at least two movements.
-Every other transition is still checked strictly. Such conversion reports
-`NOT_PROVEN` for the whole period, with no inferred full-period endpoints;
-it is **never** full-range balance `PASS` or financial approval.
-The CLI accepts a declaration; it cannot independently authenticate the
-person authorizing it. Keep actual source hashes, approvals, reports and
-candidate CSVs **private** and out of GitHub/CI. The desktop UI does not yet
-collect historical-gap declarations; do not weaken its default fail-closed path.
+**Converter, not auditor (Owner decision 2026-11-01):** The converter emits
+all valid observed movements and a private trace even when consecutive bank
+balances disagree, balance cells are missing/invalid, or a historical interval
+is omitted from the source statement. A balance mismatch produces explicit
+**nonblocking diagnostics**, never an accounting PASS or an inference that
+missing movements were imported. The legacy four-parameter `--gap-*`
+exception approval has been removed from both conversion and CLI: no
+balance-gap declaration is required for a REVIEW CANDIDATE ONLY.
+
+Source identification, essential columns, Jalali dates, signed movement
+amounts/directions, exact Decimal scaling and confirmed monetary context remain
+fail-closed. Optional balance data and raw source values stay in the PRIVATE
+trace for a later accountant review. Odoo import and reconciliation are outside
+the converter's authority.
 
 The CSV follows the bank's **source row order**. The report records its order,
 physical source rows, original columns/IDs, dates/times, exact source-byte SHA,
@@ -99,8 +96,8 @@ classification, rounding or unit conversion. The report is UTF-8 text with
 human-readable headings and JSON trace lines; treat it as sensitive.
 
 The converter refuses incomplete/contradictory monetary data, invalid dates,
-unknown types, misaligned bank balances, missing units and existing output
-files. Incomplete balance support is reported as `NOT_PROVEN`, **never PASS**.
+unknown types, missing units and existing output
+files. Incomplete or conflicting balance support is reported as `NOT_PROVEN`, **never accounting PASS**, and does not independently block conversion.
 A successful conversion only provides a **review candidate**; it does not mean
 accountant approval, absence of previously imported duplicates, or safety of
 live Odoo import. Before import, confirm source/journal/account, currency,
