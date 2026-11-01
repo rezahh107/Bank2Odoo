@@ -1,0 +1,88 @@
+name: Bank2Odoo Stage 2 native breakpoint repair qualification
+
+on:
+  pull_request:
+    paths:
+      - 'bank2odoo/ui/window.py'
+      - 'tests/qt_stage2_layout_regression.py'
+      - '.github/workflows/qt-stage2-repair-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-windows-regression:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out exact repair PR Head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: bank2odoo
+          persist-credentials: false
+      - name: Verify exact Head identity
+        working-directory: bank2odoo
+        shell: pwsh
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if ((git rev-parse HEAD).Trim() -ne $env:EXPECTED_HEAD) { throw "Wrong repair Head" }
+      - name: Check out pinned canonical Qt Lab font
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: rezahh107/UI-UX-Test-Lab
+          ref: 6e9da83efe2208e8dac5cf293d3fc9f4e14796b9
+          path: qt-lab
+          persist-credentials: false
+      - name: Install locked toolchain
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.10.0"
+      - name: Install Python 3.13
+        run: uv python install 3.13
+      - name: Sync exact locked dependencies
+        working-directory: bank2odoo
+        run: uv sync --locked
+      - name: Obtain immutable unmodified production baseline
+        working-directory: bank2odoo
+        shell: bash
+        run: git fetch --no-tags --depth=1 origin f58743742851787c55b5c9145257f035940985be
+      - name: Require canonical bundled Vazirmatn preflight
+        working-directory: bank2odoo
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+        shell: pwsh
+        run: |
+          uv run --locked python -m adapters.qt_style_probe.font_runtime --require-system-absent
+          if ($LASTEXITCODE -ne 0) { throw "Canonical font unavailable" }
+      - name: Reproduce unmodified main defect with native Qt and fictional paired save
+        working-directory: bank2odoo
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+          PYTHONFAULTHANDLER: "1"
+        shell: pwsh
+        run: |
+          uv run --locked python -m tests.qt_stage2_layout_regression --mode baseline --output "$env:RUNNER_TEMP/b2o-stage2-repair/before"
+          if ($LASTEXITCODE -ne 0) { throw "Baseline reproduction not proven" }
+      - name: Exercise repaired actual production MainWindow and guard negative control
+        working-directory: bank2odoo
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+          PYTHONFAULTHANDLER: "1"
+        shell: pwsh
+        run: |
+          uv run --locked python -m tests.qt_stage2_layout_regression --mode repaired --output "$env:RUNNER_TEMP/b2o-stage2-repair/after"
+          if ($LASTEXITCODE -ne 0) { throw "Native responsive regression not proven" }
+      - name: Upload real original-resolution Qt before-after evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bank2odoo-stage2-production-responsive-before-after
+          path: ${{ runner.temp }}/b2o-stage2-repair/
+          retention-days: 14
+          if-no-files-found: warn
