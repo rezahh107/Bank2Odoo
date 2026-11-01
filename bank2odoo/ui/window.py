@@ -1055,7 +1055,7 @@ class MainWindow(QMainWindow):
             return
         self.result = result
         good = result.balance_status.startswith("PASS")
-        discontinuity = "balance discontinuity" in result.balance_status
+        discontinuity = any(issue.startswith("BALANCE DISCONTINUITY") for issue in result.issues)
         self.result_state.setText(
             ("PASS — شواهد ماندهٔ مشاهده‌شده سازگار است؛ نه تأیید حسابداری"
              if good else
