@@ -260,6 +260,83 @@ class ConversionFirstDiagnosticsTests(unittest.TestCase):
                 save_candidate(converted, csv_path, report_path)
                 self.assertIn("EXTRA_SYNTHETIC_CELL", report_path.read_text("utf-8"))
 
+    def test_mellat_inserted_cell_cannot_change_credit_to_debit(self):
+        # Source-width anomaly: a legitimate +900 source credit is shifted
+        # into a parseable -700 debit. Both time and balance diagnostics alone
+        # are insufficient to prevent a financially incorrect candidate.
+        original = [
+            ["1", "1405/07/01", "10:00:00", "SYN-1", "ورودی ساختگی", "0", "100", "100"],
+            ["2", "1405/07/02", "11:00:00", "321", "700", "0", "900", "1000"],
+        ]
+        # The bank CSV has twelve documented columns, including named
+        # supplemental columns. The final populated cell makes a genuine
+        # thirteenth field observable after insertion.
+        original = [r + ["", "", "", "TRAIL_SYNTH"] for r in original]
+        baseline = self.folder / "mellat_baseline.csv"
+        write_mellat(baseline, original)
+        accepted = convert(baseline, Context("IRR", "IRR", "Synthetic Journal"))
+        self.assertEqual([m.signed for m in accepted.rows],
+                         [Decimal("100"), Decimal("900")])
+        malformed = [r.copy() for r in original]
+        malformed[1].insert(2, "NOT_TIME")
+        self.assertEqual(len(malformed[1]), 13)
+        source = self.folder / "mellat_inserted.csv"
+        write_mellat(source, malformed)
+        try:
+            altered = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+        except StatementError as exc:
+            self.assertRegex(str(exc), "Unmapped populated source column")
+        else:
+            candidate = self.folder / "mellat_shifted.csv"
+            private = self.folder / "mellat_shifted_PRIVATE.txt"
+            save_candidate(altered, candidate, private)
+            trace = [json.loads(line) for line in private.read_text("utf-8").splitlines()
+                     if line.startswith("{")]
+            self.fail(
+                "Financial alignment bypass: intended signed +900, observed "
+                + str(altered.rows[1].signed)
+                + "; candidate_saved=" + str(candidate.exists())
+                + "; csv=" + repr(output_csv(altered))
+                + "; warnings=" + repr(altered.issues)
+                + "; raw_report_row=" + repr(trace[1]["source_report_row"])
+                + "; source_cells=" + str(len(trace[1]["original_columns"]))
+            )
+
+    def test_melli_inserted_amount_cell_cannot_change_credit(self):
+        # A typed numerical cell inserted in front of the amount may be
+        # mistaken for the actual transfer, even while the raw extra XLS
+        # column is detected and the description stays syntactically valid.
+        rows = [
+            ["2", "1405/07/02", "11:00:00", "واریز", "900", "SYN-REF",
+             "123", "شرح ساختگی", "", "1000", "", "", "", "TRAIL_SYNTH"],
+            ["1", "1405/07/01", "10:00:00", "واریز", "100", "SYN-1",
+             "", "واریز ساختگی", "", "100", "", "", "", ""],
+        ]
+        baseline = self.folder / "melli_original.xls"
+        write_melli(baseline, rows)
+        accepted = convert(baseline, Context("IRR", "IRR", "Synthetic Journal"))
+        self.assertEqual([m.signed for m in accepted.rows],
+                         [Decimal("900"), Decimal("100")])
+        malformed = [r.copy() for r in rows]
+        malformed[0].insert(4, "700")
+        source = self.folder / "melli_inserted.xls"
+        write_melli(source, malformed)
+        try:
+            altered = convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+        except StatementError as exc:
+            self.assertRegex(str(exc), "Unmapped populated source column")
+        else:
+            candidate = self.folder / "melli_shifted.csv"
+            private = self.folder / "melli_shifted_PRIVATE.txt"
+            save_candidate(altered, candidate, private)
+            self.fail(
+                "Financial alignment bypass: intended signed +900, observed "
+                + str(altered.rows[0].signed)
+                + "; candidate_saved=" + str(candidate.exists())
+                + "; csv=" + repr(output_csv(altered))
+                + "; warnings=" + repr(altered.issues)
+            )
+
     def test_missing_essential_source_cell_still_fails_closed(self):
         for bank in ("melli", "mellat"):
             with self.subTest(bank=bank):
