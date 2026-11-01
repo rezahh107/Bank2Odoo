@@ -31,6 +31,7 @@ class SourceRow:
     sheet: str
     fields: dict[str, str]
     original: dict[str, str]
+    raw_time: str | None = None  # Decoded source cell, without conversion normalization.
 
 
 @dataclass(frozen=True)
@@ -110,9 +111,21 @@ def _extract(table: list[tuple[int, list[str]]], bank: str, sheet: str) -> tuple
             )
         if not fields["date"]:
             raise StatementError(f"Missing transaction date or unidentified footer at {sheet}:{physical}")
-        original = {f"{header[i] if str(header[i]).strip() else 'column_'+str(i+1)} [{i+1}]": str(value)
-                    for i, value in enumerate(cells)}
-        result.append(SourceRow(physical, sheet, fields, original))
+        # Source records need not have a universal fixed width. Preserve
+        # additional decoded cells without indexing beyond the header row.
+        original = {
+            f"{header[i] if i < len(header) and str(header[i]).strip() else 'column_'+str(i+1)} [{i+1}]": str(value)
+            for i, value in enumerate(cells)
+        }
+        if any(str(value).strip() for value in cells[len(header):]):
+            fields["source_structure_issue"] = (
+                f"Extra populated source cells beyond header at {sheet}:{physical}; "
+                "raw values retained, column alignment not independently proven"
+            )
+        time_index = mapping.get("time")
+        raw_time = (str(cells[time_index]) if time_index is not None
+                    and time_index < len(cells) else None)
+        result.append(SourceRow(physical, sheet, fields, original, raw_time))
     if not result:
         raise StatementError(f"No transactions below {bank} header in {sheet}")
     return tuple(result)
@@ -123,7 +136,9 @@ def _xls_text(cell: object) -> str:
     # decoded cell faithfully with str(), never apply a guessed money format.
     if isinstance(cell, float) and cell.is_integer():
         return str(int(cell))
-    return str(cell).strip()
+    # Raw provenance must retain significant whitespace. _extract() normalizes
+    # conversion-facing fields separately; never strip the original XLS cell.
+    return str(cell)
 
 
 def _read_melli(raw: bytes) -> Source:
