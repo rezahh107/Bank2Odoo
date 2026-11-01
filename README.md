@@ -73,6 +73,24 @@ Journal name are entered context, **not verified against Odoo**. Never guess
 IRR/TOMAN from bank data. Destination `--decimal-places` must reflect confirmed
 Journal/currency precision; amounts requiring rounding are rejected.
 
+**Explicit historical balance gaps (review-only):** By default, every observed
+consecutive balance transition must reconcile; an unexplained mismatch still
+fails the conversion. A source with a separately documented, previously imported
+interval can use the four *optional* CLI arguments
+`--gap-source-sha256`, `--gap-before-row`, `--gap-after-row` and
+`--gap-residual` only after authorized private review of the exact source bytes,
+physical row boundary and residual in **source** monetary units. All four are
+required together; the approved source hash must match the current input.
+The sole declared boundary can be excluded from adjacency verification only when
+its exact residual matches and both segments contain at least two movements.
+Every other transition is still checked strictly. Such conversion reports
+`NOT_PROVEN` for the whole period, with no inferred full-period endpoints;
+it is **never** full-range balance `PASS` or financial approval.
+The CLI accepts a declaration; it cannot independently authenticate the
+person authorizing it. Keep actual source hashes, approvals, reports and
+candidate CSVs **private** and out of GitHub/CI. The desktop UI does not yet
+collect historical-gap declarations; do not weaken its default fail-closed path.
+
 The CSV follows the bank's **source row order**. The report records its order,
 physical source rows, original columns/IDs, dates/times, exact source-byte SHA,
 amounts, balances, tentative associations and outstanding decisions.
