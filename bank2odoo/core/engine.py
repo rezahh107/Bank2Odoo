@@ -52,6 +52,7 @@ class Movement:
     reference: str
     kind: str
     balance_issue: str | None = None
+    time_issue: str | None = None
 
 
 @dataclass(frozen=True)
@@ -83,7 +84,14 @@ def _movement(row: SourceRow, bank: str, context: Context, factor: Decimal) -> M
     if not label:
         raise StatementError("Missing meaningful bank description")
     date_value = jalali_date(f["date"])
-    time = clock(f.get("time", ""))
+    # A malformed, independently extracted time is optional evidence, not a
+    # fabricated midnight or a reason to discard an otherwise valid movement.
+    time_issue = None
+    try:
+        time = clock(f.get("time", ""))
+    except StatementError:
+        time = None
+        time_issue = f"Unparseable optional transaction time at source row {row.physical_row}"
     # Balance is optional evidence, not a field required to preserve a movement.
     # The original raw cell remains in SourceRow.original and private trace.
     balance_issue = f.get("balance_evidence_issue")
@@ -113,7 +121,8 @@ def _movement(row: SourceRow, bank: str, context: Context, factor: Decimal) -> M
         signed = exact_sub(credit, debit)
     return Movement(row, date_value, time, signed,
                     exact_scaled(signed, factor, context.decimal_places), balance,
-                    label, f.get("reference", ""), f.get("kind", ""), balance_issue)
+                    label, f.get("reference", ""), f.get("kind", ""), balance_issue,
+                    time_issue)
 
 
 def _balances(
@@ -125,6 +134,9 @@ def _balances(
     No balance conclusion authorizes accounting acceptance or Odoo import.
     """
     issues = [r.balance_issue for r in rows if r.balance_issue is not None]
+    issues.extend(r.time_issue for r in rows if r.time_issue is not None)
+    issues.extend(r.row.fields["source_structure_issue"] for r in rows
+                  if "source_structure_issue" in r.row.fields)
     missing = [r.row.physical_row for r in rows if r.balance is None]
     if missing:
         issues.append(
