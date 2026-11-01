@@ -128,6 +128,29 @@ class ConversionFirstDiagnosticsTests(unittest.TestCase):
         self.assertTrue(result.balance_status.startswith("NOT_PROVEN:"))
         self.assertEqual(sum(x.balance is None for x in result.rows), 4)
 
+    def test_duplicate_optional_balance_headers_are_diagnostic_only(self):
+        path = self.folder / "ambiguous_optional_balance.xls"
+        workbook = xlwt.Workbook()
+        sheet = workbook.add_sheet("Synthetic")
+        for i, header in enumerate(MELLI_HEADER):
+            sheet.write(5, i, "مانده" if i == 10 else header)
+        for r, fields in enumerate(self.rows, start=6):
+            for i, value in enumerate(fields):
+                sheet.write(r, i, value)
+        workbook.save(str(path))
+        result = convert(path, Context("IRR", "IRR", "Synthetic Journal"))
+        self.assertEqual(len(result.rows), 4)
+        self.assertTrue(result.balance_status.startswith("NOT_PROVEN:"))
+        self.assertTrue(all(m.balance is None for m in result.rows))
+        self.assertTrue(all("Duplicate/ambiguous optional balance headers" in m.balance_issue
+                            for m in result.rows))
+        csv_path = self.folder / "duplicate_optional.csv"
+        report_path = self.folder / "duplicate_optional_PRIVATE.txt"
+        save_candidate(result, csv_path, report_path)
+        self.assertIn("Duplicate/ambiguous optional balance headers",
+                      report_path.read_text(encoding="utf-8"))
+        self.assertIn('"source_physical_row": 7', report_path.read_text(encoding="utf-8"))
+
     def test_same_timestamp_at_gap_boundary_does_not_block_conversion(self):
         self.rows[2][1] = self.rows[1][1]
         self.rows[2][2] = self.rows[1][2]
