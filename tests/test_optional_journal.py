@@ -72,6 +72,32 @@ class OptionalJournalTests(unittest.TestCase):
         self.assertEqual(new.journal, "")
         self.assertIn("separately inside Odoo", control_report(new))
 
+    def test_melli_without_journal_preserves_movements_and_nonblocking_balance_flags(self):
+        from tests.test_conversion import write_melli
+        melli = self.root / "fictional_melli.xls"
+        write_melli(melli, [
+            ["2", "1405/07/02", "11:00:00", "برداشت", "10", "201",
+             "", "برداشت آزمایشی", "", "90"],
+            ["1", "1405/07/01", "10:00:00", "واریز", "20", "200",
+             "", "واریز آزمایشی", "", "500"],
+        ])
+        no_journal = convert(melli, Context("IRR", "IRR"))
+        legacy = convert(melli, Context("IRR", "IRR", "Legacy Fictional Journal"))
+        self.assertEqual(output_csv(no_journal), output_csv(legacy))
+        self.assertEqual([m.signed for m in no_journal.rows],
+                         [Decimal("-10"), Decimal("20")])
+        self.assertEqual(len(no_journal.rows), 2)
+        self.assertIn("BALANCE DISCONTINUITY", "\n".join(no_journal.issues))
+        self.assertEqual(output_csv(no_journal).splitlines()[0],
+                         "Date,Label,Amount")
+        report = control_report(no_journal)
+        trace = [json.loads(line) for line in report.split(
+            "## Source-to-destination trace (JSON objects, one per output row; private)\n", 1
+        )[1].splitlines()]
+        self.assertEqual(len(trace), 2)
+        self.assertTrue(all(t["original_columns"] for t in trace))
+        self.assertIn("separately inside Odoo", report)
+
     def test_journal_is_not_a_validation_bypass(self):
         for context in (
             Context("UNKNOWN", "IRR"),
