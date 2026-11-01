@@ -22,7 +22,7 @@ from adapters.qt_style_probe import font_runtime
 from bank2odoo.ui import window as product
 from tests.qt_theme_pilot_capture import fixture, wait_finished
 
-SIZES = ((600, 480), (650, 520), (700, 520), (740, 520), (940, 830))
+SIZES = ((600, 480), (650, 520), (700, 520), (710, 520), (720, 520), (730, 520), (740, 520), (940, 830))
 SCHEMES = ("light", "dark")
 ORIGINAL_CAPTIONS = (
     "اعتبارسنجی و تبدیل",
@@ -49,8 +49,11 @@ def measure(w, name: str, *, png: bool = False) -> dict:
     input_min = w._input_column.minimumSizeHint().width()
     result_min = w._result_column.minimumSizeHint().width()
     spacing = w._workspace.spacing()
+    margins = w.scroll.widget().layout().contentsMargins()
+    horizontal_outer_margins = margins.left() + margins.right()
     measured_input, measured_result, minimum_input_at_reflow, minimum_result_at_reflow = w._workspace_measurements
     requested_minimum = input_min + result_min + spacing
+    full_native_required = requested_minimum + horizontal_outer_margins
     record = {
         "state": name,
         "scheme": QApplication.instance().styleHints().colorScheme().name,
@@ -66,6 +69,8 @@ def measure(w, name: str, *, png: bool = False) -> dict:
         "column_minimum_size_hint": {
             "input": input_min, "result": result_min,
             "spacing": spacing, "sum": requested_minimum,
+            "outer_layout_left": margins.left(), "outer_layout_right": margins.right(),
+            "with_outer_layout_margins": full_native_required,
             "at_last_reflow": [minimum_input_at_reflow, minimum_result_at_reflow],
         },
         "column_actual_widths": [w._input_column.width(), w._result_column.width()],
@@ -110,7 +115,7 @@ def simulate_minimum_hint_guard(w) -> dict:
     """Test a proposed native minimum-hint floor; NOT a product patch."""
     app = QApplication.instance()
     before = measure(w, "before_guard")
-    floor = before["column_minimum_size_hint"]["sum"]
+    floor = before["column_minimum_size_hint"]["with_outer_layout_margins"]
     predicate = max(before["breakpoint"], floor)
     target = (QBoxLayout.Direction.LeftToRight
               if w.scroll.viewport().width() >= predicate
@@ -121,7 +126,7 @@ def simulate_minimum_hint_guard(w) -> dict:
         w.scroll.widget().updateGeometry()
     settle(app, w)
     result = {
-        "floor_from_native_minimum_size_hints": floor,
+        "floor_from_native_minimum_size_hints_and_outer_layout_margins": floor,
         "calculated_safe_breakpoint": predicate,
         "chosen_direction": target.name,
         "after_guard_direction": w._workspace.direction().name,
@@ -209,6 +214,11 @@ def run_case(app: QApplication, scheme: str, width: int, height: int,
         w.saved_path_fields.show()
         collect(w, key + "_saved_paths_visible_again", data["counterfactuals"])
 
+        w.save_box.hide()
+        collect(w, key + "_saved_save_group_hidden_short_caption", data["counterfactuals"])
+        w.save_box.show()
+        collect(w, key + "_saved_save_group_visible_again", data["counterfactuals"])
+
         data["candidate"] = simulate_minimum_hint_guard(w)
         # Native original-resolution snapshot of guarded version.
         pm = w.grab()
@@ -277,6 +287,34 @@ def main():
     report["candidate_no_new_overflow"] = all(
         c["candidate_horizontal_scroll"] == 0 for c in report["cases"]
     )
+    # Fail closed on a false baseline explanation or a proposed unsafe floor.
+    for c in report["cases"]:
+        for state in c["states"]:
+            if state["layout_direction"] == "LeftToRight":
+                native = state["column_minimum_size_hint"]["with_outer_layout_margins"]
+                predicted = max(0, native - state["viewport_width"])
+                if state["horizontal_scroll_max"] != predicted:
+                    raise AssertionError(
+                        f"Native minimum + outer margin model falsified: "
+                        f"{state['state']} predicted={predicted} "
+                        f"actual={state['horizontal_scroll_max']}"
+                    )
+    if not report["candidate_no_new_overflow"]:
+        raise AssertionError("Minimum-hint plus root margins guard still overflows")
+    for expected_case in ("dark_650x520", "dark_700x520", "light_700x520"):
+        case = next(x for x in report["cases"] if x["case"] == expected_case)
+        if case["baseline_horizontal_scroll"] <= 0:
+            raise AssertionError(f"Expected authentic saved overflow for {expected_case}")
+    critical_cf = {x["state"].split("saved_")[-1]: x for x in critical["counterfactuals"]}
+    if not (
+        critical_cf["long_caption"]["horizontal_scroll_max"] == 0
+        and critical_cf["caption_restored"]["horizontal_scroll_max"] > 0
+        and critical_cf["paths_hidden_short_caption"]["horizontal_scroll_max"] > 0
+        and critical_cf["save_group_hidden_short_caption"]["horizontal_scroll_max"] == 0
+        and critical_cf["save_group_visible_again"]["horizontal_scroll_max"] > 0
+    ):
+        raise AssertionError("Causal counterfactual discrimination failed")
+    report["counterfactual_discrimination_passed"] = True
     report["caption_intervention_critical"] = [
         {"state": x["state"], "breakpoint": x["breakpoint"],
          "layout": x["layout_direction"], "horizontal": x["horizontal_scroll_max"],
