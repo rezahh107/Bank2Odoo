@@ -71,6 +71,10 @@ _SOURCE_LIGHT_QSS = (
     " color: #626A70; border: 1px solid #BBC2C8; }"
 )
 _PRIMARY_LIGHT_QSS = _SOURCE_LIGHT_QSS.replace("sourceSelection", "primaryConversion")
+_INVALID_FACTOR_GUIDANCE = (
+    "ضریب تبدیل با واحدهای انتخاب‌شده سازگار نیست؛ "
+    "مقدار را اصلاح و دوباره تأیید کنید."
+)
 _APPROVAL_DARK_QSS = (
     "QCheckBox#financialApproval::indicator:unchecked {"
     " border: 2px solid #DCE7F0; background-color: #202831; }"
@@ -897,10 +901,15 @@ class MainWindow(QMainWindow):
         else:
             self._approved_digest = self._selected_digest if checked else None
         self._invalidate()
-        if checked and self._conversion_is_ready_for_emphasis():
-            self._set_message(
-                "گام بعد: اعتبارسنجی و تبدیل را اجرا کنید؛ نتیجه هنوز تولید یا بررسی نشده است."
-            )
+        if checked:
+            if self._conversion_is_ready_for_emphasis():
+                self._set_message(
+                    "گام بعد: اعتبارسنجی و تبدیل را اجرا کنید؛ نتیجه هنوز تولید یا بررسی نشده است."
+                )
+            elif self.factor.isEnabled() and self._missing_input_guidance()[0] is None:
+                # Completed but financially rejected: never tell the user
+                # they are ready, or merely ask for approval already given.
+                self._set_message(_INVALID_FACTOR_GUIDANCE)
 
     def _update_units(self) -> None:
         left, right = self.source_unit.currentData(), self.target_unit.currentData()
@@ -1005,10 +1014,7 @@ class MainWindow(QMainWindow):
                 # rejected the value. Reuse that validation, not a UI copy
                 # of its numeric/unit rules; guide correction to the field.
                 widget = self.factor
-                guidance = (
-                    "ضریب تبدیل با واحدهای انتخاب‌شده سازگار نیست؛ "
-                    "مقدار را اصلاح و دوباره تأیید کنید."
-                )
+                guidance = _INVALID_FACTOR_GUIDANCE
             self._set_message("تبدیل آغاز نشد: " + (guidance or human_error(str(exc))),
                               str(exc))
             if widget is not None:

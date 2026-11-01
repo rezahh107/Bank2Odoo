@@ -197,6 +197,8 @@ class AccountantUiTests(unittest.TestCase):
                     self.assertIn("اقدام اصلی", w.convert_button.accessibleName())
                 else:
                     self.assertIn("راهنمای تکمیل", w.convert_button.accessibleName())
+                    self.assertIn("ضریب تبدیل", w.status.text())
+                    self.assertNotIn("اعتبارسنجی و تبدیل را اجرا", w.status.text())
                     w.convert_button.click()
                     self.assertIsNone(w._thread)
                     self.assertIsNone(w.result)

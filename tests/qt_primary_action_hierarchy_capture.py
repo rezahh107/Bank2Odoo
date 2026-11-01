@@ -186,6 +186,9 @@ def run_case(app, ui_module, variant, scheme, width, height, source, output):
                 raise AssertionError("Invalid-factor snapshot lacks explicit SHA approval")
             if w.convert_button.styleSheet():
                 raise AssertionError("Financially invalid factor wrongly gains primary accent")
+            if ("ضریب تبدیل" not in w.status.text()
+                    or "اعتبارسنجی و تبدیل را اجرا" in w.status.text()):
+                raise AssertionError("Approved invalid-factor guidance is misleading")
             capture(app, w, output, key, "invalid_factor", meta)
             w.convert_button.click()
             app.processEvents()

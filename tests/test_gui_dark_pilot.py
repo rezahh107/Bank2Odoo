@@ -310,6 +310,7 @@ class DarkThemePilotTests(unittest.TestCase):
                 self.assertEqual(w._approved_digest, w._selected_digest)
                 self.assertFalse(w.convert_button.styleSheet(),
                                  "A SHA-approved but invalid factor must not become primary")
+                self.assertIn("ضریب تبدیل", w.status.text())
                 self.assertTrue(w.convert_button.isEnabled())
                 w.factor.setText("10")
                 self.assertFalse(w.approved.isChecked())
