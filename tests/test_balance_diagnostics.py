@@ -334,6 +334,31 @@ class ConversionFirstDiagnosticsTests(unittest.TestCase):
                 + "; source_cells=" + str(len(trace[1]["original_columns"]))
             )
 
+    def test_mellat_inserted_cell_with_empty_surplus_still_fails_closed(self):
+        # The source's final supplemental field is empty. After insertion
+        # the thirteenth cell is also empty; the row-width mismatch remains
+        # evidence even though a populated-extra-only check would miss it.
+        original = [
+            ["1", "1405/07/01", "10:00:00", "SYN-1", "ورودی ساختگی", "0", "100", "100"],
+            ["2", "1405/07/02", "11:00:00", "321", "700", "0", "900", "1000"],
+        ]
+        original = [row + ["", "", "", ""] for row in original]
+        baseline = self.folder / "mellat_empty_tail_original.csv"
+        write_mellat(baseline, original)
+        converted = convert(baseline, Context("IRR", "IRR", "Synthetic Journal"))
+        self.assertEqual(converted.rows[1].signed, Decimal("900"))
+        shifted = [row.copy() for row in original]
+        shifted[1].insert(2, "MALFORMED_TIME")
+        self.assertEqual(len(shifted[1]), 13)
+        candidate = self.folder / "mellat_empty_tail_candidate.csv"
+        private = self.folder / "mellat_empty_tail_PRIVATE.txt"
+        source = self.folder / "mellat_empty_tail_shift.csv"
+        write_mellat(source, shifted)
+        with self.assertRaisesRegex(StatementError, "Unmapped populated source column"):
+            convert(source, Context("IRR", "IRR", "Synthetic Journal"))
+        self.assertFalse(candidate.exists())
+        self.assertFalse(private.exists())
+
     def test_melli_inserted_amount_cell_cannot_change_credit(self):
         # A typed numerical cell inserted in front of the amount may be
         # mistaken for the actual transfer, even while the raw extra XLS
