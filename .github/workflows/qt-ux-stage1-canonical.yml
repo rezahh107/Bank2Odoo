@@ -51,6 +51,16 @@ jobs:
         run: |
           uv run --locked python -m adapters.qt_style_probe.font_runtime --require-system-absent
           if ($LASTEXITCODE -ne 0) { throw "Canonical Vazirmatn preflight failed" }
+      - name: Diagnose native Windows work area and post-show Qt geometry
+        working-directory: bank2odoo-checkout
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONFAULTHANDLER: "1"
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+        run: |
+          uv run --locked python -m tests.qt_stage1_geometry_probe
+          if ($LASTEXITCODE -ne 0) { throw "Windows geometry probe failed" }
       - name: Capture authentic MainWindow states using canonical Vazirmatn
         working-directory: bank2odoo-checkout
         shell: pwsh
