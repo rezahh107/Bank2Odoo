@@ -75,14 +75,21 @@ def capture(app, w, directory, key, state, meta):
     w.scroll.verticalScrollBar().setValue(0)
     app.processEvents()
     images = []
+    expected = meta["requested_size"]
     for view in ("top", "action"):
+        if (w.width(), w.height()) != tuple(expected):
+            raise RuntimeError(f"Window geometry drift in {key}/{state}: "
+                               f"{(w.width(), w.height())} != {tuple(expected)}")
         if view == "action":
             w.scroll.ensureWidgetVisible(w.convert_button, 0, 18)
             app.processEvents()
         filename = f"{key}_{state}_{view}.png"
         pix = w.grab()
-        if pix.isNull() or not pix.save(str(directory / filename), "PNG"):
-            raise RuntimeError("Native Qt capture failed: " + filename)
+        if pix.isNull() or (pix.width(), pix.height()) != (
+            round(expected[0] * pix.devicePixelRatio()),
+            round(expected[1] * pix.devicePixelRatio())
+        ) or not pix.save(str(directory / filename), "PNG"):
+            raise RuntimeError("Native Qt capture missing or wrong dimensions: " + filename)
         images.append({
             "file": filename, "native_width": pix.width(),
             "native_height": pix.height(), "dpr": pix.devicePixelRatio(),
@@ -128,9 +135,19 @@ def run_case(app, ui_module, variant, scheme, width, height, source, output):
     w.resize(width, height)
     w.show()
     app.processEvents()
+    # Qt/Windows may shrink oversized windows on first show. Reassert native
+    # QWidget size after show before acquiring any original-resolution PNG.
+    w.resize(width, height)
+    app.processEvents()
+    if (w.width(), w.height()) != (width, height):
+        raise RuntimeError(
+            f"Windows Qt cannot capture requested widget geometry: "
+            f"requested={(width, height)} actual={(w.width(), w.height())}"
+        )
     key = f"{variant}_{scheme}_{width}x{height}"
     meta = {
         "variant": variant, "requested_size": [width, height],
+        "actual_postshow_widget_size": [w.width(), w.height()],
         "scheme": scheme, "effective_style": app.style().objectName(),
         "effective_scheme_hint": app.styleHints().colorScheme().name,
         "effective_palette": {
