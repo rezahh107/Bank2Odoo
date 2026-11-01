@@ -111,7 +111,6 @@ class DarkThemePilotTests(unittest.TestCase):
         self.assertIsNotNone(w._selected_digest)
         w.source_unit.setCurrentIndex(w.source_unit.findData("IRR"))
         w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
-        w.journal.setText("ژورنال آزمایشی")
         w.approved.setChecked(True)
         self.assertTrue(w.approved.isChecked())
         self.assertEqual(w._approved_digest, w._selected_digest)
@@ -240,10 +239,9 @@ class DarkThemePilotTests(unittest.TestCase):
         self.assertEqual(w.select_button.styleSheet(), _SOURCE_DARK_QSS)
         self.assertFalse(w.styleSheet())
         self.assertFalse(w.source_unit.styleSheet())
-        self.assertFalse(w.journal.styleSheet())
         self.assertFalse(w.precision.styleSheet())
         self.assertEqual(len(w.findChildren(QGroupBox)), 4)
-        for control in (w.source_unit, w.target_unit, w.journal, w.factor,
+        for control in (w.source_unit, w.target_unit, w.factor,
                         w.precision, w.approved, w.convert_button):
             self.assertTrue(control.isEnabled() or control is w.factor)
         for value in self._metric(w.approved):
@@ -286,7 +284,7 @@ class DarkThemePilotTests(unittest.TestCase):
         self._scheme(Qt.ColorScheme.Dark)
         self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_DARK_QSS)
         self.assertEqual(w.select_button.styleSheet(), "")
-        w.journal.setText("تغییر ژورنال")
+        w.precision.setValue(1)
         self.assertFalse(w.approved.isChecked())
         self.assertEqual(w.convert_button.styleSheet(), "")
         self.assertEqual(w.select_button.styleSheet(), "")
@@ -329,7 +327,7 @@ class DarkThemePilotTests(unittest.TestCase):
         self._scheme(Qt.ColorScheme.Dark)
         self.assertEqual(self.app.palette().color(QPalette.ColorRole.Window), QColor("#151A21"))
         self.assertEqual(self.app.palette().color(QPalette.ColorRole.Text), QColor("#EAF1F7"))
-        for control in (w.source_unit, w.target_unit, w.precision, w.factor, w.journal):
+        for control in (w.source_unit, w.target_unit, w.precision, w.factor):
             self.assertEqual(control.styleSheet(), "")
         w.source_unit.setFocus()
         QTest.keyClick(w.source_unit, Qt.Key.Key_Down)
@@ -340,9 +338,11 @@ class DarkThemePilotTests(unittest.TestCase):
                         "Native ComboBox popup must remain available in Fusion Dark")
         w.source_unit.hidePopup()
         self.app.processEvents()
-        w.journal.setFocus()
-        QTest.keyClicks(w.journal, "test")
-        self.assertEqual(w.journal.text(), "test")
+        w.target_unit.setCurrentIndex(w.target_unit.findData("TOMAN"))
+        self.assertTrue(w.factor.isEnabled())
+        w.factor.setFocus()
+        QTest.keyClicks(w.factor, "test")
+        self.assertEqual(w.factor.text(), "test")
         w.precision.setFocus()
         QTest.keyClick(w.precision, Qt.Key.Key_Up)
         self.assertEqual(w.precision.value(), 1)
@@ -380,7 +380,7 @@ class DarkThemePilotTests(unittest.TestCase):
             current = (w.approved.isChecked(), w._approved_digest,
                        w._selected_digest, w.result, w.save_button.isEnabled())
             self.assertEqual(current, original, "Pure theme switch modified financial state")
-        w.journal.setText("تغییر واقعی در ژورنال")
+        w.precision.setValue(1)
         self.assertFalse(w.approved.isChecked(), "Real context editing must revoke approval")
         self.assertIsNone(w._approved_digest)
         self.assertIsNone(w.result)
