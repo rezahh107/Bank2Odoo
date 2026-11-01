@@ -201,20 +201,26 @@ class RealConverterFrozenOracleAcceptance(unittest.TestCase):
         self.assertEqual(sum(x["category"] == "correction" for x in adapter_result["trace"]),
                          expected_cases()[bank]["correction_count"])
 
-    def test_broken_source_balance_fails_closed_before_writing_files(self):
+    def test_changed_optional_source_balance_retains_candidate_with_warning(self):
         for bank in ("melli", "mellat"):
             with self.subTest(bank=bank):
                 mutated = ledgers()[bank]
                 mutated["rows"][5]["balance"] = "1"
-                source = self.root / (f"corrupt_{bank}" + (".xls" if bank == "melli" else ".csv"))
+                source = self.root / (f"changed_balance_{bank}" + (".xls" if bank == "melli" else ".csv"))
                 if bank == "melli":
                     render_melli(mutated, source)
                 else:
                     render_mellat(mutated, source)
-                with self.assertRaisesRegex(StatementError, "balance mismatch"):
-                    convert(source, Context("IRR", "IRR", "UNCONFIRMED", approved_factor=Decimal("1")))
-                self.assertFalse((self.root/f"{bank}_candidate.csv").exists())
-                self.assertFalse((self.root/f"{bank}_PRIVATE-report.txt").exists())
+                result = convert(source, Context(
+                    "IRR", "IRR", "UNCONFIRMED", approved_factor=Decimal("1")))
+                self.assertEqual(len(result.rows), len(mutated["rows"]))
+                self.assertTrue(result.balance_status.startswith("NOT_PROVEN:"))
+                self.assertIn("BALANCE DISCONTINUITY", "\\n".join(result.issues))
+                csv_path = self.root / f"{bank}_candidate.csv"
+                report_path = self.root / f"{bank}_PRIVATE-report.txt"
+                save_candidate(result, csv_path, report_path)
+                self.assertTrue(csv_path.exists())
+                self.assertIn("BALANCE DISCONTINUITY", report_path.read_text(encoding="utf-8"))
 
     def test_tampered_actual_trace_identity_is_rejected_for_both_banks(self):
         for bank in ("melli", "mellat"):
