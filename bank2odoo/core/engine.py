@@ -15,12 +15,27 @@ UNITS = {"IRR", "TOMAN"}
 
 
 @dataclass(frozen=True)
+class BalanceGapApproval:
+    """A separate, explicit approval scoped to exact source bytes and one gap.
+
+    Approval is not inferred from a date interval, balance mismatch or bank name.
+    Keep this outside the public repository when it contains real identifiers.
+    """
+
+    source_sha256: str
+    preceding_physical_row: int
+    following_physical_row: int
+    expected_residual: Decimal
+
+
+@dataclass(frozen=True)
 class Context:
     source_unit: str
     target_unit: str
     journal: str
     decimal_places: int = 0
     approved_factor: Decimal | None = None
+    balance_gap_approval: BalanceGapApproval | None = None
 
     def factor(self) -> Decimal:
         if self.source_unit not in UNITS or self.target_unit not in UNITS:
@@ -111,52 +126,110 @@ def _movement(row: SourceRow, bank: str, context: Context, factor: Decimal) -> M
                     label, f.get("reference", ""), f.get("kind", ""))
 
 
-def _balances(rows: tuple[Movement, ...]) -> tuple[str, Decimal | None, Decimal | None, str, list[str]]:
-    issues = []
+def _balances(
+    rows: tuple[Movement, ...],
+    approval: BalanceGapApproval | None = None,
+    *,
+    source_sha256: str | None = None,
+) -> tuple[str, Decimal | None, Decimal | None, str, list[str]]:
+    issues: list[str] = []
+    if approval is not None:
+        if source_sha256 is None or approval.source_sha256 != source_sha256:
+            raise StatementError("Balance-gap approval does not match exact source SHA-256")
+        if (approval.preceding_physical_row < 1 or approval.following_physical_row < 1
+                or approval.preceding_physical_row >= approval.following_physical_row
+                or not approval.expected_residual.is_finite()
+                or approval.expected_residual == 0):
+            raise StatementError("Invalid explicitly approved balance-gap boundary/residual")
+        if len(rows) < 4:
+            raise StatementError("Approved gap requires two verifiable balance segments")
     if not all(r.balance is not None for r in rows):
+        if approval is not None:
+            raise StatementError("Cannot verify approved gap with missing source balances")
         return "NOT_PROVEN: missing source balances", None, None, "unknown", ["Missing balance(s); no full balance proof"]
     if len(rows) < 2:
         return "NOT_PROVEN: one movement", None, None, "unknown", ["One movement cannot establish bank ordering"]
-    # Within equal dates, a missing time prevents asserting either direction.
     if any(a.date == b.date and (a.time is None or b.time is None)
            for a, b in zip(rows, rows[1:])):
+        if approval is not None:
+            raise StatementError("Approved gap requires provable source chronological order")
         return "NOT_PROVEN: incomplete time/order", None, None, "unknown", ["Same-date rows without complete times"]
     keys = [(r.date, r.time or (0, 0, 0)) for r in rows]
     forward = all(a <= b for a, b in zip(keys, keys[1:]))
     reverse = all(a >= b for a, b in zip(keys, keys[1:]))
     if forward == reverse:
+        if approval is not None:
+            raise StatementError("Approved gap requires provable source chronological order")
         return "NOT_PROVEN: ambiguous or unordered timestamps", None, None, "unknown", ["Chronological source order is unproven"]
+
+    approved_index: int | None = None
+
+    def verify_transition(previous: Movement, current: Movement,
+                          residual: Decimal, pair_index: int) -> None:
+        nonlocal approved_index
+        if residual == 0:
+            return
+        if (approval is not None and approved_index is None
+                and previous.row.physical_row == approval.preceding_physical_row
+                and current.row.physical_row == approval.following_physical_row
+                and residual == approval.expected_residual):
+            approved_index = pair_index
+            return
+        raise StatementError(
+            f"Consecutive balance mismatch at source rows "
+            f"{previous.row.physical_row}/{current.row.physical_row}"
+        )
+
     if forward:
-        # With oldest first, each current transaction changes previous closing balance.
-        for previous, current in zip(rows, rows[1:]):
+        for i, (previous, current) in enumerate(zip(rows, rows[1:])):
             assert previous.balance is not None and current.balance is not None
-            if exact_sub(current.balance, previous.balance) != current.signed:
-                raise StatementError(f"Consecutive balance mismatch at source rows {previous.row.physical_row}/{current.row.physical_row}")
+            residual = exact_sub(exact_sub(current.balance, previous.balance), current.signed)
+            verify_transition(previous, current, residual, i)
         first, last = rows[0], rows[-1]
         assert first.balance is not None and last.balance is not None
         opening, closing = exact_sub(first.balance, first.signed), last.balance
         order = "oldest-to-newest"
     else:
-        # With newest first, prior/newer balance minus current/older balance = prior movement.
-        for newer, older in zip(rows, rows[1:]):
+        for i, (newer, older) in enumerate(zip(rows, rows[1:])):
             assert newer.balance is not None and older.balance is not None
-            if exact_sub(newer.balance, older.balance) != newer.signed:
-                raise StatementError(f"Consecutive balance mismatch at source rows {newer.row.physical_row}/{older.row.physical_row}")
+            residual = exact_sub(exact_sub(newer.balance, older.balance), newer.signed)
+            verify_transition(newer, older, residual, i)
         first, last = rows[0], rows[-1]
         assert first.balance is not None and last.balance is not None
         opening, closing = exact_sub(last.balance, last.signed), first.balance
         order = "newest-to-oldest"
+
+    if approval is not None:
+        if approved_index is None:
+            raise StatementError("Approved balance gap not found in exact source rows")
+        if approved_index == 0 or approved_index == len(rows) - 2:
+            raise StatementError("Approved gap requires at least two movements in each segment")
+        before_count = approved_index
+        after_count = len(rows) - approved_index - 2
+        issues.append(
+            f"OWNER-APPROVED HISTORICAL GAP ONLY: source rows "
+            f"{approval.preceding_physical_row}/{approval.following_physical_row}; "
+            f"source-unit residual {approval.expected_residual}. "
+            f"Verified {before_count}+{after_count} within-segment transitions; "
+            "whole-period opening/closing and continuity NOT_PROVEN."
+        )
+        return (
+            f"NOT_PROVEN: approved historical gap; "
+            f"{before_count}+{after_count} strict within-segment transitions",
+            None, None, order, issues,
+        )
+
     net = exact_sum(r.signed for r in rows)
     if exact_sub(closing, opening) != net:
         raise StatementError("Closing minus inferred opening does not equal source movement net")
     return f"PASS: {len(rows)-1} consecutive balance transitions", opening, closing, order, issues
-
 
 def convert(path: Path, context: Context) -> Conversion:
     factor = context.factor()  # fail without opening any statement when units unapproved
     raw = path.read_bytes()
     if not raw:
         raise StatementError("Empty bank statement")
+    source_sha256 = sha256(raw).hexdigest()
     source = read_statement(path, raw)
     rows = []
     for item in source.rows:
@@ -165,7 +238,9 @@ def convert(path: Path, context: Context) -> Conversion:
         except StatementError as exc:
             raise StatementError(f"{source.bank} {item.sheet}, physical row {item.physical_row}: {exc}") from exc
     movements = tuple(rows)  # retain each physical movement, preserve original order
-    balance_status, opening, closing, ordering, issues = _balances(movements)
+    balance_status, opening, closing, ordering, issues = _balances(
+        movements, context.balance_gap_approval, source_sha256=source_sha256
+    )
     seen: dict[tuple, int] = {}
     for mov in movements:
         k = (mov.date, mov.time, mov.signed, mov.reference, mov.label)
@@ -185,7 +260,7 @@ def convert(path: Path, context: Context) -> Conversion:
                           ", ".join(str(m.row.physical_row) for m in group))
     debits = exact_sum(m.signed.copy_abs() for m in movements if m.signed < 0)
     credits = exact_sum(m.signed for m in movements if m.signed > 0)
-    return Conversion(source.bank, path.name, sha256(raw).hexdigest(), source.encoding,
+    return Conversion(source.bank, path.name, source_sha256, source.encoding,
                       source.separator, movements, factor, context.source_unit, context.target_unit,
                       context.journal, debits, credits, exact_sub(credits, debits), balance_status,
                       opening, closing, ordering, tuple(issues), context.decimal_places)
