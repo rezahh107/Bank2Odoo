@@ -61,6 +61,11 @@ def _column_map(headers: list[str], bank: str) -> dict[str, int] | None:
     for key, options in OPTIONAL[bank].items():
         indexes = [i for i, item in enumerate(names) if item in {normalized_header(a) for a in options}]
         if len(indexes) > 1:
+            if key == "balance":
+                # Balance is diagnostic-only. Retain ambiguous raw columns in
+                # the trace rather than choosing one or blocking movements.
+                cols["ambiguous_balance_header"] = -1
+                continue
             raise StatementError(f"Duplicate/ambiguous {bank} optional header {key}")
         if indexes:
             cols[key] = indexes[0]
@@ -97,7 +102,12 @@ def _extract(table: list[tuple[int, list[str]]], bank: str, sheet: str) -> tuple
             continue
         if seen_footer:
             raise StatementError(f"Unexpected data after total/footer at {sheet}:{physical}")
-        fields = {key: str(cells[i]).strip() if i < len(cells) else "" for key, i in mapping.items()}
+        fields = {key: str(cells[i]).strip() if i < len(cells) else ""
+                  for key, i in mapping.items() if i >= 0}
+        if "ambiguous_balance_header" in mapping:
+            fields["balance_evidence_issue"] = (
+                f"Duplicate/ambiguous optional balance headers at {sheet}:{physical}"
+            )
         if not fields["date"]:
             raise StatementError(f"Missing transaction date or unidentified footer at {sheet}:{physical}")
         original = {f"{header[i] if str(header[i]).strip() else 'column_'+str(i+1)} [{i+1}]": str(value)
