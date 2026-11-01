@@ -33,6 +33,11 @@ jobs:
         run: uv python install 3.13
       - name: Sync exact locked environment
         run: uv sync --locked
+      - name: Focused financial-context primary-action Qt regressions
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONFAULTHANDLER: "1"
+        run: uv run --locked python -m unittest -v tests.test_gui.AccountantUiTests.test_authoritative_preflight_factor_matrix_and_recovery tests.test_gui_dark_pilot.DarkThemePilotTests.test_invalid_factor_is_secondary_but_corrected_factor_primary_across_themes
       - name: Run automated verification
         env:
           QT_QPA_PLATFORM: offscreen

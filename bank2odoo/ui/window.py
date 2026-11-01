@@ -774,16 +774,14 @@ class MainWindow(QMainWindow):
         self.status.setPalette(QPalette(self.status.parentWidget().palette()))
 
     def _conversion_is_ready_for_emphasis(self) -> bool:
-        """Presentation-only: engine and SHA-bound approval remain authoritative."""
-        return bool(
-            self.result is not None or (
-                self.source is not None
-                and self._selected_digest is not None
-                and self._approved_digest == self._selected_digest
-                and self.approved.isChecked()
-                and self._missing_input_guidance()[0] is None
-            )
-        )
+        """Match primary styling to the existing authoritative financial preflight."""
+        if self.result is not None:
+            return True  # Review/save actions follow an actual conversion result.
+        try:
+            self._context()
+        except StatementError:
+            return False
+        return True
 
     def _apply_theme_controls(self) -> None:
         pilot = getattr(QApplication.instance(), "_bank2odoo_appearance_pilot", None)
@@ -1002,6 +1000,15 @@ class MainWindow(QMainWindow):
             context = self._context()
         except StatementError as exc:
             widget, guidance = self._missing_input_guidance()
+            if widget is None and self.factor.isEnabled():
+                # All required fields are present, but Context.factor()
+                # rejected the value. Reuse that validation, not a UI copy
+                # of its numeric/unit rules; guide correction to the field.
+                widget = self.factor
+                guidance = (
+                    "ضریب تبدیل با واحدهای انتخاب‌شده سازگار نیست؛ "
+                    "مقدار را اصلاح و دوباره تأیید کنید."
+                )
             self._set_message("تبدیل آغاز نشد: " + (guidance or human_error(str(exc))),
                               str(exc))
             if widget is not None:
