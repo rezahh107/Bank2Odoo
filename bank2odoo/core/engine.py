@@ -173,6 +173,11 @@ def _balances(
                 and previous.row.physical_row == approval.preceding_physical_row
                 and current.row.physical_row == approval.following_physical_row
                 and residual == approval.expected_residual):
+            if keys[pair_index] <= keys[pair_index + 1]:
+                raise StatementError(
+                    "Approved Bank Melli gap boundary requires strictly descending timestamps "
+                    f"at source rows {previous.row.physical_row}/{current.row.physical_row}"
+                )
             approved_index = pair_index
             return
         raise StatementError(
