@@ -153,8 +153,11 @@ all public changes.
 ## Source policy and evidence limits
 
 Authoritative, private Owner documents (do not copy their private financial
-content into GitHub): Bank2Odoo GOAL_AUTHORITY v1.1.13 and NESTEC Bank
-Melli/Mellat CSV Conversion Guide v1.0.1. Their published behavior contract is
+content into GitHub): Bank2Odoo GOAL_AUTHORITY **v1.1.26, section 36**
+(**Converter, Not Auditor**; supersedes the previous blocking-balance policy)
+and NESTEC Bank Melli/Mellat CSV Conversion Guide v1.0.1. Earlier Owner
+authority revisions, including v1.1.13, are historical references only.
+The currently adopted conversion contract is
 `Date,Label,Amount` only, exact Decimal amounts, validated Jalali conversion,
 per-row trace and explicit review-only status.
 
