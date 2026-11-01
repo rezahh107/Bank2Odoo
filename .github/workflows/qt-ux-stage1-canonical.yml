@@ -1,0 +1,157 @@
+name: Bank2Odoo Stage 1 canonical Qt evidence
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/qt-ux-stage1-canonical.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-stage1:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact Bank2Odoo PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: bank2odoo-checkout
+          persist-credentials: false
+      - name: Check out pinned canonical Qt Lab font contract
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: rezahh107/UI-UX-Test-Lab
+          ref: 6e9da83efe2208e8dac5cf293d3fc9f4e14796b9
+          path: qt-lab
+          persist-credentials: false
+      - name: Install locked Python environment
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.10.0"
+      - name: Install Python 3.13
+        run: uv python install 3.13
+      - name: Sync exact Bank2Odoo dependencies
+        working-directory: bank2odoo-checkout
+        run: uv sync --locked
+      - name: Fetch two immutable comparison source revisions
+        working-directory: bank2odoo-checkout
+        shell: bash
+        run: |
+          git fetch --no-tags --depth=1 origin 1ff8057945abacf1ae8a2532ac37b9fe9dd43361
+          git fetch --no-tags --depth=1 origin 463c28d1012e8c3e076705223f1ff6d958012e76
+      - name: Strict canonical font preflight (not OS font)
+        working-directory: bank2odoo-checkout
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+        run: |
+          uv run --locked python -m adapters.qt_style_probe.font_runtime --require-system-absent
+          if ($LASTEXITCODE -ne 0) { throw "Canonical Vazirmatn preflight failed" }
+      - name: Diagnose native Windows work area and post-show Qt geometry
+        working-directory: bank2odoo-checkout
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONFAULTHANDLER: "1"
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+        run: |
+          uv run --locked python -m tests.qt_stage1_geometry_probe
+          if ($LASTEXITCODE -ne 0) { throw "Windows geometry probe failed" }
+      - name: Capture authentic MainWindow states using canonical Vazirmatn
+        working-directory: bank2odoo-checkout
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONFAULTHANDLER: "1"
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+        run: |
+          @'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+          from PySide6.QtGui import QFontInfo
+          from PySide6.QtWidgets import QApplication
+          from adapters.qt_style_probe import font_runtime
+
+          root = Path(os.environ["RUNNER_TEMP"]) / "bank2odoo-stage1"
+          root.mkdir(parents=True, exist_ok=True)
+          app = QApplication([])
+          font = font_runtime.initialize_font(app, point_size=11)
+          font_runtime.assert_widget_font(app)
+          from tests import qt_theme_pilot_capture, qt_primary_action_hierarchy_capture
+
+          def validate(folder, *, theme):
+              meta_path = folder / "environment.json"
+              meta = json.loads(meta_path.read_text(encoding="utf-8"))
+              cases = meta["cases"]
+              current = ([x for x in cases if x["phase"] == "after"]
+                         if theme else [x for x in cases if x["variant"] == "product"])
+              if len(current) != 6:
+                  raise RuntimeError("Expected six current UI Light/Dark/size cases")
+              for case in cases:
+                  family = case["resolved_font"] if theme else case["font"]
+                  pt = case["resolved_font_point_size"] if theme else case["font_size_pt"]
+                  if family != "Vazirmatn" or pt != 11:
+                      raise RuntimeError(f"Non-canonical Qt font: {family} {pt}")
+                  records = case["capture_records"] if theme else [
+                      image for state in case["states"] for image in state["images"]
+                  ]
+                  if not records or any(not (folder / record["file"]).is_file() for record in records):
+                      raise RuntimeError("Missing original-resolution PNG")
+                  requested = case["requested_size"]
+                  for item in records:
+                      pixel_size = ([item["width"], item["height"]] if theme else
+                                    [item["native_width"], item["native_height"]])
+                      dpr = item["device_pixel_ratio"] if theme else item["dpr"]
+                      if pixel_size != [round(v * dpr) for v in requested]:
+                          raise RuntimeError(
+                              f"INVALID_GEOMETRY: requested={requested}, captured={pixel_size}, "
+                              f"dpr={dpr}, file={item['file']}")
+                  if not theme and case["actual_postshow_widget_size"] != requested:
+                      raise RuntimeError("Post-show QWidget dimensions mismatch")
+              font_runtime.assert_widget_font(app)
+              if QFontInfo(app.font()).family() != "Vazirmatn":
+                  raise RuntimeError("Application font changed from canonical")
+              meta["canonical_font"] = font
+              meta["canonical_classification"] = "CANONICAL_VAZIRMATN"
+              meta["environment_type"] = "GITHUB_ACTIONS_WINDOWS_RUNNER_NOT_PHYSICAL_DESKTOP"
+              meta["theme_source"] = "SYNTHETIC_QSTYLEHINTS_OVERRIDE_NOT_REAL_OS"
+              meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+              return len(current)
+
+          theme_dir = root / "whole-window-states"
+          sys.argv = ["qt_theme_pilot_capture", "--output", str(theme_dir)]
+          qt_theme_pilot_capture.main()
+          count_theme = validate(theme_dir, theme=True)
+
+          primary_dir = root / "action-and-factor"
+          sys.argv = ["qt_primary_action_hierarchy_capture", "--output", str(primary_dir),
+                      "--baseline-sha", "463c28d1012e8c3e076705223f1ff6d958012e76"]
+          qt_primary_action_hierarchy_capture.main()
+          count_primary = validate(primary_dir, theme=False)
+          (root / "STAGE1_PROVENANCE.txt").write_text(
+              "Synthetic fictional statement data only.\n"
+              "Real Bank2Odoo MainWindow QWidget.grab originals on Windows GitHub runner.\n"
+              "Bundled, SHA-256-verified Vazirmatn v33.003 Regular/SemiBold via pinned Lab.\n"
+              "Light/Dark via QStyleHints override, NOT actual Windows OS theme.\n"
+              "Post-show native Qt resize plus strict original-PNG geometry assertions.\n"
+              "The 940x830 window extends beyond the 1024x768 runner screen; QWidget.grab is not a physical display photograph.\n"
+              "No physical Windows11, real DPI scaling, per-glyph identity or accountant acceptance.\n"
+              f"Current whole-window cases: {count_theme}; current action cases: {count_primary}.\n",
+              encoding="utf-8")
+          print("CANONICAL_STAGE1_CASES", count_theme, count_primary)
+          '@ | uv run --locked python -
+          if ($LASTEXITCODE -ne 0) { throw "Stage 1 canonical UI capture/verification failed" }
+      - name: Upload original-resolution canonical Stage 1 evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bank2odoo-stage1-canonical-vazirmatn
+          path: ${{ runner.temp }}/bank2odoo-stage1/
+          retention-days: 14
+          if-no-files-found: warn

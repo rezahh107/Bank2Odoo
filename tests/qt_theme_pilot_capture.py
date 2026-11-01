@@ -148,6 +148,15 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
     w.resize(width, height)
     w.show()
     app.processEvents()
+    # Windows QPA can shrink an oversized top-level widget at first show.
+    # Resize *after* native window creation; never relabel the reduced capture.
+    w.resize(width, height)
+    app.processEvents()
+    if (w.width(), w.height()) != (width, height):
+        raise RuntimeError(
+            f"Windows Qt could not establish requested geometry: "
+            f"requested={(width, height)} actual={(w.width(), w.height())}"
+        )
     label = f"{phase}_{scheme}_{width}x{height}"
     cb = w.approved
     option = QStyleOptionButton()
@@ -170,6 +179,7 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
         raise AssertionError("Product approval indicator 22px metric lost: " + repr(metric))
     case = {
         "phase": phase, "requested_test_scheme": scheme,
+        "requested_size": [width, height],
         "approval_indicator_geometry": metric,
         "qt_effective_color_scheme": app.styleHints().colorScheme().name,
         "effective_style": app.style().objectName(),
@@ -189,8 +199,23 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
     try:
         def grab(state):
             if capture_states is None or state in capture_states:
+                if (w.width(), w.height()) != (width, height):
+                    raise RuntimeError(
+                        f"Window geometry drift in {label}/{state}: "
+                        f"{(w.width(), w.height())} != {(width, height)}"
+                    )
+                before = len(case["capture_records"])
                 snapshot(app, w, root, label + "_" + state,
                          case["capture_records"])
+                for item in case["capture_records"][before:]:
+                    dpr = item["device_pixel_ratio"]
+                    if (item["width"], item["height"]) != (
+                        round(width * dpr), round(height * dpr)
+                    ):
+                        raise RuntimeError(
+                            f"PNG dimensions differ from requested QWidget geometry: "
+                            f"{label}/{state}/{item['file']}"
+                        )
 
         grab("initial")
         w.start_conversion()
