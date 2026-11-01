@@ -108,7 +108,17 @@ def measure(w, name: str, *, png: bool = False) -> dict:
 
 
 def collect(w, name, records, *, png=False):
-    records.append(measure(w, name, png=png))
+    original = measure(w, name, png=png)
+    # Evidence-only counterfactual: apply the proposed Qt minimum-width guard
+    # at EACH reachable stage, then restore the genuine production reflow.
+    candidate = simulate_minimum_hint_guard(w)
+    original["guarded_probe"] = candidate
+    w._reflow_workspace()
+    settle(QApplication.instance(), w)
+    if (w._workspace.direction().name != original["layout_direction"]
+            or w.scroll.horizontalScrollBar().maximum() != original["horizontal_scroll_max"]):
+        raise AssertionError(f"Unrestored production layout after {name}")
+    records.append(original)
 
 
 def simulate_minimum_hint_guard(w) -> dict:
@@ -287,6 +297,11 @@ def main():
     report["candidate_no_new_overflow"] = all(
         c["candidate_horizontal_scroll"] == 0 for c in report["cases"]
     )
+    report["all_stage_guarded_no_overflow"] = all(
+        s["guarded_probe"]["after_guard_horizontal_scroll_max"] == 0
+        for c in report["cases"]
+        for s in c["states"] + c["counterfactuals"]
+    )
     # Fail closed on a false baseline explanation or a proposed unsafe floor.
     for c in report["cases"]:
         for state in c["states"]:
@@ -299,8 +314,8 @@ def main():
                         f"{state['state']} predicted={predicted} "
                         f"actual={state['horizontal_scroll_max']}"
                     )
-    if not report["candidate_no_new_overflow"]:
-        raise AssertionError("Minimum-hint plus root margins guard still overflows")
+    if not report["candidate_no_new_overflow"] or not report["all_stage_guarded_no_overflow"]:
+        raise AssertionError("Minimum-hint plus root margins guard still overflows at a reachable state")
     for expected_case in ("dark_650x520", "dark_700x520", "light_700x520"):
         case = next(x for x in report["cases"] if x["case"] == expected_case)
         if case["baseline_horizontal_scroll"] <= 0:
