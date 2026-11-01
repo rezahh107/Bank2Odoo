@@ -5,7 +5,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 import sys
 
-from bank2odoo.core.engine import Context, convert
+from bank2odoo.core.engine import BalanceGapApproval, Context, convert
 from bank2odoo.reporting.output import save_candidate
 from bank2odoo.validation.financial import StatementError
 from bank2odoo.version import VERSION
@@ -24,6 +24,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--journal", help="Accountant-chosen Bank Journal name; not independently verified")
     parser.add_argument("--decimal-places", type=int, default=0, help="Confirmed Odoo Journal currency precision")
     parser.add_argument("--approved-factor", help="Required when units differ; exact factor (10 or 0.1)")
+    parser.add_argument("--gap-source-sha256",
+                        help="Exact file SHA-256 from separately verified private gap approval")
+    parser.add_argument("--gap-before-row", type=int,
+                        help="Physical source row immediately before an approved historical gap")
+    parser.add_argument("--gap-after-row", type=int,
+                        help="Physical source row immediately after an approved historical gap")
+    parser.add_argument("--gap-residual",
+                        help="Separately approved balance discontinuity in source units, as exact Decimal")
     args = parser.parse_args(argv)
     needed = ("input", "output", "report", "source_unit", "target_unit", "journal")
     if not all(getattr(args, key) is not None for key in needed):
@@ -35,8 +43,21 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     try:
         approved_factor = Decimal(args.approved_factor) if args.approved_factor is not None else None
+        gap_values = (args.gap_source_sha256, args.gap_before_row, args.gap_after_row,
+                      args.gap_residual)
+        if any(value is not None for value in gap_values) and not all(
+                value is not None for value in gap_values):
+            raise StatementError("Historical balance gap requires all four explicit --gap-* parameters")
+        approval = None
+        if all(value is not None for value in gap_values):
+            approval = BalanceGapApproval(
+                source_sha256=args.gap_source_sha256,
+                preceding_physical_row=args.gap_before_row,
+                following_physical_row=args.gap_after_row,
+                expected_residual=Decimal(args.gap_residual),
+            )
         result = convert(args.input, Context(args.source_unit, args.target_unit, args.journal,
-                                             args.decimal_places, approved_factor))
+                                             args.decimal_places, approved_factor, approval))
         save_candidate(result, args.output, args.report)
     except (StatementError, OSError, InvalidOperation) as exc:
         print(f"Conversion NOT completed; no approved Odoo import: {exc}", file=sys.stderr)
