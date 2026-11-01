@@ -173,6 +173,32 @@ def run_case(app, ui_module, variant, scheme, width, height, source, output):
         apply_qualification_variant(w, variant, scheme, "approved")
         assert_hierarchy(w, variant, "approved")
         capture(app, w, output, key, "approved", meta)
+
+        if variant == "product":
+            # Additional real-widget snapshot: SHA-approved financial context
+            # can still be invalid. The Qt accent must remain secondary and
+            # the enabled action must guide focus to the factor field.
+            w.source_unit.setCurrentIndex(w.source_unit.findData("TOMAN"))
+            w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
+            w.factor.setText("11")
+            w.approved.setChecked(True)
+            if w._approved_digest != w._selected_digest:
+                raise AssertionError("Invalid-factor snapshot lacks explicit SHA approval")
+            if w.convert_button.styleSheet():
+                raise AssertionError("Financially invalid factor wrongly gains primary accent")
+            capture(app, w, output, key, "invalid_factor", meta)
+            w.convert_button.click()
+            app.processEvents()
+            if (w.result is not None or w._thread is not None
+                    or app.focusWidget() is not w.factor
+                    or "ضریب" not in w.status.text()):
+                raise AssertionError("Rejected factor did not guide to its actual field")
+            w.factor.setText("10")
+            if w.approved.isChecked() or w.convert_button.styleSheet():
+                raise AssertionError("Factor correction failed to revoke old approval")
+            w.approved.setChecked(True)
+            assert_hierarchy(w, variant, "approved")
+            capture(app, w, output, key, "corrected_factor", meta)
         # Explicit negative control: resurrect the historically conflicting
         # bright convert style while the source is missing; detector MUST fail.
         if variant == "product":

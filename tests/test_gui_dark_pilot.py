@@ -293,6 +293,36 @@ class DarkThemePilotTests(unittest.TestCase):
         self._scheme(Qt.ColorScheme.Light)
         self.assertEqual(w.convert_button.styleSheet(), "")
 
+
+    def test_invalid_factor_is_secondary_but_corrected_factor_primary_across_themes(self):
+        w = self._window()
+        self._validated_approval(w)
+        for scheme in (Qt.ColorScheme.Light, Qt.ColorScheme.Dark):
+            with self.subTest(scheme=scheme.name):
+                self._scheme(scheme)
+                primary = _PRIMARY_DARK_QSS if scheme == Qt.ColorScheme.Dark else _PRIMARY_LIGHT_QSS
+                self.assertEqual(w.convert_button.styleSheet(), primary)
+                w.source_unit.setCurrentIndex(w.source_unit.findData("TOMAN"))
+                w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
+                w.factor.setText("11")
+                w.approved.setChecked(True)
+                self.assertTrue(w.approved.isChecked())
+                self.assertEqual(w._approved_digest, w._selected_digest)
+                self.assertFalse(w.convert_button.styleSheet(),
+                                 "A SHA-approved but invalid factor must not become primary")
+                self.assertTrue(w.convert_button.isEnabled())
+                w.factor.setText("10")
+                self.assertFalse(w.approved.isChecked())
+                self.assertFalse(w.convert_button.styleSheet())
+                w.approved.setChecked(True)
+                self.assertEqual(w.convert_button.styleSheet(), primary)
+                self.assertFalse(w.select_button.styleSheet())
+                # Revoke between schemes, so the second iteration starts valid.
+                w.source_unit.setCurrentIndex(w.source_unit.findData("IRR"))
+                w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
+                w.approved.setChecked(True)
+                self.assertEqual(w.convert_button.styleSheet(), primary)
+
     def test_dark_palette_roles_native_inputs_and_focus(self):
         w = self._window()
         self._scheme(Qt.ColorScheme.Dark)
