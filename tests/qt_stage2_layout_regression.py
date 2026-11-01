@@ -185,7 +185,7 @@ def run_case(app, module, scheme, width, height, folder, out, *, strict=True):
             w.source_unit.setFocus()
             app.processEvents()
             capture("focus_source_unit", png=True)
-        if strict and width == 650:
+        if width == 650:
             # Real worker, held at the conversion boundary, then cancelled:
             # no partial result is allowed to become saveable.
             entered, release = Event(), Event()
@@ -199,26 +199,26 @@ def run_case(app, module, scheme, width, height, folder, out, *, strict=True):
                 try:
                     w.start_conversion()
                     assert entered.wait(8)
-                    capture("busy")
+                    capture("busy", png=True)
                     w.cancel_conversion()
-                    capture("cancel_requested")
+                    capture("cancel_requested", png=True)
                 finally:
                     release.set()
                 wait_finished(w, w.conversion_done, app)
             assert w.result is None
-            capture("cancel_completed")
+            capture("cancel_completed", png=True)
         w.start_conversion()
         wait_finished(w, w.conversion_done, app)
         assert w.result is not None and w.result.balance_status.startswith("NOT_PROVEN")
         capture("not_proven", png=True)
-        if strict and width == 650:
+        if width == 650:
             target_folder = folder / f"private_{key}"
             target_folder.mkdir()
             w.output_directory.setText(str(target_folder / "missing"))
             w.save_files()
             wait_finished(w, w.save_done, app)
             assert not w._saved and "خطای ذخیره" in w.status.text()
-            capture("save_failure")
+            capture("save_failure", png=True)
         else:
             target_folder = folder / f"private_{key}"
             target_folder.mkdir()
@@ -270,7 +270,7 @@ def run_case(app, module, scheme, width, height, folder, out, *, strict=True):
                 w.start_conversion()
                 wait_finished(w, w.conversion_done, app)
                 assert w.result is not None and w.result.balance_status.startswith("PASS")
-                capture("pass")
+                capture("pass", png=True)
         return record
     finally:
         w.close()
