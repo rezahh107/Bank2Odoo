@@ -200,6 +200,8 @@ def _balances(
         order = "newest-to-oldest"
 
     if approval is not None:
+        if order != "newest-to-oldest":
+            raise StatementError("Bank Melli historical gap requires original newest-to-oldest source order")
         if approved_index is None:
             raise StatementError("Approved balance gap not found in exact source rows")
         if approved_index == 0 or approved_index == len(rows) - 2:
