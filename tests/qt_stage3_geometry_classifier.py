@@ -179,7 +179,7 @@ def classify_geometry(states: object, *, variant: str, width: int) -> dict:
                 reachable_ok = False
         # Also verify any other visible control instead of trusting an
         # observer-controlled list to exclude inconvenient geometry.
-        for name in (observed_required if isinstance(observed_required, list) else expected_visible):
+        for name in (observed_required if valid_required else expected_visible):
             info = measured.get(name)
             if not isinstance(info, dict):
                 failures.append(prefix + name + ":missing_reachability")
