@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 
 from bank2odoo.banks.reader import read_statement
 from bank2odoo.core.engine import Context, Conversion, convert
-from bank2odoo.reporting.output import save_candidate
+from bank2odoo.reporting.output import SavePublicationError, save_candidate
 from bank2odoo.validation.financial import StatementError, exact_sum
 
 
@@ -210,17 +210,54 @@ GENERAL_REVIEW = (
 )
 
 
+def safe_save_error_detail(exc: Exception) -> str:
+    """Diagnostic metadata only: never copy arbitrary OS error text or filenames."""
+    cause = (exc.__cause__ if isinstance(exc, SavePublicationError)
+             and isinstance(exc.__cause__, Exception) else exc)
+    kind = type(cause).__name__
+    if isinstance(cause, StatementError):
+        # Only known, fixed program-generated messages are safe to retain.
+        message = str(cause)
+        if message == "Output files must be distinct and must not already exist":
+            kind = "output files already exist or are not distinct"
+        elif message.startswith("Output appeared during conversion: "):
+            kind = "output appeared during conversion"
+        elif message == "Both outputs must use the same existing private directory":
+            kind = "same existing private directory"
+        elif message == "Financial outputs must be saved outside the public source checkout":
+            kind = "outside the public source checkout"
+        else:
+            kind = "unclassified StatementError"
+    parts = [f"{type(exc).__name__}: {kind}"]
+    for label in ("errno", "winerror"):
+        number = getattr(cause, label, None)
+        if isinstance(number, int):
+            parts.append(f"{label}={number}")
+    if isinstance(exc, SavePublicationError):
+        parts.append(f"outcome={exc.outcome}")
+        parts.append(f"cleanup_failed={exc.cleanup_failed}")
+    return "; ".join(parts)
+
+
 def human_error(detail: str, *, saving: bool = False) -> str:
     """Human wording, not a claim about an unverified underlying cause."""
     message = detail.lower()
-    if "already exist" in message or "output appeared" in message:
+    if "already exist" in message or "output appeared" in message or (
+            saving and "fileexistserror" in message):
         return "فایل خروجی هم‌نام از قبل وجود دارد. پوشه‌ای دیگر انتخاب کنید یا فایل‌های قبلی را بررسی کنید."
     if "outside the public source checkout" in message:
         return "پوشه خروجی داخل پوشه کد برنامه است. یک پوشه خصوصی بیرون از آن انتخاب کنید."
     if "same existing private directory" in message:
         return "برای هر دو خروجی باید یک پوشه خصوصیِ موجود انتخاب شود."
+    # Match complete diagnostic fields; errno=1234 is not errno=1.
+    diagnostic_fields = {part.strip() for part in message.split(";")} if saving else set()
+    if saving and ("permissionerror" in message
+                   or diagnostic_fields.intersection({"errno=13", "errno=1", "winerror=5"})):
+        return ("دسترسی فایل‌سیستم هنگام ذخیره رد شد؛ مجوز پوشه مقصد "
+                "و قفل‌بودن فایل‌ها را بررسی کنید.")
     if saving:
-        return "ذخیره هر دو فایل کامل نشد. مسیر، دسترسی و فضای دیسک را بررسی کنید؛ هیچ موفقیتی تأیید نشده است."
+        return ("علت دقیق خطای ذخیره مشخص نیست؛ نوع خطا و کد سیستم را "
+                "در جزئیات فنی بررسی کنید.")
     if "balance mismatch" in message or "closing minus" in message:
         return "مانده‌های گزارش با گردش‌ها تطابق ندارند؛ خروجی ساخته نشد. گزارش بانک را بررسی کنید."
     if "jalali date" in message or "transaction time" in message:
@@ -302,7 +339,15 @@ class _Job(QObject):
             else:
                 raise RuntimeError("Unsupported GUI background operation")
         except Exception as exc:
-            self.state["error"] = f"{type(exc).__name__}: {exc}"
+            # Save exceptions can embed private banking filenames in OS text.
+            # Preserve diagnostic type/codes and outcome, not raw filesystem paths.
+            self.state["error"] = (safe_save_error_detail(exc) if self.kind == "save"
+                                   else f"{type(exc).__name__}: {exc}")
+            if isinstance(exc, SavePublicationError):
+                self.state["save_outcome"] = exc.outcome
+                self.state["cleanup_failed"] = exc.cleanup_failed
+                if exc.outcome == "COMPLETE_PAIR":
+                    self.state["value"] = (self.csv_path, self.report_path)
         finally:
             self.finished.emit()
 
@@ -322,6 +367,7 @@ class MainWindow(QMainWindow):
         self._selected_digest: str | None = None
         self._approved_digest: str | None = None
         self._saved = False
+        self._retry_blocked_directory: str | None = None
         self._ui_busy = False
         self._last_detail = ""
         self._presentation_ready = False
@@ -682,10 +728,15 @@ class MainWindow(QMainWindow):
             return
         if self.result is None:
             self.start_conversion()
-        elif not self.output_directory.text().strip():
+        elif (not self.output_directory.text().strip()
+              or self._destination_retry_blocked()):
             self._browse_directory()
         else:
             self.save_files()
+
+    def _destination_retry_blocked(self) -> bool:
+        return (self._retry_blocked_directory is not None
+                and self.output_directory.text().strip() == self._retry_blocked_directory)
 
     def _sync_actions(self, *_args: object) -> None:
         if not hasattr(self, "save_button"):
@@ -695,11 +746,14 @@ class MainWindow(QMainWindow):
         has_folder = bool(self.output_directory.text().strip())
         self.save_button.setEnabled(
             not active and has_result and has_folder and not self._saved
+            and not self._destination_retry_blocked()
         )
         self.directory_button.setEnabled(not active and not self._saved)
         self.convert_button.setEnabled(not active and not self._saved)
         if self._saved:
             caption = "ذخیره شد"
+        elif has_result and has_folder and self._destination_retry_blocked():
+            caption = "انتخاب یا تأیید دوبارهٔ پوشه…"
         elif has_result and has_folder:
             caption = "ذخیره CSV و گزارش کنترل"
         elif has_result:
@@ -861,6 +915,7 @@ class MainWindow(QMainWindow):
         self._clear_saved_path_fields()
         self.result = None
         self._saved = False
+        self._retry_blocked_directory = None
         self.saved_paths.setText("هنوز خروجی جدیدی ذخیره نشده است.")
         self.summary.setText("پس از تأیید زمینه مالی، تبدیل را اجرا کنید.")
         self.result_state.setText(
@@ -1170,25 +1225,52 @@ class MainWindow(QMainWindow):
             else:
                 self._success(value)
         elif kind == "save":
-            if error is not None:
+            outcome = state.get("save_outcome")
+            if error is not None and outcome != "COMPLETE_PAIR":
                 self._clear_saved_path_fields()
-                # Any failed pair needs a fresh explicit destination: a missing
-                # folder, existing output, forbidden checkout or write failure
-                # must not leave the primary action offering an identical retry.
-                # Keep the conversion candidate and its balance evidence.
-                self.output_directory.clear()
-                self.saved_paths.setText("ذخیره کامل نشد؛ فایل‌ها را در پوشه مقصد بررسی کنید.")
-                self._set_message("خطای ذخیره: " + human_error(error, saving=True), error)
+                # Keep the selected folder as evidence, but require a distinct
+                # selection or an explicit repeat confirmation via the picker.
+                # The conversion candidate, SHA approval and balance evidence stay.
+                self._retry_blocked_directory = self.output_directory.text().strip()
+                if outcome == "PARTIAL":
+                    guidance = ("فقط بخشی از دو خروجی نهایی باقی مانده است. "
+                                "فایل‌های این پوشه را دستی بررسی کنید؛ بازنویسی انجام نمی‌شود.")
+                elif outcome == "AMBIGUOUS":
+                    guidance = ("وضعیت فایل‌های نهایی نامشخص است. پیش از اقدام دوباره "
+                                "پوشه را دستی بررسی کنید؛ موفقیت تأیید نشده است.")
+                elif outcome == "NO_FINALS":
+                    # Disk outcome and cause are separate facts: no finals does
+                    # not explain whether access, naming or another I/O failed.
+                    guidance = ("هیچ خروجی نهایی جدیدی مشاهده نشد. "
+                                + human_error(error, saving=True))
+                else:
+                    guidance = human_error(error, saving=True)
+                if state.get("cleanup_failed"):
+                    guidance += " پاکسازی فایل موقت خصوصی نیز کامل نشد؛ پوشه را بررسی کنید."
+                self.saved_paths.setText("ذخیره کامل نشد؛ مسیر انتخاب‌شده حفظ شده است.")
+                self._set_message("خطای ذخیره: " + guidance
+                                  + " برای تلاش بعدی پوشه را دوباره انتخاب یا تأیید کنید.", error)
             else:
                 csv_path, report_path = value
                 self._saved = True
+                self._retry_blocked_directory = None
                 self.saved_csv_path.setText(str(csv_path))
                 self.saved_report_path.setText(str(report_path))
                 self.saved_path_fields.show()
-                self.saved_paths.setText("دو فایل ایجاد شدند؛ مسیرهای کامل زیر قابل انتخاب و کپی هستند.")
-                self._set_message("ذخیره هر دو فایل موفق بود. نامزد هنوز مجوز ورود به Odoo نیست.")
-                # Storage success belongs in status/saved_paths; retain the
-                # independent PASS/NOT_PROVEN balance qualification.
+                if error is not None:
+                    # Complete output bytes verified, but the save invocation
+                    # was not clean. Prevent another publish attempt.
+                    self.saved_paths.setText(
+                        "هر دو خروجی نهایی کامل‌اند؛ عملیات با هشدار خاتمه یافت. "
+                        "مسیرهای زیر را بررسی کنید.")
+                    self._set_message(
+                        "هر دو فایل نهایی با محتوای مورد انتظار تأیید شدند، اما "
+                        "پاکسازی/پایان ذخیره خطا داشت. فایل موقت خصوصی را در پوشه "
+                        "بررسی کنید؛ تکرار خودکار انجام نمی‌شود.", error)
+                else:
+                    self.saved_paths.setText("دو فایل ایجاد شدند؛ مسیرهای کامل زیر قابل انتخاب و کپی هستند.")
+                    self._set_message("ذخیره هر دو فایل موفق بود. نامزد هنوز مجوز ورود به Odoo نیست.")
+                # Storage outcome does not change PASS/NOT_PROVEN evidence.
         self._set_busy(False)
         if kind in ("convert", "save"):
             self._reveal_result()
@@ -1203,6 +1285,10 @@ class MainWindow(QMainWindow):
         folder = QFileDialog.getExistingDirectory(self, "پوشه خصوصی برای دو فایل خروجی")
         if folder:
             self.output_directory.setText(folder)
+            # Explicit picker confirmation permits a deliberate retry, even
+            # when the repaired destination has the same textual path.
+            self._retry_blocked_directory = None
+            self._sync_actions()
 
     def save_files(self) -> None:
         if self._thread is not None:
@@ -1213,6 +1299,11 @@ class MainWindow(QMainWindow):
         folder_text = self.output_directory.text().strip()
         if not folder_text:
             self._set_message("خطا: پیش از ذخیره یک پوشه خصوصی انتخاب کنید.")
+            return
+        if self._destination_retry_blocked():
+            self._set_message(
+                "ذخیره دوباره آغاز نشد. ابتدا مشکل را برطرف و پوشه را با "
+                "دکمهٔ انتخاب پوشه صریحاً دوباره تأیید کنید.")
             return
         folder = Path(folder_text)
         assert self.source is not None

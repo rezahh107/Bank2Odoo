@@ -674,6 +674,8 @@ class AccountantUiTests(unittest.TestCase):
         self.window.output_directory.setText(str(not_folder))
         self._save()
         self.assertIn("خطای ذخیره", self.window.status.text())
+        self.assertIn("پوشه خصوصیِ موجود", self.window.status.text())
+        self.assertNotIn("هم‌نام", self.window.status.text())
         self.assertFalse(list(self.private.glob("Bank2Odoo_*")))
         # Manually pre-existing private name is not replaced and partner not created.
         self.window.output_directory.setText(str(self.private))
@@ -684,6 +686,9 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(report.read_text(encoding="utf-8"), "keep")
         self.assertFalse((self.private / f"{prefix}_candidate.csv").exists())
         self.assertIn("هم‌نام", self.window.status.text())
+        self.assertNotIn("محتوای یکسان", self.window.status.text())
+        self.assertIn("already exist", self.window.details.toPlainText())
+        self.assertNotIn(str(self.private), self.window.details.toPlainText())
 
     def test_failed_conversion_does_not_enable_save(self):
         self._select(self.source)
@@ -874,6 +879,222 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
         self.assertFalse(self.window.save_button.isEnabled())
 
+    def test_save_failure_retains_folder_but_blocks_implicit_retry(self):
+        """P0 regression: a failure must not erase the selected private folder."""
+        candidate = self._convert()
+        evidence = self.window.result_state.text()
+        self.window.output_directory.setText(str(self.private))
+        with patch("bank2odoo.ui.window.save_candidate",
+                   side_effect=OSError("fictional permission failure")) as writer:
+            self._save()
+        self.assertEqual(writer.call_count, 1)
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertIs(self.window.result, candidate)
+        self.assertEqual(self.window.result_state.text(), evidence)
+        self.assertTrue(self.window.approved.isChecked())
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertIn("انتخاب", self.window.convert_button.text())
+        with patch("bank2odoo.ui.window.QFileDialog.getExistingDirectory", return_value="") as picker:
+            self.window.convert_button.click()  # Must ask, never retry automatically.
+        picker.assert_called_once()
+        self.app.processEvents()
+        self.assertEqual(writer.call_count, 1)
+
+    def test_no_finals_permission_failure_explains_access_without_private_path(self):
+        from bank2odoo.reporting import output
+        self._convert()
+        candidate = self.window.result
+        balance = self.window.result_state.text()
+        self.window.output_directory.setText(str(self.private))
+        sensitive = str(self.private / "confidential-customer-1234.xls")
+        with patch.object(output.os, "link",
+                          side_effect=PermissionError(13, "Permission denied", sensitive)):
+            self._save()
+        message = self.window.status.text()
+        details = self.window.details.toPlainText()
+        self.assertIn("هیچ خروجی نهایی", message)
+        self.assertIn("دسترسی", message)
+        self.assertNotIn("هم‌نام", message)
+        self.assertNotIn("موفق بود", message)
+        self.assertNotIn(sensitive, message + details)
+        self.assertNotIn("confidential-customer", message + details)
+        self.assertIn("PermissionError", details)
+        self.assertIn("errno=13", details)
+        self.assertIn("NO_FINALS", details)
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertFalse(self.window._saved)
+        self.assertIs(self.window.result, candidate)
+        self.assertEqual(self.window.result_state.text(), balance)
+        self.assertTrue(self.window.approved.isChecked())
+        self.assertFalse(list(self.private.glob("Bank2Odoo_*")))
+
+    def test_no_finals_unknown_error_is_honest_and_technical_detail_sanitized(self):
+        from bank2odoo.reporting import output
+        self._convert()
+        self.window.output_directory.setText(str(self.private))
+        sensitive = str(self.private / "secret-raw-statement.csv")
+        with patch.object(output.os, "link",
+                          side_effect=OSError(1234, "secret diagnostic text", sensitive)):
+            self._save()
+        message = self.window.status.text()
+        details = self.window.details.toPlainText()
+        self.assertIn("هیچ خروجی نهایی", message)
+        self.assertIn("جزئیات فنی", message)
+        self.assertNotIn("هم‌نام", message)
+        self.assertNotIn("مجوز دسترسی", message)
+        self.assertNotIn("موفق بود", message)
+        self.assertIn("OSError", details)
+        self.assertIn("errno=1234", details)
+        self.assertIn("NO_FINALS", details)
+        self.assertNotIn(sensitive, message + details)
+        self.assertNotIn("secret diagnostic", message + details)
+        self.assertFalse(self.window._saved)
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertFalse(list(self.private.glob("Bank2Odoo_*")))
+
+    def test_explicit_same_folder_retry_after_recoverable_error_needs_no_reconversion(self):
+        candidate = self._convert()
+        balance = self.window.result_state.text()
+        self.window.output_directory.setText(str(self.private))
+        with patch("bank2odoo.ui.window.save_candidate",
+                   side_effect=PermissionError("synthetic temporary denial")) as failing:
+            self._save()
+        self.assertEqual(failing.call_count, 1)
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertFalse(self.window.save_button.isEnabled())
+        with patch("bank2odoo.ui.window.QFileDialog.getExistingDirectory",
+                   return_value=str(self.private)) as picker:
+            self.window.convert_button.click()
+        picker.assert_called_once()
+        self.assertTrue(self.window.save_button.isEnabled())
+        self.window.convert_button.click()
+        self._wait_operation(self.window.save_done)
+        self.assertTrue(self.window._saved)
+        self.assertIs(self.window.result, candidate)
+        self.assertEqual(self.window.result_state.text(), balance)
+        self.assertTrue(self.window.approved.isChecked())
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
+
+    def test_same_source_new_valid_financial_context_does_not_overwrite(self):
+        self._convert()
+        self.window.output_directory.setText(str(self.private))
+        self._save()
+        original = {p.name: p.read_bytes()
+                    for p in self.private.glob("Bank2Odoo_*")}
+        self.assertEqual(len(original), 2)
+        self.window.target_unit.setCurrentIndex(self.window.target_unit.findData("TOMAN"))
+        self.window.factor.setText("0.1")
+        self._approve(source="IRR", target="TOMAN", factor="0.1")
+        # The shared test helper resets precision to zero.
+        self.window.precision.setValue(1)
+        self.window.approved.setChecked(True)
+        self.window.start_conversion()
+        self._wait_conversion()
+        self.assertIsNotNone(self.window.result)
+        candidate = self.window.result
+        self.window.output_directory.setText(str(self.private))
+        self._save()
+        self.assertIs(self.window.result, candidate)
+        self.assertIn("هم‌نام", self.window.status.text())
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertEqual(
+            {p.name: p.read_bytes() for p in self.private.glob("Bank2Odoo_*")},
+            original)
+
+    def test_complete_pair_with_temp_cleanup_fault_is_warning_not_false_failure(self):
+        self._convert()
+        balance = self.window.result_state.text()
+        self.window.output_directory.setText(str(self.private))
+        real_unlink = Path.unlink
+        faulted = False
+        def cleanup_fails(path, *args, **kwargs):
+            nonlocal faulted
+            if path.name.startswith(".bank2odoo-") and not faulted:
+                faulted = True
+                raise PermissionError("synthetic temp cleanup fault")
+            return real_unlink(path, *args, **kwargs)
+        def write_with_cleanup_fault(result, csv_path, report_path):
+            with patch.object(Path, "unlink", autospec=True, side_effect=cleanup_fails):
+                actual_save_candidate(result, csv_path, report_path)
+        with patch("bank2odoo.ui.window.save_candidate",
+                   side_effect=write_with_cleanup_fault):
+            self._save()
+        self.assertTrue(self.window._saved)
+        self.assertEqual(self.window.result_state.text(), balance)
+        self.assertIn("با محتوای مورد انتظار", self.window.status.text())
+        self.assertNotIn("ذخیره هر دو فایل موفق بود", self.window.status.text())
+        self.assertTrue(self.window.saved_path_fields.isVisible())
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
+        self.assertEqual(len(list(self.private.glob(".bank2odoo-*.tmp"))), 1)
+        self.assertFalse(self.window.convert_button.isEnabled())
+        for path in self.private.glob(".bank2odoo-*.tmp"):
+            path.unlink()
+
+    def test_gui_partial_report_publication_requires_manual_review(self):
+        from bank2odoo.reporting import output
+        self._convert()
+        self.window.output_directory.setText(str(self.private))
+
+        def fail_after_report_published(result, csv_path, report_path):
+            actual_link = output.os.link
+            count = 0
+            def link(src, dst):
+                nonlocal count
+                count += 1
+                if count == 2:
+                    raise OSError("synthetic CSV publication failed")
+                return actual_link(src, dst)
+            with patch.object(output.os, "link", side_effect=link):
+                actual_save_candidate(result, csv_path, report_path)
+
+        with patch("bank2odoo.ui.window.save_candidate",
+                   side_effect=fail_after_report_published):
+            self._save()
+        self.assertFalse(self.window._saved)
+        self.assertIn("بخشی", self.window.status.text())
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertFalse(self.window.saved_path_fields.isVisible())
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*.txt"))), 1)
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*.csv"))), 0)
+        self.assertEqual(len(list(self.private.glob(".bank2odoo-*.tmp"))), 0)
+
+    def test_gui_ambiguous_external_race_does_not_claim_success(self):
+        from bank2odoo.reporting import output
+        self._convert()
+        self.window.output_directory.setText(str(self.private))
+
+        def ambiguous_second_link(result, csv_path, report_path):
+            actual_link = output.os.link
+            count = 0
+            def link(src, dst):
+                nonlocal count
+                count += 1
+                if count == 2:
+                    Path(dst).write_bytes(b"synthetic independent existing data")
+                    raise OSError("synthetic race after independent publish")
+                return actual_link(src, dst)
+            with patch.object(output.os, "link", side_effect=link):
+                actual_save_candidate(result, csv_path, report_path)
+
+        with patch("bank2odoo.ui.window.save_candidate",
+                   side_effect=ambiguous_second_link):
+            self._save()
+        self.assertFalse(self.window._saved)
+        self.assertIn("نامشخص", self.window.status.text())
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertFalse(self.window.save_button.isEnabled())
+        report_files = list(self.private.glob("Bank2Odoo_*.txt"))
+        self.assertEqual(len(report_files), 1)
+        self.assertIn(b"PRIVATE accountant control report", report_files[0].read_bytes())
+        csv_files = list(self.private.glob("Bank2Odoo_*.csv"))
+        self.assertEqual(len(csv_files), 1)
+        self.assertEqual(csv_files[0].read_bytes(), b"synthetic independent existing data")
+        self.assertEqual(len(list(self.private.glob(".bank2odoo-*.tmp"))), 0)
+
     def test_async_save_failure_and_stale_finished_slot_never_publish_success(self):
         self._convert()
         self.window.output_directory.setText(str(self.private))
@@ -891,9 +1112,9 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(text, self.window.status.text())
         self.assertIsNone(self.window._thread)
         self.assertIsNotNone(self.window.result)
-        self.assertEqual(self.window.output_directory.text(), "")
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
         self.assertFalse(self.window.save_button.isEnabled())
-        self.assertIn("انتخاب پوشه", self.window.convert_button.text())
+        self.assertIn("تأیید دوباره", self.window.convert_button.text())
 
     def _await_join_attempts(self, calls: list[int], count: int) -> None:
         for _ in range(160):
@@ -1068,13 +1289,13 @@ class AccountantUiTests(unittest.TestCase):
         self.assertTrue(w.approved.isChecked())
         self.assertIn("خطای ذخیره", w.status.text())
         self.assertIn("ذخیره کامل نشد", w.saved_paths.text())
-        self.assertEqual(w.output_directory.text(), "")
+        self.assertTrue(w.output_directory.text())
         self.assertFalse(w.save_button.isEnabled())
-        self.assertEqual(w.convert_button.text(), "انتخاب پوشهٔ خصوصی خروجی…")
+        self.assertEqual(w.convert_button.text(), "انتخاب یا تأیید دوبارهٔ پوشه…")
         self.assertIs(self.app.focusWidget(), w.convert_button)
         self.assertTrue(w.directory_button.isVisible())
         self.assertFalse(w.saved_path_fields.isVisible())
-        # The single primary action must ask for the new destination, not retry.
+        # The primary action must explicitly confirm a destination, not retry.
         self.assertFalse(w.save_button.isVisible())
         for width, height in ((940, 830), (650, 520), (600, 480)):
             with self.subTest(size=(width, height)):
@@ -1111,6 +1332,47 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIn("ذخیره هر دو فایل موفق بود", self.window.status.text())
         self.assertEqual(len(list(recovered.glob("Bank2Odoo_*"))), 2)
         self.assertFalse(self.window.convert_button.isEnabled())
+
+    def test_genuine_repeated_save_same_statement_preserves_existing_pair(self):
+        original_candidate = self._convert()
+        first_folder = self.private / "original_pair"
+        first_folder.mkdir()
+        self.window.output_directory.setText(str(first_folder))
+        self._save()
+        self.assertTrue(self.window._saved)
+        original = {path.name: path.read_bytes()
+                    for path in first_folder.glob("Bank2Odoo_*")}
+        self.assertEqual(len(original), 2)
+
+        # A deliberate repeat is a NEW conversion of the same source bytes,
+        # not an automatic save retry; the pre-existing pair remains immutable.
+        repeated_candidate = self._convert()
+        self.assertEqual(original_candidate.sha256, repeated_candidate.sha256)
+        self.window.output_directory.setText(str(first_folder))
+        self._save()
+        self.assertFalse(self.window._saved)
+        self.assertIn("هم‌نام", self.window.status.text())
+        self.assertEqual(self.window.output_directory.text(), str(first_folder))
+        self.assertEqual(
+            {path.name: path.read_bytes() for path in first_folder.glob("Bank2Odoo_*")},
+            original)
+        self.assertFalse(self.window.save_button.isEnabled())
+
+        another_folder = self.private / "alternate_folder"
+        another_folder.mkdir()
+        with patch("bank2odoo.ui.window.QFileDialog.getExistingDirectory",
+                   return_value=str(another_folder)) as picker:
+            self.window.convert_button.click()
+        picker.assert_called_once()
+        self.assertEqual(self.window.output_directory.text(), str(another_folder))
+        self.window.convert_button.click()
+        self._wait_operation(self.window.save_done)
+        self.assertTrue(self.window._saved)
+        self.assertIs(self.window.result, repeated_candidate)
+        self.assertEqual(len(list(another_folder.glob("Bank2Odoo_*"))), 2)
+        self.assertEqual(
+            {path.name: path.read_bytes() for path in first_folder.glob("Bank2Odoo_*")},
+            original)
 
     def test_existing_output_collision_keeps_file_and_requires_reselection(self):
         candidate = self._convert()

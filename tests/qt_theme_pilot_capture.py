@@ -288,11 +288,15 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
         if "خطای ذخیره" not in w.status.text() or w._saved:
             raise AssertionError("Synthetic save failure was falsely published")
         if phase == "after" and (
-            w.output_directory.text() or
-            "انتخاب پوشه" not in w.convert_button.text() or
+            w.output_directory.text() != str(private_folder / "missing") or
+            "تأیید دوباره" not in w.convert_button.text() or
+            w.save_button.isEnabled() or
             w.result_state.text() != financial_evidence
         ):
-            raise AssertionError("Failed save must request a new folder and retain balance evidence")
+            raise AssertionError(
+                "Failed save must retain the chosen folder, require explicit retry "
+                "and preserve balance evidence"
+            )
         grab("save_failure")
         w.output_directory.setText(str(private_folder))
         if not w.save_button.isEnabled():
