@@ -199,6 +199,12 @@ def run_case(app, module, variant, scheme, width, root, folder):
     decisive = width in (800, 940)
     def state(name):
         data = measure(app, w, name)
+        if name == "saved_success" and width in (800, 900, 940):
+            print("STAGE3_SAVED_PATH_GEOMETRY", variant, scheme, width,
+                  "viewport", data["viewport"],
+                  "vertical_scroll_max", data["vertical_scroll_max"],
+                  "csv", data["reachable"].get("csv_path"),
+                  "report", data["reachable"].get("report_path"), flush=True)
         views = ()
         if name in ("initial", "saved_success"):
             views = ("top",) if name == "initial" else ("action", "bottom")
