@@ -13,6 +13,11 @@ on:
 permissions:
   contents: write
 
+# A later qualification Head supersedes earlier unreviewed evidence runs.
+concurrency:
+  group: bank2odoo-stage3-fixed-minimum-pr23
+  cancel-in-progress: true
+
 jobs:
   native-windows-stage3:
     runs-on: windows-latest
@@ -103,6 +108,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          CAPTURE_HEAD=$(git rev-parse HEAD)
+          ACTIVE_HEAD=$(git ls-remote origin refs/heads/qualification/stage3-fixed-min-width-20261102 | awk '{print $1}')
+          if [ "$CAPTURE_HEAD" != "$ACTIVE_HEAD" ]; then
+            echo "REFUSED_STALE_EVIDENCE: captured=$CAPTURE_HEAD active=$ACTIVE_HEAD"
+            exit 1
+          fi
           # Preserve the previous evidence branch history; no force-push.
           # Move this run's untracked evidence aside before checking out a branch
           # on which stage3-evidence/ is already tracked.
