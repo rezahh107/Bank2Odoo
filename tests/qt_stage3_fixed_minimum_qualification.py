@@ -24,6 +24,7 @@ from adapters.qt_style_probe import font_runtime
 from bank2odoo.ui import window as journal_free
 from tests.qt_theme_pilot_capture import fixture, wait_finished
 from tests.qt_stage1_geometry_probe import win32_metrics, screen_record
+from tests.qt_stage3_geometry_classifier import classify_geometry
 
 MAIN_SHA = "e0f50ab8605024896bf6975050fb4034b874514e"
 PR20_SHA = "aa4362adfa8cd3e6e2873c8b36de79ce8183e3bd"
@@ -141,6 +142,7 @@ def measure(app, w, stage):
                        "saved_paths": w.saved_paths})
     if w._saved:
         checks.update({"csv_path": w.saved_csv_path, "report_path": w.saved_report_path})
+    values["required_controls"] = list(checks)
     values["reachable"] = {key: can_reveal(app, w, child) for key, child in checks.items()}
     return values
 
@@ -359,12 +361,14 @@ def main():
             for scheme in SCHEMES:
                 for width in WIDTHS:
                     case = run_case(app, module, variant, scheme, width, out, folder)
+                    case["geometry_classification"] = classify_geometry(case["states"])
                     summary["cases"].append(case)
                     worst = max(s["horizontal_scroll_max"] for s in case["states"])
                     req = max(s["required_content_width"] for s in case["states"])
                     print("STAGE3_CASE", variant, scheme, width, "required_max", req,
                           "overflow_scroll_max", worst, flush=True)
         summary["negative"] = negative_case(app, journal_free, out)
+    summary["negative"]["geometry_classification"] = classify_geometry([summary["negative"]])
     for variant in ("main_journal", "journal_free"):
         for scheme in SCHEMES:
             summary["contact_sheets"].append(make_sheet(out, summary, variant, scheme))
@@ -374,6 +378,7 @@ def main():
     rows.append("Source main: `" + MAIN_SHA + "`; PR20: `" + PR20_SHA + "`.")
     rows.append("Light uses test-set Qt Light hint and native-style branch; Dark uses a test-set Dark hint and simulated Fusion palette. Both have authentic QWidget grabs on a Windows hosted runner.")
     rows.append("Comparison configuration overrides only the live test window's reflow to two columns; production stays unchanged. Logical pixels; PNG dimensions and Qt DPR recorded per capture.")
+    rows.append("GEOMETRY_PASS is assigned only by tests.qt_stage3_geometry_classifier.classify_geometry over every required control in every measured state; missing and partially clipped controls fail closed.")
     rows.append("")
     rows.append("| Variant | Scheme | Minimum width | Max required | Viewport | Max horizontal scrollbar overflow | All key controls reachable | Geometry status |")
     rows.append("|---|---|---:|---:|---:|---:|---|---|")
@@ -382,16 +387,19 @@ def main():
         overflow = max(s["horizontal_scroll_max"] for s in states)
         viewport = min(s["viewport"][0] for s in states)
         required = max(s["required_content_width"] for s in states)
-        reach = all(p is None or p["in_viewport"] for s in states for p in s["reachable"].values())
-        rows.append(f"| {c['variant']} | {c['scheme']} | {c['width']} | {required} | {viewport} | {overflow} | {reach} | {'GEOMETRY_PASS' if not overflow and reach else 'NOT_QUALIFIED'} |")
+        verdict = c["geometry_classification"]
+        rows.append(f"| {c['variant']} | {c['scheme']} | {c['width']} | {required} | {viewport} | {overflow} | {verdict['all_key_controls_reachable']} | {verdict['status']} |")
     rows.append("")
     rows.append("Negative forced 500 px: scrollbar overflow = "
-                + str(summary["negative"]["horizontal_scroll_max"]) + " logical px.")
+                + str(summary["negative"]["horizontal_scroll_max"]) + " logical px; classification = "
+                + summary["negative"]["geometry_classification"]["status"] + ".")
     rows.append("Visual readability/density, physical DPI scaling (100/125/150%), real OS theme and target-accountant acceptance remain NOT_PROVEN pending specialist review.")
     rows.append("Screenshots are genuine, unmodified QWidget.grab PNGs; contact sheets are preview composites only.")
     (out / "MEASUREMENTS.md").write_text("\n".join(rows) + "\n", encoding="utf-8")
     (out / "manifest.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    if summary["negative"]["geometry_classification"]["status"] != "NOT_QUALIFIED":
+        raise AssertionError("500px control must remain NOT_QUALIFIED; evidence was saved")
     print("STAGE3_COMPLETE", len(summary["cases"]), "cases;",
           len(list(out.glob("*.png"))), "PNG files; negative",
           summary["negative"]["horizontal_scroll_max"], flush=True)
