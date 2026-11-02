@@ -1,8 +1,8 @@
 # Stage 3 — Fresh qualification interpretation (generated per exact Head)
 
-Evidence run Head: \`adb03ca5921ef107f8d03c13c29afa2b41902e87\`
+Evidence run Head: `2d1e38f71201807eef98b8bff3d290a75fde6c4c`
 
-Tested sources (pinned): main \`e0f50ab8605024896bf6975050fb4034b874514e\`; Journal-free PR #20 \`aa4362adfa8cd3e6e2873c8b36de79ce8183e3bd\`.
+Tested sources (pinned): main `e0f50ab8605024896bf6975050fb4034b874514e`; Journal-free PR #20 `aa4362adfa8cd3e6e2873c8b36de79ce8183e3bd`.
 
 Geometry qualified: 0/20 combinations; 200 captured states.
 Forced 500px negative: NOT_QUALIFIED.
