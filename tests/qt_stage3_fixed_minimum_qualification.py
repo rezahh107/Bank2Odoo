@@ -384,7 +384,10 @@ def main():
                     worst = max(s["horizontal_scroll_max"] for s in case["states"])
                     req = max(s["required_content_width"] for s in case["states"])
                     print("STAGE3_CASE", variant, scheme, width, "required_max", req,
-                          "overflow_scroll_max", worst, flush=True)
+                          "overflow_scroll_max", worst,
+                          "verdict", case["geometry_classification"]["status"],
+                          "reasons", case["geometry_classification"]["failure_reasons"][:10],
+                          flush=True)
         summary["negative"] = negative_case(app, journal_free, out)
     summary["negative"]["geometry_classification"] = classify_geometry(
         [summary["negative"]], variant="journal_free", width=500)
