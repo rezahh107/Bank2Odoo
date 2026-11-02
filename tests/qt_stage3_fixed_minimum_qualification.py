@@ -338,6 +338,7 @@ def main():
         "utc": datetime.now(timezone.utc).isoformat(),
         "purpose": "Stage 3 design qualification only — not a product implementation",
         "source_heads": {"main": MAIN_SHA, "journal_free_pr20": PR20_SHA},
+        "qualification_test_head": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
         "test_override": "Instance-level _reflow_workspace force QBoxLayout.LeftToRight; setMinimumSize(candidate,480)",
         "machine": {"platform": platform.platform(), "python": sys.version,
                     "qt": qVersion(), "pyside6": __import__("PySide6").__version__,
