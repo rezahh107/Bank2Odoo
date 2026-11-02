@@ -68,6 +68,18 @@ def can_reveal(app, w, target):
     app.processEvents()
     rect = QRect(target.mapTo(w.scroll.viewport(), QPoint(0, 0)), target.size())
     area = w.scroll.viewport().rect()
+    # Qt ensureWidgetVisible can leave the last few pixels clipped for nested
+    # read-only path controls. Verify actual reachability using a bounded native
+    # vertical scrollbar adjustment; never fabricate visibility or geometry.
+    bar = w.scroll.verticalScrollBar()
+    before_scroll = bar.value()
+    if rect.height() <= area.height():
+        if rect.y() < 0:
+            bar.setValue(bar.value() + rect.y())
+        elif rect.y() + rect.height() > area.height():
+            bar.setValue(bar.value() + rect.y() + rect.height() - area.height())
+        app.processEvents()
+        rect = QRect(target.mapTo(w.scroll.viewport(), QPoint(0, 0)), target.size())
     # Actual post-scroll geometry; keep flags redundant so consistency can
     # be checked independently at the verdict boundary.
     x, y, width, height = rect.x(), rect.y(), rect.width(), rect.height()
@@ -77,6 +89,8 @@ def can_reveal(app, w, target):
         "horizontally_contained": x >= 0 and x + width <= vw,
         "vertically_contained": y >= 0 and y + height <= vh,
         "rectangle": [x, y, width, height],
+        "native_vertical_scroll_delta": bar.value() - before_scroll,
+        "vertical_scroll_value": bar.value(),
     }
 
 
