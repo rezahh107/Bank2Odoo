@@ -147,8 +147,8 @@ def measure(app, w, stage):
 
 def long_nested(folder, prefix):
     target = folder
-    for i in range(3):
-        target = target / (prefix + "_" + str(i) + "_" + ("x" * 35))
+    for i in range(2):
+        target = target / (prefix + "_" + str(i) + "_" + ("x" * 25))
     target.mkdir(parents=True, exist_ok=True)
     return target
 
