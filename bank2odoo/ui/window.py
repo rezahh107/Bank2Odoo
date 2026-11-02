@@ -4,6 +4,7 @@ No bank parsing, monetary decisions or CSV serialization live in this module.
 """
 from __future__ import annotations
 
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from hashlib import sha256
 from pathlib import Path
@@ -210,6 +211,34 @@ GENERAL_REVIEW = (
 )
 
 
+def _available_paired_save_paths(csv_path: Path, report_path: Path) -> tuple[Path, Path]:
+    """Choose one unused pair before publication; never reinterpret publish errors.
+
+    lstat counts even a dangling symlink as occupied and propagates access
+    errors instead of treating them as filename collisions. The publisher
+    remains responsible for race-safe, no-overwrite publication.
+    """
+    csv_suffix, report_suffix = "_candidate.csv", "_control.txt"
+    if (not csv_path.name.endswith(csv_suffix)
+            or report_path.name != csv_path.name[:-len(csv_suffix)] + report_suffix
+            or csv_path.parent != report_path.parent):
+        raise StatementError("Paired output names must share a destination and basename")
+    base = csv_path.name[:-len(csv_suffix)]
+    for number in range(1, 10_001):
+        suffix = "" if number == 1 else f"_{number:02d}"
+        candidate = csv_path.with_name(f"{base}{suffix}{csv_suffix}")
+        control = report_path.with_name(f"{base}{suffix}{report_suffix}")
+        for path in (candidate, control):
+            try:
+                path.lstat()
+            except FileNotFoundError:
+                continue
+            break
+        else:
+            return candidate, control
+    raise OSError("No unused paired output filename is available")
+
+
 def safe_save_error_detail(exc: Exception) -> str:
     """Diagnostic metadata only: never copy arbitrary OS error text or filenames."""
     cause = (exc.__cause__ if isinstance(exc, SavePublicationError)
@@ -334,6 +363,9 @@ class _Job(QObject):
                 assert self.result is not None and self.csv_path is not None
                 assert self.report_path is not None
                 # A paired save is non-cancellable; it owns its cleanup/commit.
+                self.csv_path, self.report_path = _available_paired_save_paths(
+                    self.csv_path, self.report_path
+                )
                 save_candidate(self.result, self.csv_path, self.report_path)
                 self.state["value"] = (self.csv_path, self.report_path)
             else:
@@ -1308,7 +1340,8 @@ class MainWindow(QMainWindow):
         folder = Path(folder_text)
         assert self.source is not None
         safe_stem = "".join(c if c.isalnum() or c in "-_" else "_" for c in self.source.stem)[:48]
-        prefix = f"Bank2Odoo_{safe_stem or 'statement'}_{self.result.sha256[:10]}"
+        export_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        prefix = f"Bank2Odoo_{safe_stem or 'statement'}_{self.result.sha256[:10]}_{export_timestamp}"
         csv_path = folder / f"{prefix}_candidate.csv"
         report_path = folder / f"{prefix}_control.txt"
         self._set_message("در حال ذخیره هم‌زمان نامزد و گزارش خصوصی؛ تا پایان عملیات پنجره را نبندید.")
