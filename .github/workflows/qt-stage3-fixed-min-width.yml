@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/qt-stage3-fixed-min-width.yml'
       - 'tests/qt_stage3_fixed_minimum_qualification.py'
+      - 'tests/qt_stage3_geometry_classifier.py'
+      - 'tests/test_qt_stage3_geometry_classifier.py'
   workflow_dispatch:
 
 permissions:
@@ -49,6 +51,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Python install failed" }
           uv sync --locked
           if ($LASTEXITCODE -ne 0) { throw "Locked dependency sync failed" }
+      - name: Focused fail-closed geometry classifier and mutation regression tests
+        working-directory: bank2odoo-checkout
+        shell: pwsh
+        run: |
+          uv run --locked python -m unittest tests.test_qt_stage3_geometry_classifier -v
+          if ($LASTEXITCODE -ne 0) { throw "Stage 3 classifier regressions failed" }
       - name: Fail-closed bundled font verification
         working-directory: bank2odoo-checkout
         shell: pwsh
