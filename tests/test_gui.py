@@ -684,6 +684,7 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(report.read_text(encoding="utf-8"), "keep")
         self.assertFalse((self.private / f"{prefix}_candidate.csv").exists())
         self.assertIn("هم‌نام", self.window.status.text())
+        self.assertNotIn("محتوای یکسان", self.window.status.text())
 
     def test_failed_conversion_does_not_enable_save(self):
         self._select(self.source)
@@ -894,6 +895,60 @@ class AccountantUiTests(unittest.TestCase):
         picker.assert_called_once()
         self.app.processEvents()
         self.assertEqual(writer.call_count, 1)
+
+    def test_no_finals_permission_failure_explains_access_without_private_path(self):
+        from bank2odoo.reporting import output
+        self._convert()
+        candidate = self.window.result
+        balance = self.window.result_state.text()
+        self.window.output_directory.setText(str(self.private))
+        sensitive = str(self.private / "confidential-customer-1234.xls")
+        with patch.object(output.os, "link",
+                          side_effect=PermissionError(13, "Permission denied", sensitive)):
+            self._save()
+        message = self.window.status.text()
+        details = self.window.details.toPlainText()
+        self.assertIn("هیچ خروجی نهایی", message)
+        self.assertIn("دسترسی", message)
+        self.assertNotIn("هم‌نام", message)
+        self.assertNotIn("موفق بود", message)
+        self.assertNotIn(sensitive, message + details)
+        self.assertNotIn("confidential-customer", message + details)
+        self.assertIn("PermissionError", details)
+        self.assertIn("errno=13", details)
+        self.assertIn("NO_FINALS", details)
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertFalse(self.window._saved)
+        self.assertIs(self.window.result, candidate)
+        self.assertEqual(self.window.result_state.text(), balance)
+        self.assertTrue(self.window.approved.isChecked())
+        self.assertFalse(list(self.private.glob("Bank2Odoo_*")))
+
+    def test_no_finals_unknown_error_is_honest_and_technical_detail_sanitized(self):
+        from bank2odoo.reporting import output
+        self._convert()
+        self.window.output_directory.setText(str(self.private))
+        sensitive = str(self.private / "secret-raw-statement.csv")
+        with patch.object(output.os, "link",
+                          side_effect=OSError(1234, "secret diagnostic text", sensitive)):
+            self._save()
+        message = self.window.status.text()
+        details = self.window.details.toPlainText()
+        self.assertIn("هیچ خروجی نهایی", message)
+        self.assertIn("جزئیات فنی", message)
+        self.assertNotIn("هم‌نام", message)
+        self.assertNotIn("مجوز دسترسی", message)
+        self.assertNotIn("موفق بود", message)
+        self.assertIn("OSError", details)
+        self.assertIn("errno=1234", details)
+        self.assertIn("NO_FINALS", details)
+        self.assertNotIn(sensitive, message + details)
+        self.assertNotIn("secret diagnostic", message + details)
+        self.assertFalse(self.window._saved)
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertFalse(list(self.private.glob("Bank2Odoo_*")))
 
     def test_explicit_same_folder_retry_after_recoverable_error_needs_no_reconversion(self):
         candidate = self._convert()
