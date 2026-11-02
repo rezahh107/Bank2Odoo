@@ -7,6 +7,7 @@ on:
       - 'tests/qt_stage3_fixed_minimum_qualification.py'
       - 'tests/qt_stage3_geometry_classifier.py'
       - 'tests/test_qt_stage3_geometry_classifier.py'
+      - 'tests/qt_stage3_evidence_integrity.py'
   workflow_dispatch:
 
 permissions:
@@ -79,6 +80,14 @@ jobs:
         run: |
           uv run --locked python -m tests.qt_stage3_fixed_minimum_qualification
           if ($LASTEXITCODE -ne 0) { throw "Stage 3 qualification failed" }
+      - name: Independently audit exact-Head manifest and original PNGs
+        working-directory: bank2odoo-checkout
+        shell: pwsh
+        env:
+          STAGE3_EVIDENCE: ${{ github.workspace }}/bank2odoo-checkout/stage3-evidence
+        run: |
+          uv run --locked python -m tests.qt_stage3_evidence_integrity
+          if ($LASTEXITCODE -ne 0) { throw "Stage 3 evidence integrity audit failed" }
       - name: Upload original-resolution evidence even on partial failure
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -107,6 +116,9 @@ jobs:
           else
             git switch -c "$TARGET"
           fi
+          # Replace the complete generated evidence snapshot, never overlay.
+          # Historic interpretation was archived outside this directory.
+          git rm -r -f --ignore-unmatch stage3-evidence
           mkdir -p stage3-evidence
           cp -R "$RUNNER_TEMP/stage3-current/." stage3-evidence/
           git add --force stage3-evidence
