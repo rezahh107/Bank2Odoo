@@ -38,7 +38,7 @@ CAPTURE_VIEWS = {
     "saved_success": "bottom",
     "pass_result": "action",
 }
-FOCUS = ("select_button", "source_unit", "target_unit", "journal",
+FOCUS = ("select_button", "source_unit", "target_unit", "precision",
          "approved", "convert_button", "directory_button")
 
 
@@ -73,7 +73,7 @@ def focus_chain(w):
         raise AssertionError("Task focus order not in source-to-save sequence: "+str(indices))
     names = {name: getattr(w, name).accessibleName() for name in FOCUS}
     if not all(names[x] for x in
-               ("source_unit", "target_unit", "journal", "approved")):
+               ("source_unit", "target_unit", "precision", "approved")):
         raise AssertionError("Required financial control accessible name lost")
     return {"indices": indices, "accessible_names": names}
 

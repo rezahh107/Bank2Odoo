@@ -88,7 +88,6 @@ class AccountantUiTests(unittest.TestCase):
         self.window.target_unit.setCurrentIndex(
             self.window.target_unit.findData(target)
         )
-        self.window.journal.setText("ژورنال فرضی")
         self.window.precision.setValue(0)
         if factor is not None:
             self.window.factor.setText(factor)
@@ -120,6 +119,29 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIsNotNone(self.window.result)
         return self.window.result
 
+    def test_without_journal_real_conversion_and_private_paired_save(self):
+        import json
+        w = self.window
+        self.assertFalse(hasattr(w, "journal"))
+        self._select(self.source)
+        self._approve()
+        self.assertTrue(w._conversion_is_ready_for_emphasis())
+        w.start_conversion()
+        self._wait_conversion()
+        self.assertEqual(len(w.result.rows), 2)
+        self.assertEqual(w.result.journal, "")
+        w.output_directory.setText(str(self.private))
+        self._save()
+        self.assertTrue(w._saved)
+        csv_file = next(self.private.glob("Bank2Odoo_*.csv"))
+        private_file = next(self.private.glob("Bank2Odoo_*.txt"))
+        self.assertEqual(csv_file.read_text(encoding="utf-8").splitlines()[0], "Date,Label,Amount")
+        report = private_file.read_text(encoding="utf-8")
+        self.assertIn("select the correct Bank Journal separately inside Odoo", report)
+        trace = report.split("## Source-to-destination trace (JSON objects, one per output row; private)\n", 1)[1].splitlines()
+        self.assertEqual([json.loads(t)["csv_row"] for t in trace], [2, 3])
+        self.assertTrue(all(json.loads(t)["original_columns"] for t in trace))
+
     def test_minimal_initial_workspace_guidance_and_click_validation(self):
         w = self.window
         self.assertTrue(w.convert_button.isVisible())
@@ -145,7 +167,6 @@ class AccountantUiTests(unittest.TestCase):
         self._select(self.source)
         w.source_unit.setCurrentIndex(w.source_unit.findData("IRR"))
         w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
-        w.journal.setText("ژورنال آزمایشی")
         self.assertIsNone(w.result)
         self.assertFalse(w.approved.isChecked())
         self.assertIn("گام بعد: اطلاعات مالی", w.status.text())
@@ -181,7 +202,6 @@ class AccountantUiTests(unittest.TestCase):
                 w.approved.setChecked(False)
                 w.source_unit.setCurrentIndex(w.source_unit.findData(source))
                 w.target_unit.setCurrentIndex(w.target_unit.findData(target))
-                w.journal.setText("ژورنال ساختگی")
                 w.precision.setValue(places)
                 if w.factor.isEnabled():
                     w.factor.setText(factor)
@@ -250,7 +270,7 @@ class AccountantUiTests(unittest.TestCase):
             self.app.processEvents()
             visible_center = control.mapTo(w.scroll.viewport(), control.rect().center())
             self.assertTrue(w.scroll.viewport().rect().contains(visible_center))
-        w.journal.setText("ژورنال دیگری")
+        w.precision.setValue(1)
         self.assertIsNone(w.result)
         self.assertFalse(w.approved.isChecked())
         self.assertFalse(w.metrics_panel.isVisible())
@@ -344,7 +364,6 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(self.window.path_field.layoutDirection(), Qt.LayoutDirection.LeftToRight)
         self.assertEqual(self.window.factor.layoutDirection(), Qt.LayoutDirection.LeftToRight)
         self.assertEqual([ord(char) for char in latin("123")], [0x2066, 49, 50, 51, 0x2069])
-        self.assertLessEqual(self.window.journal.maximumWidth(), 480)
         self.assertLessEqual(self.window.source_unit.maximumWidth(), 390)
         forms = self.window.findChildren(QFormLayout)
         self.assertEqual(len(forms), 1)
@@ -385,7 +404,6 @@ class AccountantUiTests(unittest.TestCase):
         self._select(self.source)
         self.window.source_unit.setCurrentIndex(self.window.source_unit.findData("IRR"))
         self.window.target_unit.setCurrentIndex(self.window.target_unit.findData("IRR"))
-        self.window.journal.setText("ژورنال آزمایشی")
         self.assertFalse(self.window.approved.isChecked())
         self.window.scroll.ensureWidgetVisible(self.window.approved)
         self.app.processEvents()
@@ -445,10 +463,6 @@ class AccountantUiTests(unittest.TestCase):
 
         self.window.target_unit.setCurrentIndex(self.window.target_unit.findData("IRR"))
         self.window.start_conversion()
-        self.assertIn("نام ژورنال", self.window.status.text())
-
-        self.window.journal.setText("ژورنال آزمایشی")
-        self.window.start_conversion()
         self.assertIn("تأیید صریح", self.window.status.text())
         self.assertIs(self.app.focusWidget(), self.window.approved)
         self.assertIsNone(self.window._thread)
@@ -464,7 +478,7 @@ class AccountantUiTests(unittest.TestCase):
         self.window.start_conversion()
         self.assertIsNone(self.window._thread)
         self.window.approved.setChecked(True)
-        self.window.journal.clear()  # invalidates previous approval
+        self.window.precision.setValue(1)  # invalidates previous approval
         self.assertFalse(self.window.approved.isChecked())
         self.window.start_conversion()
         self.assertIsNone(self.window._thread)
@@ -630,7 +644,7 @@ class AccountantUiTests(unittest.TestCase):
         self._convert()
         self.assertFalse(self.window.save_button.isEnabled())
         self.assertIn("انتخاب پوشه", self.window.convert_button.text())
-        self.window.journal.setText("ژورنال تغییرکرده")
+        self.window.precision.setValue(1)
         self.assertFalse(self.window.approved.isChecked())
         self.assertIsNone(self.window.result)
         self.assertFalse(self.window.save_button.isEnabled())
@@ -1151,7 +1165,7 @@ class AccountantUiTests(unittest.TestCase):
                 self.assertIn("دو فایل ایجاد شدند", self.window.saved_paths.text())
                 self.assertEqual(len(list(private.glob("Bank2Odoo_*"))), 2)
                 # A saved candidate becomes stale after financial context changes.
-                self.window.journal.setText("ژورنال جدید آزمایشی")
+                self.window.precision.setValue(1)
                 self.assertFalse(self.window.approved.isChecked())
                 self.assertIsNone(self.window._approved_digest)
                 self.assertIsNone(self.window.result)
@@ -1234,7 +1248,7 @@ class AccountantUiTests(unittest.TestCase):
                 content = self.window.scroll.widget()
                 for control in (
                     self.window.source_unit, self.window.target_unit,
-                    self.window.journal, self.window.path_field,
+                    self.window.precision, self.window.path_field,
                     self.window.approved, self.window.convert_button,
                     self.window.output_directory, self.window.directory_button,
                 ):

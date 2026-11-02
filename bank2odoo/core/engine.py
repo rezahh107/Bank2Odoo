@@ -18,15 +18,13 @@ UNITS = {"IRR", "TOMAN"}
 class Context:
     source_unit: str
     target_unit: str
-    journal: str
+    journal: str = ""  # Optional legacy metadata; destination selected inside Odoo.
     decimal_places: int = 0
     approved_factor: Decimal | None = None
 
     def factor(self) -> Decimal:
         if self.source_unit not in UNITS or self.target_unit not in UNITS:
             raise StatementError("Explicit supported source/target unit required (IRR/TOMAN)")
-        if not self.journal.strip():
-            raise StatementError("An accountant-selected Bank Journal label is required")
         if not 0 <= self.decimal_places <= 9:
             raise StatementError("Destination decimal-places must be between 0 and 9")
         expected = (Decimal("1") if self.source_unit == self.target_unit else

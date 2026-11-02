@@ -33,7 +33,9 @@ def control_report(result: Conversion) -> str:
         f"Source filename: {result.filename}",
         f"SHA-256 exact source bytes: {result.sha256}",
         f"Bank: {result.bank}; Source format: {result.encoding}; Separator: {result.separator}",
-        f"Journal (user-entered, UNVERIFIED): {result.journal}",
+        (f"Journal (user-entered, UNVERIFIED): {result.journal}"
+         if result.journal and result.journal.strip() else
+         "Destination Journal: select the correct Bank Journal separately inside Odoo; NOT verified by Bank2Odoo."),
         f"Source unit: {result.source_unit}; target unit: {result.target_unit}; approved factor: {result.factor}",
         f"Destination decimal precision (applied; Odoo-unverified): {result.decimal_places}",
         f"Period (observed rows): {min(m.date for m in result.rows)} .. {max(m.date for m in result.rows)}",

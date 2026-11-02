@@ -58,7 +58,6 @@ def measure(w, app, case, output):
        "widget_min_hints":{
             "source_picker":size(w.select_button.minimumSizeHint()),
             "path":size(w.path_field.minimumSizeHint()),
-            "journal":size(w.journal.minimumSizeHint()),
             "source_unit":size(w.source_unit.minimumSizeHint()),
             "approval":size(w.approved.minimumSizeHint()),
             "primary_action":size(w.convert_button.minimumSizeHint()),
@@ -84,7 +83,7 @@ def run_case(app, output, theme, width, height):
             if w.source is None:raise AssertionError("fictional source detection failed")
             w.source_unit.setCurrentIndex(w.source_unit.findData("IRR"))
             w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
-            w.journal.setText("ژورنال فرضی");w.approved.setChecked(True)
+            w.approved.setChecked(True)
             w.start_conversion();wait_finished(w,w.conversion_done,app)
             if w.result is None:raise AssertionError("fictional conversion failed")
             w.output_directory.setText(str(out));w.save_files()

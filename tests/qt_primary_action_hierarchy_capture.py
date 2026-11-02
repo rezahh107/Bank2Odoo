@@ -177,7 +177,8 @@ def run_case(app, ui_module, variant, scheme, width, height, source, output):
             raise AssertionError("Real Qt detection failed for fictional source")
         w.source_unit.setCurrentIndex(w.source_unit.findData("IRR"))
         w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
-        w.journal.setText("ژورنال ساختگی")
+        if hasattr(w, "journal"):  # Historical baseline still required this field.
+            w.journal.setText("ژورنال ساختگی")
         if w.approved.isChecked():
             raise AssertionError("Source selection implicitly approved finance")
         apply_qualification_variant(w, variant, scheme, "source_selected")

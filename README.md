@@ -19,7 +19,7 @@ One-time technician setup (Internet required for installing prerequisites):
 2. In the downloaded Bank2Odoo folder, run `uv sync --locked` once while online.
 3. Double-click **Run.bat**. Normal launching/conversion uses `uv run --offline --locked`; no Odoo or Internet connection is required once setup is complete.
 
-In the Persian window select an actual Melli XLS or Mellat CSV, confirm the **source and target units, journal, currency precision and (if units differ) approved factor**, then select **اعتبارسنجی و تبدیل**. Review the count, totals, balance status and flagged uncertainties. Choose a **private folder outside this checkout**, then click **ذخیره CSV و گزارش کنترل**. Both files must be new: the program refuses overwriting and does not independently approve any Odoo import.
+In the Persian window select an actual Melli XLS or Mellat CSV, confirm the **source and target units, destination currency precision and (if units differ) approved factor**, then select **اعتبارسنجی و تبدیل**. Review the count, totals, balance status and flagged uncertainties. Choose a **private folder outside this checkout**, then click **ذخیره CSV و گزارش کنترل**. Both files must be new: the program refuses overwriting and does not independently approve any Odoo import. The destination Bank Journal is selected separately inside Odoo.
 
 A `PASS` balance check is limited to observed consecutive balances; `NOT_PROVEN` means a complete proof is unavailable, not necessarily an error. A generated candidate still requires accountant review, independent approval and checking for past imports before any manual Odoo import. Technical diagnostics are optional and hidden by default. Closing a busy window requires waiting for the current operation; the stop request discards its result after the active phase.
 
@@ -59,7 +59,7 @@ After installing `uv` and Python 3.13 (initial setup requires connectivity):
 
 ```powershell
 uv sync --locked
-uv run --locked python -m bank2odoo --input "C:\Private\statement.xls" --output "C:\Private\candidate.csv" --report "C:\Private\control.txt" --source-unit IRR --target-unit IRR --journal "Bank Journal name confirmed by accountant" --decimal-places 0
+uv run --locked python -m bank2odoo --input "C:\Private\statement.xls" --output "C:\Private\candidate.csv" --report "C:\Private\control.txt" --source-unit IRR --target-unit IRR --decimal-places 0
 ```
 
 Use `.csv` input for Bank Mellat; the **content**, not extension, selects parser.
@@ -69,7 +69,7 @@ not silently accepted. Headers are discovered rather than pinned to row 8.
 
 When monetary units differ, enter the explicitly **accountant-approved** factor
 (e.g. verified `TOMAN → IRR` with `--approved-factor 10`); unit selection and
-Journal name are entered context, **not verified against Odoo**. Never guess
+destination currency precision must be confirmed for the Journal the Owner manually selects in Odoo. Legacy optional `--journal "name"` remains accepted for older scripts; it is unverified metadata in the private report and never changes CSV. Never guess
 IRR/TOMAN from bank data. Destination `--decimal-places` must reflect confirmed
 Journal/currency precision; amounts requiring rounding are rejected.
 
@@ -100,7 +100,7 @@ unknown types, missing units and existing output
 files. Incomplete or conflicting balance support is reported as `NOT_PROVEN`, **never accounting PASS**, and does not independently block conversion.
 A successful conversion only provides a **review candidate**; it does not mean
 accountant approval, absence of previously imported duplicates, or safety of
-live Odoo import. Before import, confirm source/journal/account, currency,
+live Odoo import. Before any Odoo import, manually open the correct Bank Journal for the intended bank account in Odoo and confirm source/account, currency,
 period completeness, prior entries, existing Bank Transactions and receipts.
 
 `Run.bat` starts the Persian Qt interface directly. The developer CLI remains
@@ -153,8 +153,9 @@ all public changes.
 ## Source policy and evidence limits
 
 Authoritative, private Owner documents (do not copy their private financial
-content into GitHub): Bank2Odoo GOAL_AUTHORITY **v1.1.26, section 36**
-(**Converter, Not Auditor**; supersedes the previous blocking-balance policy)
+content into GitHub): Bank2Odoo GOAL_AUTHORITY **v1.1.32, section 42**
+(**Manual Journal selection in Odoo**, superseding account-to-Journal mapping),
+and section 36 (**Converter, Not Auditor**; supersedes the earlier blocking-balance policy)
 and NESTEC Bank Melli/Mellat CSV Conversion Guide v1.0.1. Earlier Owner
 authority revisions, including v1.1.13, are historical references only.
 The currently adopted conversion contract is

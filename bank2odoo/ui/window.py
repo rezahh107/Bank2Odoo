@@ -229,7 +229,7 @@ def human_error(detail: str, *, saving: bool = False) -> str:
         return "مبلغ یا دقت اعشاری یکی از ردیف‌ها قابل تأیید نیست؛ هیچ مبلغی گرد نشده است."
     if "headers" in message or "header" in message or "xls" in message or "csv" in message:
         return "ساختار یا قالب فایل پشتیبانی نمی‌شود یا خواندن آن ممکن نیست."
-    if "source/target unit" in message or "factor" in message or "journal" in message:
+    if "source/target unit" in message or "factor" in message:
         return "اطلاعات مالی یا ضریب تأییدشده ناقص یا ناسازگار است."
     return "خواندن یا تبدیل فایل کامل نشد. جزئیات فنی را بررسی کنید."
 
@@ -413,13 +413,6 @@ class MainWindow(QMainWindow):
         self.target_unit.setAccessibleName("واحد پول ژورنال مقصد")
         form.addRow("واحد پول فایل بانک:", self.source_unit)
         form.addRow("واحد پول ژورنال مقصد:", self.target_unit)
-        self.journal = QLineEdit()
-        self.journal.setMinimumHeight(38)
-        self.journal.setMaximumWidth(480)
-        self.journal.setPlaceholderText("نام ژورنال بانکی انتخاب‌شده در Odoo")
-        self.journal.setAccessibleName("ژورنال بانکی")
-        self.journal.textChanged.connect(self._context_changed)
-        form.addRow("نام ژورنال بانکی:", self.journal)
         self.precision = QSpinBox()
         self.precision.setRange(0, 9)
         self.precision.setMinimumHeight(38)
@@ -458,7 +451,7 @@ class MainWindow(QMainWindow):
         self.approved.toggled.connect(self._approval_changed)
         approval_layout.addWidget(self.approved)
         approval_hint = QLabel(
-            "بانک، واحدهای مبدأ و مقصد، ژورنال، دقت اعشار و ضریب احتمالی را با مدارک واقعی تطبیق دهید."
+            "واحدهای مبدأ و مقصد، دقت اعشار و ضریب احتمالی را تأیید کنید؛ ژورنال صحیح را جداگانه در Odoo انتخاب کنید."
         )
         approval_hint.setWordWrap(True)
         approval_layout.addWidget(approval_hint)
@@ -982,7 +975,7 @@ class MainWindow(QMainWindow):
                 factor = Decimal(value)
             except InvalidOperation as exc:
                 raise StatementError("Invalid approved factor") from exc
-        context = Context(left, right, self.journal.text().strip(), self.precision.value(), factor)
+        context = Context(left, right, decimal_places=self.precision.value(), approved_factor=factor)
         context.factor()
         return context
 
@@ -994,8 +987,6 @@ class MainWindow(QMainWindow):
             return self.source_unit, "واحد پول فایل بانک را انتخاب کنید."
         if self.target_unit.currentData() is None:
             return self.target_unit, "واحد پول ژورنال مقصد را انتخاب کنید."
-        if not self.journal.text().strip():
-            return self.journal, "نام ژورنال بانکی مقصد را وارد کنید."
         if (self.source_unit.currentData() != self.target_unit.currentData()
                 and not self.factor.text().strip()):
             return self.factor, "ضریب تبدیل تأییدشده را وارد کنید."
@@ -1033,7 +1024,7 @@ class MainWindow(QMainWindow):
         self.busy.setVisible(active)
         self.cancel_button.setEnabled(active and self._job_state is not None
                                       and self._job_state["kind"] == "convert")
-        for widget in (self.select_button, self.source_unit, self.target_unit, self.journal,
+        for widget in (self.select_button, self.source_unit, self.target_unit,
                        self.precision, self.factor, self.approved, self.convert_button,
                        self.directory_button):
             widget.setEnabled(not active)

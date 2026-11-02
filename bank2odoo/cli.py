@@ -21,21 +21,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--report", type=Path, help="New PRIVATE plain-text report path (no overwrite)")
     parser.add_argument("--source-unit", choices=("IRR", "TOMAN"))
     parser.add_argument("--target-unit", choices=("IRR", "TOMAN"))
-    parser.add_argument("--journal", help="Accountant-chosen Bank Journal name; not independently verified")
+    parser.add_argument("--journal", help="Optional legacy Journal label for private report only; never verified")
     parser.add_argument("--decimal-places", type=int, default=0, help="Confirmed Odoo Journal currency precision")
     parser.add_argument("--approved-factor", help="Required when units differ; exact factor (10 or 0.1)")
     args = parser.parse_args(argv)
-    needed = ("input", "output", "report", "source_unit", "target_unit", "journal")
+    needed = ("input", "output", "report", "source_unit", "target_unit")
     if not all(getattr(args, key) is not None for key in needed):
         if any(getattr(args, key) is not None for key in needed):
-            parser.error("Conversion requires --input --output --report --source-unit --target-unit --journal")
+            parser.error("Conversion requires --input --output --report --source-unit --target-unit")
         print("Bank2Odoo headless conversion CLI. Persian desktop GUI is available separately:\n"
               "  python -m bank2odoo.ui (or Run.bat on Windows).\n"
               "No bank file processed. Use --help for explicit review-candidate conversion command.")
         return 0
     try:
         approved_factor = Decimal(args.approved_factor) if args.approved_factor is not None else None
-        result = convert(args.input, Context(args.source_unit, args.target_unit, args.journal,
+        result = convert(args.input, Context(args.source_unit, args.target_unit, args.journal or "",
                                              args.decimal_places, approved_factor))
         save_candidate(result, args.output, args.report)
     except (StatementError, OSError, InvalidOperation) as exc:
