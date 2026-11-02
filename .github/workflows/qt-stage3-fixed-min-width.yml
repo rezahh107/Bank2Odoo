@@ -91,6 +91,7 @@ jobs:
           # on which stage3-evidence/ is already tracked.
           mkdir -p "$RUNNER_TEMP/stage3-current"
           cp -R stage3-evidence/. "$RUNNER_TEMP/stage3-current/"
+          rm -rf stage3-evidence  # Only this job\u0027s generated untracked capture directory.
           TARGET=evidence/stage3-fixed-min-width-windows-20261102
           if git ls-remote --exit-code origin "refs/heads/$TARGET" >/dev/null; then
             git fetch --no-tags origin "refs/heads/$TARGET"
