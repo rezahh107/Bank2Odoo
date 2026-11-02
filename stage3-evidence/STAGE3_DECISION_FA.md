@@ -1,10 +1,10 @@
 # Stage 3 — Fresh qualification interpretation (generated per exact Head)
 
-Evidence run Head: `1551d5dc0fddf5d6bfdfd98a616d77fa942e09d1`
+Evidence run Head: `4fadcb0209faadd0b3b65f7034cbae52b104e37d`
 
 Tested sources (pinned): main `e0f50ab8605024896bf6975050fb4034b874514e`; Journal-free PR #20 `aa4362adfa8cd3e6e2873c8b36de79ce8183e3bd`.
 
-Geometry qualified: 0/20 combinations; 200 captured states.
+Geometry qualified: 20/20 combinations; 200 captured states.
 Forced 500px negative: NOT_QUALIFIED.
 
 Geometry qualification means required widgets were individually fully contained after programmatic vertical scrolling, with no horizontal overflow and internally consistent recorded rectangles and flags. It does **not** prove simultaneous visibility, user-driven navigation, glyph legibility or visual acceptance.

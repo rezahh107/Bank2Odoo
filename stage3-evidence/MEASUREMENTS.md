@@ -7,26 +7,26 @@ GEOMETRY_PASS derives from independent expected scenario/control contracts. Each
 
 | Variant | Scheme | Minimum width | Max required | Viewport | Max horizontal scrollbar overflow | All key controls reachable | Geometry status |
 |---|---|---:|---:|---:|---:|---|---|
-| main_journal | light | 800 | 724 | 788 | 0 | False | NOT_QUALIFIED |
-| main_journal | light | 840 | 724 | 828 | 0 | False | NOT_QUALIFIED |
-| main_journal | light | 900 | 724 | 888 | 0 | False | NOT_QUALIFIED |
-| main_journal | light | 940 | 724 | 928 | 0 | False | NOT_QUALIFIED |
-| main_journal | light | 980 | 724 | 968 | 0 | False | NOT_QUALIFIED |
-| main_journal | dark | 800 | 712 | 786 | 0 | False | NOT_QUALIFIED |
-| main_journal | dark | 840 | 712 | 826 | 0 | False | NOT_QUALIFIED |
-| main_journal | dark | 900 | 712 | 886 | 0 | False | NOT_QUALIFIED |
-| main_journal | dark | 940 | 712 | 926 | 0 | False | NOT_QUALIFIED |
-| main_journal | dark | 980 | 712 | 966 | 0 | False | NOT_QUALIFIED |
-| journal_free | light | 800 | 724 | 788 | 0 | False | NOT_QUALIFIED |
-| journal_free | light | 840 | 724 | 828 | 0 | False | NOT_QUALIFIED |
-| journal_free | light | 900 | 724 | 888 | 0 | False | NOT_QUALIFIED |
-| journal_free | light | 940 | 724 | 928 | 0 | False | NOT_QUALIFIED |
-| journal_free | light | 980 | 724 | 968 | 0 | False | NOT_QUALIFIED |
-| journal_free | dark | 800 | 712 | 786 | 0 | False | NOT_QUALIFIED |
-| journal_free | dark | 840 | 712 | 826 | 0 | False | NOT_QUALIFIED |
-| journal_free | dark | 900 | 712 | 886 | 0 | False | NOT_QUALIFIED |
-| journal_free | dark | 940 | 712 | 926 | 0 | False | NOT_QUALIFIED |
-| journal_free | dark | 980 | 712 | 966 | 0 | False | NOT_QUALIFIED |
+| main_journal | light | 800 | 724 | 788 | 0 | True | GEOMETRY_PASS |
+| main_journal | light | 840 | 724 | 828 | 0 | True | GEOMETRY_PASS |
+| main_journal | light | 900 | 724 | 888 | 0 | True | GEOMETRY_PASS |
+| main_journal | light | 940 | 724 | 928 | 0 | True | GEOMETRY_PASS |
+| main_journal | light | 980 | 724 | 968 | 0 | True | GEOMETRY_PASS |
+| main_journal | dark | 800 | 712 | 786 | 0 | True | GEOMETRY_PASS |
+| main_journal | dark | 840 | 712 | 826 | 0 | True | GEOMETRY_PASS |
+| main_journal | dark | 900 | 712 | 886 | 0 | True | GEOMETRY_PASS |
+| main_journal | dark | 940 | 712 | 926 | 0 | True | GEOMETRY_PASS |
+| main_journal | dark | 980 | 712 | 966 | 0 | True | GEOMETRY_PASS |
+| journal_free | light | 800 | 724 | 788 | 0 | True | GEOMETRY_PASS |
+| journal_free | light | 840 | 724 | 828 | 0 | True | GEOMETRY_PASS |
+| journal_free | light | 900 | 724 | 888 | 0 | True | GEOMETRY_PASS |
+| journal_free | light | 940 | 724 | 928 | 0 | True | GEOMETRY_PASS |
+| journal_free | light | 980 | 724 | 968 | 0 | True | GEOMETRY_PASS |
+| journal_free | dark | 800 | 712 | 786 | 0 | True | GEOMETRY_PASS |
+| journal_free | dark | 840 | 712 | 826 | 0 | True | GEOMETRY_PASS |
+| journal_free | dark | 900 | 712 | 886 | 0 | True | GEOMETRY_PASS |
+| journal_free | dark | 940 | 712 | 926 | 0 | True | GEOMETRY_PASS |
+| journal_free | dark | 980 | 712 | 966 | 0 | True | GEOMETRY_PASS |
 
 Negative forced 500 px: scrollbar overflow = 115 logical px; classification = NOT_QUALIFIED.
 Visual readability/density, physical DPI scaling (100/125/150%), real OS theme and target-accountant acceptance remain NOT_PROVEN pending specialist review.
