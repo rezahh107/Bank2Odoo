@@ -126,7 +126,7 @@ class SavePublicationOutcomeTests(TestCase):
         actual_link = output.os.link
         actual_unlink = Path.unlink
         count = 0
-        report_path = self.pair()[1]
+        report_path = self.pair()[1].resolve()
         def second_link_fails(src, dst):
             nonlocal count
             count += 1
