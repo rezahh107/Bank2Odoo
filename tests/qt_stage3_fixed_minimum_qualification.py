@@ -414,7 +414,37 @@ def main():
                 + summary["negative"]["geometry_classification"]["status"] + ".")
     rows.append("Visual readability/density, physical DPI scaling (100/125/150%), real OS theme and target-accountant acceptance remain NOT_PROVEN pending specialist review.")
     rows.append("Screenshots are genuine, unmodified QWidget.grab PNGs; contact sheets are preview composites only.")
+    passed = sum(c["geometry_classification"]["status"] == "GEOMETRY_PASS"
+                 for c in summary["cases"])
+    interpretations = [
+        "# Stage 3 — Fresh qualification interpretation (generated per exact Head)",
+        "",
+        "Evidence run Head: \`" + summary["qualification_test_head"] + "\`",
+        "",
+        "Tested sources (pinned): main \`" + MAIN_SHA +
+        "\`; Journal-free PR #20 \`" + PR20_SHA + "\`.",
+        "",
+        f"Geometry qualified: {passed}/{len(summary['cases'])} combinations; "
+        f"{sum(len(c['states']) for c in summary['cases'])} captured states.",
+        "Forced 500px negative: " + summary["negative"]["geometry_classification"]["status"] + ".",
+        "",
+        "Geometry qualification means required widgets were individually fully "
+        "contained after programmatic vertical scrolling, with no horizontal "
+        "overflow and internally consistent recorded rectangles and flags. "
+        "It does **not** prove simultaneous visibility, user-driven navigation, "
+        "glyph legibility or visual acceptance.",
+        "",
+        "Native Windows Qt QPA hosted runner evidence; physical Windows 11/125%/150% "
+        "DPI, genuine OS dark mode, private bank/Odoo results and human UX "
+        "acceptance: **NOT_PROVEN**.",
+        "",
+        "Consult this run's manifest.json and MEASUREMENTS.md; older interpretations "
+        "are archived separately under stage3-history/ and are not current evidence.",
+        "",
+    ]
     (out / "MEASUREMENTS.md").write_text("\n".join(rows) + "\n", encoding="utf-8")
+    (out / "STAGE3_DECISION_FA.md").write_text(
+        "\n".join(interpretations), encoding="utf-8")
     (out / "manifest.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     assert len(summary["cases"]) == len(VARIANTS) * len(SCHEMES) * len(WIDTHS)
