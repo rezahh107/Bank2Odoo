@@ -1482,7 +1482,7 @@ class AccountantUiTests(unittest.TestCase):
 
         first = self._convert()
         other = actual_convert(
-            self.source, Context("IRR", "TOMAN", approved_factor=Decimal("0.1"))
+            self.source, Context("IRR", "TOMAN", decimal_places=1, approved_factor=Decimal("0.1"))
         )
         self.assertEqual(first.sha256, other.sha256)
         self.assertNotEqual(output_csv(first), output_csv(other))
