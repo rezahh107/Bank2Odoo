@@ -912,9 +912,9 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(text, self.window.status.text())
         self.assertIsNone(self.window._thread)
         self.assertIsNotNone(self.window.result)
-        self.assertEqual(self.window.output_directory.text(), "")
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
         self.assertFalse(self.window.save_button.isEnabled())
-        self.assertIn("انتخاب پوشه", self.window.convert_button.text())
+        self.assertIn("تأیید دوباره", self.window.convert_button.text())
 
     def _await_join_attempts(self, calls: list[int], count: int) -> None:
         for _ in range(160):
@@ -1089,13 +1089,13 @@ class AccountantUiTests(unittest.TestCase):
         self.assertTrue(w.approved.isChecked())
         self.assertIn("خطای ذخیره", w.status.text())
         self.assertIn("ذخیره کامل نشد", w.saved_paths.text())
-        self.assertEqual(w.output_directory.text(), "")
+        self.assertTrue(w.output_directory.text())
         self.assertFalse(w.save_button.isEnabled())
-        self.assertEqual(w.convert_button.text(), "انتخاب پوشهٔ خصوصی خروجی…")
+        self.assertEqual(w.convert_button.text(), "انتخاب یا تأیید دوبارهٔ پوشه…")
         self.assertIs(self.app.focusWidget(), w.convert_button)
         self.assertTrue(w.directory_button.isVisible())
         self.assertFalse(w.saved_path_fields.isVisible())
-        # The single primary action must ask for the new destination, not retry.
+        # The primary action must explicitly confirm a destination, not retry.
         self.assertFalse(w.save_button.isVisible())
         for width, height in ((940, 830), (650, 520), (600, 480)):
             with self.subTest(size=(width, height)):
