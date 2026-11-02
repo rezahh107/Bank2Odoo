@@ -86,7 +86,20 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch -c evidence/stage3-fixed-min-width-windows-20261102
+          # Preserve the previous evidence branch history; no force-push.
+          # Move this run's untracked evidence aside before checking out a branch
+          # on which stage3-evidence/ is already tracked.
+          mkdir -p "$RUNNER_TEMP/stage3-current"
+          cp -R stage3-evidence/. "$RUNNER_TEMP/stage3-current/"
+          TARGET=evidence/stage3-fixed-min-width-windows-20261102
+          if git ls-remote --exit-code origin "refs/heads/$TARGET" >/dev/null; then
+            git fetch --no-tags origin "refs/heads/$TARGET"
+            git switch -c "$TARGET" FETCH_HEAD
+          else
+            git switch -c "$TARGET"
+          fi
+          mkdir -p stage3-evidence
+          cp -R "$RUNNER_TEMP/stage3-current/." stage3-evidence/
           git add --force stage3-evidence
           git commit -m "evidence(ui): authentic Stage 3 Windows Qt original PNGs and measurements"
-          git push origin HEAD:refs/heads/evidence/stage3-fixed-min-width-windows-20261102
+          git push origin "HEAD:refs/heads/$TARGET"
