@@ -1,11 +1,11 @@
 {
-  "utc": "2026-11-02T08:54:55.072716+00:00",
+  "utc": "2026-11-02T08:55:37.830553+00:00",
   "purpose": "Stage 3 design qualification only — not a product implementation",
   "source_heads": {
     "main": "e0f50ab8605024896bf6975050fb4034b874514e",
     "journal_free_pr20": "aa4362adfa8cd3e6e2873c8b36de79ce8183e3bd"
   },
-  "qualification_test_head": "2d1e38f71201807eef98b8bff3d290a75fde6c4c",
+  "qualification_test_head": "609332342b962411a122b2967e4f892fae94c480",
   "test_override": "Instance-level _reflow_workspace force QBoxLayout.LeftToRight; setMinimumSize(candidate,480)",
   "machine": {
     "platform": "Windows-2025Server-10.0.26100-SP0",
