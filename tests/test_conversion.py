@@ -663,8 +663,9 @@ class EngineEndToEndTests(unittest.TestCase):
         self.assertFalse((ROOT / "synthetic_candidate.csv").exists())
         self.assertFalse((ROOT / "synthetic_control.txt").exists())
 
-    def test_atomic_write_rollback_when_second_link_fails(self) -> None:
+    def test_second_link_failure_retains_report_for_manual_inspection(self) -> None:
         from unittest.mock import patch
+        from bank2odoo.reporting.output import SavePublicationError
         source = self.root / "one.csv"
         write_mellat(source, [["1", "1405/07/01", "10:00:00", "1", "نمونه", "0", "50", "50"]])
         result = convert(source, Context("IRR", "IRR", "S"))
@@ -672,16 +673,27 @@ class EngineEndToEndTests(unittest.TestCase):
         import bank2odoo.reporting.output as output
         real_link = output.os.link
         calls = 0
+        attempted: list[Path] = []
+        injected_failure = OSError("synthetic second-file publish failure")
         def fail_second(src: Path, dst: Path) -> None:
             nonlocal calls
             calls += 1
+            attempted.append(Path(dst))
             if calls == 2:
-                raise OSError("synthetic second-file publish failure")
+                raise injected_failure
             real_link(src, dst)
-        with patch.object(output.os, "link", side_effect=fail_second), self.assertRaises(OSError):
+        with patch.object(output.os, "link", side_effect=fail_second), \
+             self.assertRaises(SavePublicationError) as captured:
             save_candidate(result, csv_path, report_path)
+        self.assertEqual(calls, 2)
+        self.assertEqual(attempted, [report_path.resolve(), csv_path.resolve()])
+        self.assertEqual(captured.exception.outcome, "PARTIAL")
+        self.assertFalse(captured.exception.cleanup_failed)
+        self.assertIs(captured.exception.__cause__, injected_failure)
+        self.assertEqual(str(captured.exception.__cause__), "synthetic second-file publish failure")
         self.assertFalse(csv_path.exists())
-        self.assertFalse(report_path.exists())
+        self.assertTrue(report_path.exists())
+        self.assertEqual(report_path.read_bytes(), control_report(result).encode("utf-8"))
         self.assertEqual(list(self.root.glob(".bank2odoo-*")), [])
 
 
