@@ -1,0 +1,92 @@
+name: Bank2Odoo Stage 3 fixed desktop minimum width qualification
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/qt-stage3-fixed-min-width.yml'
+      - 'tests/qt_stage3_fixed_minimum_qualification.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  native-windows-stage3:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out exact qualification PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: bank2odoo-checkout
+          persist-credentials: true
+      - name: Verify qualification source and immutable parents
+        working-directory: bank2odoo-checkout
+        shell: bash
+        run: |
+          echo "QUALIFICATION_HEAD=$(git rev-parse HEAD)"
+          git fetch --no-tags --depth=1 origin e0f50ab8605024896bf6975050fb4034b874514e
+          git fetch --no-tags --depth=1 origin aa4362adfa8cd3e6e2873c8b36de79ce8183e3bd
+          test "$(git show aa4362adfa8cd3e6e2873c8b36de79ce8183e3bd:bank2odoo/ui/window.py | git hash-object --stdin)" = "$(git hash-object bank2odoo/ui/window.py)"
+          test "$(git show e0f50ab8605024896bf6975050fb4034b874514e:bank2odoo/ui/window.py | git hash-object --stdin)" != "$(git hash-object bank2odoo/ui/window.py)"
+      - name: Check out immutable canonical Vazirmatn test lab
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: rezahh107/UI-UX-Test-Lab
+          ref: 6e9da83efe2208e8dac5cf293d3fc9f4e14796b9
+          path: qt-lab
+          persist-credentials: false
+      - name: Configure Python
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.10.0"
+      - name: Install Python 3.13 and locked dependencies
+        working-directory: bank2odoo-checkout
+        shell: pwsh
+        run: |
+          uv python install 3.13
+          if ($LASTEXITCODE -ne 0) { throw "Python install failed" }
+          uv sync --locked
+          if ($LASTEXITCODE -ne 0) { throw "Locked dependency sync failed" }
+      - name: Fail-closed bundled font verification
+        working-directory: bank2odoo-checkout
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+        run: |
+          uv run --locked python -m adapters.qt_style_probe.font_runtime --require-system-absent
+          if ($LASTEXITCODE -ne 0) { throw "Vazirmatn preflight failed" }
+      - name: Compare actual MainWindow widths on Windows Qt QPA
+        working-directory: bank2odoo-checkout
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONFAULTHANDLER: "1"
+          PYTHONIOENCODING: utf-8
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+          QT_SCALE_FACTOR: "1"
+          STAGE3_EVIDENCE: ${{ github.workspace }}/bank2odoo-checkout/stage3-evidence
+        run: |
+          uv run --locked python -m tests.qt_stage3_fixed_minimum_qualification
+          if ($LASTEXITCODE -ne 0) { throw "Stage 3 qualification failed" }
+      - name: Upload original-resolution evidence even on partial failure
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bank2odoo-stage3-fixed-min-width-windows-qt
+          path: bank2odoo-checkout/stage3-evidence/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Publish reviewable images and measurements to dedicated evidence branch
+        if: success()
+        working-directory: bank2odoo-checkout
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c evidence/stage3-fixed-min-width-windows-20261102
+          git add --force stage3-evidence
+          git commit -m "evidence(ui): authentic Stage 3 Windows Qt original PNGs and measurements"
+          git push origin HEAD:refs/heads/evidence/stage3-fixed-min-width-windows-20261102
