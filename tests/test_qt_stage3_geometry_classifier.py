@@ -1,7 +1,6 @@
 """Regression protection for Stage 3 measurement-to-verdict geometry classification."""
 from __future__ import annotations
 
-import copy
 import unittest
 
 from tests import qt_stage3_geometry_classifier as classifier
@@ -40,6 +39,30 @@ class Stage3GeometryClassifierTests(unittest.TestCase):
         ))
         self.assert_unqualified([case])
         self.assertFalse(classifier.classify_geometry([case])["all_key_controls_reachable"])
+
+    def test_focused_regression_kills_prior_partial_visibility_mutant(self):
+        # Run the same focused regression under the original defective verdict.
+        # A regression suite that accepts this mutant has no protection.
+        from unittest.mock import patch
+
+        def prior_classifier(states):
+            old_reach = all(
+                control is None or control["in_viewport"]
+                for state in states for control in state["reachable"].values()
+            )
+            old_overflow = max(state["horizontal_scroll_max"] for state in states)
+            return {"status": "GEOMETRY_PASS" if old_reach and not old_overflow
+                    else "NOT_QUALIFIED", "failure_reasons": [],
+                    "all_key_controls_reachable": old_reach}
+
+        targeted = Stage3GeometryClassifierTests(
+            "test_partial_horizontal_clipping_fails_even_when_in_viewport")
+        with patch.object(classifier, "classify_geometry", side_effect=prior_classifier):
+            result = unittest.TestResult()
+            targeted.run(result)
+        self.assertEqual(len(result.failures), 1,
+                         "The partial-clipping regression must kill the old classifier")
+        self.assertEqual(len(result.errors), 0)
 
     def test_missing_required_control_and_none_are_not_success(self):
         for mutation in ("absent", "none", "no_required_registry",
