@@ -889,7 +889,9 @@ class AccountantUiTests(unittest.TestCase):
         self.assertTrue(self.window.approved.isChecked())
         self.assertFalse(self.window.save_button.isEnabled())
         self.assertIn("انتخاب", self.window.convert_button.text())
-        self.window.convert_button.click()  # Must ask, never retry automatically.
+        with patch("bank2odoo.ui.window.QFileDialog.getExistingDirectory", return_value="") as picker:
+            self.window.convert_button.click()  # Must ask, never retry automatically.
+        picker.assert_called_once()
         self.app.processEvents()
         self.assertEqual(writer.call_count, 1)
 
