@@ -674,6 +674,8 @@ class AccountantUiTests(unittest.TestCase):
         self.window.output_directory.setText(str(not_folder))
         self._save()
         self.assertIn("خطای ذخیره", self.window.status.text())
+        self.assertIn("پوشه خصوصیِ موجود", self.window.status.text())
+        self.assertNotIn("هم‌نام", self.window.status.text())
         self.assertFalse(list(self.private.glob("Bank2Odoo_*")))
         # Manually pre-existing private name is not replaced and partner not created.
         self.window.output_directory.setText(str(self.private))
@@ -685,6 +687,8 @@ class AccountantUiTests(unittest.TestCase):
         self.assertFalse((self.private / f"{prefix}_candidate.csv").exists())
         self.assertIn("هم‌نام", self.window.status.text())
         self.assertNotIn("محتوای یکسان", self.window.status.text())
+        self.assertIn("already exist", self.window.details.toPlainText())
+        self.assertNotIn(str(self.private), self.window.details.toPlainText())
 
     def test_failed_conversion_does_not_enable_save(self):
         self._select(self.source)
