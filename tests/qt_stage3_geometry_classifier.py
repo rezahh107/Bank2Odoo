@@ -52,10 +52,9 @@ def expected_controls(variant: str, state: str) -> tuple[tuple[str, ...], tuple[
         visible.extend(SAVED_VISIBLE)
     if state in ACTIVE_CANCEL_STATES:
         visible.append("cancel_button")
-    all_known = (*ALWAYS_VISIBLE, "journal", *CONDITIONAL_CONTROLS)
-    # Journal does not exist at all in the journal-free variant; absence is
-    # checked separately against control_presence, not called 'hidden'.
-    hidden = tuple(k for k in all_known if k != "journal" and k not in visible)
+    # The native save_button is intentionally hidden; contextual primary owns
+    # saving. The cancellation control is hidden except while converting.
+    hidden = ("save_button",) if state in ACTIVE_CANCEL_STATES else ("save_button", "cancel_button")
     return tuple(visible), hidden
 
 
@@ -137,23 +136,26 @@ def classify_geometry(states: object, *, variant: str, width: int) -> dict:
         measured = state.get("reachable")
         required_names = set(expected_visible)
         hidden_names = set(expected_hidden)
-        contract_names = required_names | hidden_names
+        known_names = set((*ALWAYS_VISIBLE, "journal", *CONDITIONAL_CONTROLS))
+        contract_names = known_names - ({"journal"} if variant == "journal_free" else set())
         if (not isinstance(observed_required, list)
                 or len(observed_required) != len(set(observed_required))
-                or set(observed_required) != required_names):
+                or not required_names.issubset(set(observed_required))):
             failures.append(prefix + "required_control_registry_mismatch")
             reachable_ok = False
         if not isinstance(visible, dict) or not isinstance(measured, dict):
             failures.append(prefix + "missing_control_observations")
             reachable_ok = False
             continue
-        if not isinstance(presence, dict) or set(presence) != contract_names | {"journal"}:
+        if not isinstance(presence, dict) or set(presence) != known_names:
             failures.append(prefix + "missing_control_presence_observations")
             reachable_ok = False
         if set(visible) != contract_names:
             failures.append(prefix + "control_visibility_registry_mismatch")
             reachable_ok = False
-        if set(measured) != required_names:
+        if (isinstance(observed_required, list) and
+                (set(measured) != set(observed_required)
+                 or {k for k, v in visible.items() if v is True} != set(observed_required))):
             failures.append(prefix + "reachability_registry_mismatch")
             reachable_ok = False
         if isinstance(presence, dict):
@@ -173,6 +175,9 @@ def classify_geometry(states: object, *, variant: str, width: int) -> dict:
             if visible.get(name) is not True:
                 failures.append(prefix + name + ":expected_visible")
                 reachable_ok = False
+        # Also verify any other visible control instead of trusting an
+        # observer-controlled list to exclude inconvenient geometry.
+        for name in (observed_required if isinstance(observed_required, list) else expected_visible):
             info = measured.get(name)
             if not isinstance(info, dict):
                 failures.append(prefix + name + ":missing_reachability")
