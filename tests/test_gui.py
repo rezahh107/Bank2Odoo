@@ -1469,6 +1469,53 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 1)
         self.assertEqual(len(list(self.private.glob(".bank2odoo-*.tmp"))), 0)
 
+    def test_real_competing_paired_publications_never_overwrite(self):
+        """Two writers choose the same free pair before either can publish."""
+        from concurrent.futures import ThreadPoolExecutor
+        from decimal import Decimal
+        from threading import Barrier
+        from bank2odoo.ui.window import _available_paired_save_paths
+        from bank2odoo.reporting.output import (
+            SavePublicationError, control_report, output_csv, save_candidate,
+        )
+        from bank2odoo.validation.financial import StatementError
+
+        first = self._convert()
+        other = actual_convert(
+            self.source, Context("IRR", "TOMAN", approved_factor=Decimal("0.1"))
+        )
+        self.assertEqual(first.sha256, other.sha256)
+        self.assertNotEqual(output_csv(first), output_csv(other))
+        folder = self.private / "parallel_save"
+        folder.mkdir()
+        basename = f"Bank2Odoo_{self.source.stem}_{first.sha256[:10]}_20261102_171105"
+        csv_path = folder / f"{basename}_candidate.csv"
+        report_path = folder / f"{basename}_control.txt"
+        both_selected = Barrier(2)
+
+        def publish(result):
+            selected = _available_paired_save_paths(csv_path, report_path)
+            both_selected.wait(timeout=10)
+            try:
+                save_candidate(result, *selected)
+            except (SavePublicationError, StatementError) as exc:
+                return ("rejected", exc)
+            return ("published", result)
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(publish, candidate)
+                       for candidate in (first, other)]
+            outcomes = [future.result(timeout=15) for future in futures]
+        successes = [value for label, value in outcomes if label == "published"]
+        failures = [value for label, value in outcomes if label == "rejected"]
+        self.assertEqual(len(successes), 1)
+        self.assertEqual(len(failures), 1)
+        winner = successes[0]
+        self.assertEqual(csv_path.read_bytes(), output_csv(winner).encode("utf-8"))
+        self.assertEqual(report_path.read_bytes(), control_report(winner).encode("utf-8"))
+        self.assertEqual(len(list(folder.glob("Bank2Odoo_*"))), 2)
+        self.assertEqual(len(list(folder.glob(".bank2odoo-*.tmp"))), 0)
+
     def test_collision_probe_access_denied_is_not_a_fake_name_conflict(self):
         result = self._convert()
         self.window.output_directory.setText(str(self.private))
