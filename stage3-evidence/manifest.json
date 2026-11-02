@@ -1,11 +1,11 @@
 {
-  "utc": "2026-11-02T08:02:52.849173+00:00",
+  "utc": "2026-11-02T08:04:29.385779+00:00",
   "purpose": "Stage 3 design qualification only — not a product implementation",
   "source_heads": {
     "main": "e0f50ab8605024896bf6975050fb4034b874514e",
     "journal_free_pr20": "aa4362adfa8cd3e6e2873c8b36de79ce8183e3bd"
   },
-  "qualification_test_head": "7c4ba822f745b1373882ae817cb091f24da58224",
+  "qualification_test_head": "5f493a56232ccc8c4c283a9a005d447391271044",
   "test_override": "Instance-level _reflow_workspace force QBoxLayout.LeftToRight; setMinimumSize(candidate,480)",
   "machine": {
     "platform": "Windows-2025Server-10.0.26100-SP0",
@@ -167,6 +167,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -256,6 +262,12 @@
             343
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -356,6 +368,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -445,6 +463,12 @@
             343
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -544,6 +568,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -645,6 +675,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -745,6 +781,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -844,6 +886,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -954,6 +1002,15 @@
               "view": "bottom",
               "vertical_pos": 451
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
           ],
           "reachable": {
             "approved": {
@@ -1095,6 +1152,15 @@
               "vertical_pos": 451
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -1214,6 +1280,15 @@
             343
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -1353,6 +1428,17 @@
               "view": "bottom",
               "vertical_pos": 554
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
           ],
           "reachable": {
             "approved": {
@@ -1514,6 +1600,15 @@
               "vertical_pos": 451
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -1587,7 +1682,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "main_journal",
@@ -1655,6 +1755,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -1745,6 +1851,12 @@
             383
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -1834,6 +1946,12 @@
             383
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -1923,6 +2041,12 @@
             383
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -2012,6 +2136,12 @@
             383
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -2101,6 +2231,15 @@
             383
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -2220,6 +2359,15 @@
             383
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -2360,6 +2508,17 @@
               "vertical_pos": 554
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -2453,7 +2612,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "main_journal",
@@ -2521,6 +2685,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -2611,6 +2781,12 @@
             420
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -2700,6 +2876,12 @@
             420
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -2789,6 +2971,12 @@
             420
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -2878,6 +3066,12 @@
             420
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -2967,6 +3161,15 @@
             420
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -3086,6 +3289,15 @@
             420
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -3226,6 +3438,17 @@
               "vertical_pos": 531
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -3319,7 +3542,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "main_journal",
@@ -3387,6 +3615,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -3477,6 +3711,12 @@
             440
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -3577,6 +3817,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -3666,6 +3912,12 @@
             440
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -3765,6 +4017,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -3866,6 +4124,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -3966,6 +4230,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -4065,6 +4335,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -4175,6 +4451,15 @@
               "view": "bottom",
               "vertical_pos": 405
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
           ],
           "reachable": {
             "approved": {
@@ -4316,6 +4601,15 @@
               "vertical_pos": 405
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -4435,6 +4729,15 @@
             440
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -4574,6 +4877,17 @@
               "view": "bottom",
               "vertical_pos": 485
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
           ],
           "reachable": {
             "approved": {
@@ -4735,6 +5049,15 @@
               "vertical_pos": 382
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -4808,7 +5131,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "main_journal",
@@ -4876,6 +5204,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -4966,6 +5300,12 @@
             460
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -5055,6 +5395,12 @@
             460
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -5144,6 +5490,12 @@
             460
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -5233,6 +5585,12 @@
             460
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -5322,6 +5680,15 @@
             460
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -5441,6 +5808,15 @@
             460
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -5581,6 +5957,17 @@
               "vertical_pos": 462
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -5674,7 +6061,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "main_journal",
@@ -5742,6 +6134,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -5832,6 +6230,12 @@
             353
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -5932,6 +6336,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -6021,6 +6431,12 @@
             353
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -6120,6 +6536,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -6221,6 +6643,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -6321,6 +6749,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -6420,6 +6854,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -6530,6 +6970,15 @@
               "view": "bottom",
               "vertical_pos": 447
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
           ],
           "reachable": {
             "approved": {
@@ -6671,6 +7120,15 @@
               "vertical_pos": 447
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -6790,6 +7248,15 @@
             353
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -6929,6 +7396,17 @@
               "view": "bottom",
               "vertical_pos": 552
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
           ],
           "reachable": {
             "approved": {
@@ -7090,6 +7568,15 @@
               "vertical_pos": 447
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -7163,7 +7650,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "main_journal",
@@ -7231,6 +7723,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -7321,6 +7819,12 @@
             389
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -7410,6 +7914,12 @@
             389
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -7499,6 +8009,12 @@
             389
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -7588,6 +8104,12 @@
             389
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -7677,6 +8199,15 @@
             389
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -7796,6 +8327,15 @@
             389
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -7936,6 +8476,17 @@
               "vertical_pos": 529
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -8029,7 +8580,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "main_journal",
@@ -8097,6 +8653,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -8187,6 +8749,12 @@
             419
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -8276,6 +8844,12 @@
             419
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -8365,6 +8939,12 @@
             419
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -8454,6 +9034,12 @@
             419
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -8543,6 +9129,15 @@
             419
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -8662,6 +9257,15 @@
             419
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -8802,6 +9406,17 @@
               "vertical_pos": 529
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -8895,7 +9510,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "main_journal",
@@ -8963,6 +9583,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -9053,6 +9679,12 @@
             439
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -9153,6 +9785,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -9242,6 +9880,12 @@
             439
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -9341,6 +9985,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -9442,6 +10092,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -9542,6 +10198,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -9641,6 +10303,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -9751,6 +10419,15 @@
               "view": "bottom",
               "vertical_pos": 401
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
           ],
           "reachable": {
             "approved": {
@@ -9892,6 +10569,15 @@
               "vertical_pos": 401
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -10011,6 +10697,15 @@
             439
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -10150,6 +10845,17 @@
               "view": "bottom",
               "vertical_pos": 483
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
           ],
           "reachable": {
             "approved": {
@@ -10311,6 +11017,15 @@
               "vertical_pos": 401
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -10384,7 +11099,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "main_journal",
@@ -10452,6 +11172,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -10542,6 +11268,12 @@
             459
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -10631,6 +11363,12 @@
             459
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -10720,6 +11458,12 @@
             459
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -10809,6 +11553,12 @@
             459
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -10898,6 +11648,15 @@
             459
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -11017,6 +11776,15 @@
             459
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -11157,6 +11925,17 @@
               "vertical_pos": 460
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -11250,7 +12029,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "journal_free",
@@ -11318,6 +12102,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -11408,6 +12198,12 @@
             343
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -11508,6 +12304,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -11597,6 +12399,12 @@
             343
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -11696,6 +12504,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -11797,6 +12611,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -11897,6 +12717,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -11996,6 +12822,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -12106,6 +12938,15 @@
               "view": "bottom",
               "vertical_pos": 451
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
           ],
           "reachable": {
             "approved": {
@@ -12247,6 +13088,15 @@
               "vertical_pos": 451
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -12366,6 +13216,15 @@
             343
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -12505,6 +13364,17 @@
               "view": "bottom",
               "vertical_pos": 554
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
           ],
           "reachable": {
             "approved": {
@@ -12666,6 +13536,15 @@
               "vertical_pos": 451
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -12739,7 +13618,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "journal_free",
@@ -12807,6 +13691,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -12897,6 +13787,12 @@
             383
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -12986,6 +13882,12 @@
             383
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -13075,6 +13977,12 @@
             383
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -13164,6 +14072,12 @@
             383
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -13253,6 +14167,15 @@
             383
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -13372,6 +14295,15 @@
             383
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -13512,6 +14444,17 @@
               "vertical_pos": 554
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -13605,7 +14548,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "journal_free",
@@ -13673,6 +14621,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -13763,6 +14717,12 @@
             420
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -13852,6 +14812,12 @@
             420
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -13941,6 +14907,12 @@
             420
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -14030,6 +15002,12 @@
             420
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -14119,6 +15097,15 @@
             420
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -14238,6 +15225,15 @@
             420
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -14378,6 +15374,17 @@
               "vertical_pos": 531
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -14471,7 +15478,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "journal_free",
@@ -14539,6 +15551,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -14629,6 +15647,12 @@
             440
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -14729,6 +15753,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -14818,6 +15848,12 @@
             440
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -14917,6 +15953,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -15018,6 +16060,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -15118,6 +16166,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -15217,6 +16271,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -15327,6 +16387,15 @@
               "view": "bottom",
               "vertical_pos": 405
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
           ],
           "reachable": {
             "approved": {
@@ -15468,6 +16537,15 @@
               "vertical_pos": 405
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -15587,6 +16665,15 @@
             440
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -15726,6 +16813,17 @@
               "view": "bottom",
               "vertical_pos": 485
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
           ],
           "reachable": {
             "approved": {
@@ -15887,6 +16985,15 @@
               "vertical_pos": 382
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -15960,7 +17067,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "journal_free",
@@ -16028,6 +17140,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -16118,6 +17236,12 @@
             460
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -16207,6 +17331,12 @@
             460
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -16296,6 +17426,12 @@
             460
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -16385,6 +17521,12 @@
             460
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -16474,6 +17616,15 @@
             460
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -16593,6 +17744,15 @@
             460
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -16733,6 +17893,17 @@
               "vertical_pos": 462
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -16826,7 +17997,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "journal_free",
@@ -16894,6 +18070,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -16984,6 +18166,12 @@
             353
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -17084,6 +18272,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -17173,6 +18367,12 @@
             353
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -17272,6 +18472,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -17373,6 +18579,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -17473,6 +18685,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -17572,6 +18790,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -17682,6 +18906,15 @@
               "view": "bottom",
               "vertical_pos": 447
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
           ],
           "reachable": {
             "approved": {
@@ -17823,6 +19056,15 @@
               "vertical_pos": 447
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -17942,6 +19184,15 @@
             353
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -18081,6 +19332,17 @@
               "view": "bottom",
               "vertical_pos": 552
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
           ],
           "reachable": {
             "approved": {
@@ -18242,6 +19504,15 @@
               "vertical_pos": 447
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -18315,7 +19586,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "journal_free",
@@ -18383,6 +19659,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -18473,6 +19755,12 @@
             389
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -18562,6 +19850,12 @@
             389
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -18651,6 +19945,12 @@
             389
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -18740,6 +20040,12 @@
             389
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -18829,6 +20135,15 @@
             389
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -18948,6 +20263,15 @@
             389
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -19088,6 +20412,17 @@
               "vertical_pos": 529
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -19181,7 +20516,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "journal_free",
@@ -19249,6 +20589,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -19339,6 +20685,12 @@
             419
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -19428,6 +20780,12 @@
             419
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -19517,6 +20875,12 @@
             419
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -19606,6 +20970,12 @@
             419
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -19695,6 +21065,15 @@
             419
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -19814,6 +21193,15 @@
             419
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -19954,6 +21342,17 @@
               "vertical_pos": 529
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -20047,7 +21446,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "journal_free",
@@ -20115,6 +21519,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -20205,6 +21615,12 @@
             439
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -20305,6 +21721,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -20394,6 +21816,12 @@
             439
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -20493,6 +21921,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -20594,6 +22028,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -20694,6 +22134,12 @@
               "vertical_pos": 0
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -20793,6 +22239,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -20903,6 +22355,15 @@
               "view": "bottom",
               "vertical_pos": 401
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
           ],
           "reachable": {
             "approved": {
@@ -21044,6 +22505,15 @@
               "vertical_pos": 401
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -21163,6 +22633,15 @@
             439
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -21302,6 +22781,17 @@
               "view": "bottom",
               "vertical_pos": 483
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
           ],
           "reachable": {
             "approved": {
@@ -21463,6 +22953,15 @@
               "vertical_pos": 401
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -21536,7 +23035,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     },
     {
       "variant": "journal_free",
@@ -21604,6 +23108,12 @@
               "view": "top",
               "vertical_pos": 0
             }
+          ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
           ],
           "reachable": {
             "approved": {
@@ -21694,6 +23204,12 @@
             459
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -21783,6 +23299,12 @@
             459
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -21872,6 +23394,12 @@
             459
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -21961,6 +23489,12 @@
             459
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -22050,6 +23584,15 @@
             459
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -22169,6 +23712,15 @@
             459
           ],
           "screenshots": [],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -22309,6 +23861,17 @@
               "vertical_pos": 460
             }
           ],
+          "required_controls": [
+            "approved",
+            "primary",
+            "source",
+            "status",
+            "balance",
+            "save_folder",
+            "saved_paths",
+            "csv_path",
+            "report_path"
+          ],
           "reachable": {
             "approved": {
               "in_viewport": true,
@@ -22402,7 +23965,12 @@
             }
           }
         }
-      ]
+      ],
+      "geometry_classification": {
+        "status": "GEOMETRY_PASS",
+        "all_key_controls_reachable": true,
+        "failure_reasons": []
+      }
     }
   ],
   "negative": {
@@ -22462,6 +24030,12 @@
         "vertical_pos": 0
       }
     ],
+    "required_controls": [
+      "approved",
+      "primary",
+      "source",
+      "status"
+    ],
     "reachable": {
       "approved": {
         "in_viewport": true,
@@ -22503,6 +24077,15 @@
           92
         ]
       }
+    },
+    "geometry_classification": {
+      "status": "NOT_QUALIFIED",
+      "all_key_controls_reachable": false,
+      "failure_reasons": [
+        "forced_below_native_required:missing_inconsistent_or_positive_overflow",
+        "forced_below_native_required:primary:not_horizontally_contained",
+        "forced_below_native_required:status:not_horizontally_contained"
+      ]
     }
   },
   "contact_sheets": [
