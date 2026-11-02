@@ -1281,6 +1281,47 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(len(list(recovered.glob("Bank2Odoo_*"))), 2)
         self.assertFalse(self.window.convert_button.isEnabled())
 
+    def test_genuine_repeated_save_same_statement_preserves_existing_pair(self):
+        original_candidate = self._convert()
+        first_folder = self.private / "original_pair"
+        first_folder.mkdir()
+        self.window.output_directory.setText(str(first_folder))
+        self._save()
+        self.assertTrue(self.window._saved)
+        original = {path.name: path.read_bytes()
+                    for path in first_folder.glob("Bank2Odoo_*")}
+        self.assertEqual(len(original), 2)
+
+        # A deliberate repeat is a NEW conversion of the same source bytes,
+        # not an automatic save retry; the pre-existing pair remains immutable.
+        repeated_candidate = self._convert()
+        self.assertEqual(original_candidate.sha256, repeated_candidate.sha256)
+        self.window.output_directory.setText(str(first_folder))
+        self._save()
+        self.assertFalse(self.window._saved)
+        self.assertIn("هم‌نام", self.window.status.text())
+        self.assertEqual(self.window.output_directory.text(), str(first_folder))
+        self.assertEqual(
+            {path.name: path.read_bytes() for path in first_folder.glob("Bank2Odoo_*")},
+            original)
+        self.assertFalse(self.window.save_button.isEnabled())
+
+        another_folder = self.private / "alternate_folder"
+        another_folder.mkdir()
+        with patch("bank2odoo.ui.window.QFileDialog.getExistingDirectory",
+                   return_value=str(another_folder)) as picker:
+            self.window.convert_button.click()
+        picker.assert_called_once()
+        self.assertEqual(self.window.output_directory.text(), str(another_folder))
+        self.window.convert_button.click()
+        self._wait_operation(self.window.save_done)
+        self.assertTrue(self.window._saved)
+        self.assertIs(self.window.result, repeated_candidate)
+        self.assertEqual(len(list(another_folder.glob("Bank2Odoo_*"))), 2)
+        self.assertEqual(
+            {path.name: path.read_bytes() for path in first_folder.glob("Bank2Odoo_*")},
+            original)
+
     def test_existing_output_collision_keeps_file_and_requires_reselection(self):
         candidate = self._convert()
         evidence = self.window.result_state.text()
