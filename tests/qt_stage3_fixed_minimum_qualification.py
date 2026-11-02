@@ -24,13 +24,13 @@ from adapters.qt_style_probe import font_runtime
 from bank2odoo.ui import window as journal_free
 from tests.qt_theme_pilot_capture import fixture, wait_finished
 from tests.qt_stage1_geometry_probe import win32_metrics, screen_record
-from tests.qt_stage3_geometry_classifier import classify_geometry
+from tests.qt_stage3_geometry_classifier import (
+    classify_geometry, expected_states, WIDTHS, SCHEMES, VARIANTS,
+)
 
 MAIN_SHA = "e0f50ab8605024896bf6975050fb4034b874514e"
 PR20_SHA = "aa4362adfa8cd3e6e2873c8b36de79ce8183e3bd"
-WIDTHS = (800, 840, 900, 940, 980)
 HEIGHT = 620
-SCHEMES = ("light", "dark")
 
 
 def pinned_main(folder):
@@ -68,12 +68,15 @@ def can_reveal(app, w, target):
     app.processEvents()
     rect = QRect(target.mapTo(w.scroll.viewport(), QPoint(0, 0)), target.size())
     area = w.scroll.viewport().rect()
-    # The target must be at least partially inside the usable vertical viewport.
-    # Horizontal containment checked separately except for intentionally scrollable line edits.
+    # Actual post-scroll geometry; keep flags redundant so consistency can
+    # be checked independently at the verdict boundary.
+    x, y, width, height = rect.x(), rect.y(), rect.width(), rect.height()
+    vw, vh = area.width(), area.height()
     return {
-        "in_viewport": rect.intersects(area),
-        "horizontally_contained": rect.left() >= area.left() and rect.right() <= area.right(),
-        "rectangle": [rect.x(), rect.y(), rect.width(), rect.height()],
+        "in_viewport": x < vw and x + width > 0 and y < vh and y + height > 0,
+        "horizontally_contained": x >= 0 and x + width <= vw,
+        "vertically_contained": y >= 0 and y + height <= vh,
+        "rectangle": [x, y, width, height],
     }
 
 
@@ -135,15 +138,29 @@ def measure(app, w, stage):
         "screenshots": [],
     }
     # Scroll both directions; test actual viewport reachability, not merely the scrollbar policy.
-    checks = {"approved": w.approved, "primary": w.convert_button,
-              "source": w.select_button, "status": w.status}
-    if w.result is not None:
-        checks.update({"balance": w.result_state, "save_folder": w.directory_button,
-                       "saved_paths": w.saved_paths})
-    if w._saved:
-        checks.update({"csv_path": w.saved_csv_path, "report_path": w.saved_report_path})
-    values["required_controls"] = list(checks)
-    values["reachable"] = {key: can_reveal(app, w, child) for key, child in checks.items()}
+    # Exhaustive, fixed observation registry. The expected controls and states
+    # come from an independent contract, not from whichever widgets appear.
+    checks = {
+        "source": w.select_button, "path_field": w.path_field,
+        "detected": w.detected, "source_unit": w.source_unit,
+        "target_unit": w.target_unit, "precision": w.precision,
+        "factor": w.factor, "approved": w.approved,
+        "primary": w.convert_button, "status": w.status,
+        "journal": getattr(w, "journal", None),
+        "save_button": w.save_button, "cancel_button": w.cancel_button,
+        "balance": w.result_state, "save_folder": w.directory_button,
+        "output_directory": w.output_directory, "saved_paths": w.saved_paths,
+        "csv_path": w.saved_csv_path, "report_path": w.saved_report_path,
+    }
+    presence = {key: widget is not None for key, widget in checks.items()}
+    visibility = {key: widget.isVisibleTo(w)
+                  for key, widget in checks.items() if widget is not None}
+    observed_visible = [key for key, shown in visibility.items() if shown]
+    values["control_presence"] = presence
+    values["control_visibility"] = visibility
+    values["required_controls"] = observed_visible
+    values["reachable"] = {key: can_reveal(app, w, checks[key])
+                           for key in observed_visible}
     return values
 
 
@@ -361,14 +378,16 @@ def main():
             for scheme in SCHEMES:
                 for width in WIDTHS:
                     case = run_case(app, module, variant, scheme, width, out, folder)
-                    case["geometry_classification"] = classify_geometry(case["states"])
+                    case["geometry_classification"] = classify_geometry(
+                        case["states"], variant=variant, width=width)
                     summary["cases"].append(case)
                     worst = max(s["horizontal_scroll_max"] for s in case["states"])
                     req = max(s["required_content_width"] for s in case["states"])
                     print("STAGE3_CASE", variant, scheme, width, "required_max", req,
                           "overflow_scroll_max", worst, flush=True)
         summary["negative"] = negative_case(app, journal_free, out)
-    summary["negative"]["geometry_classification"] = classify_geometry([summary["negative"]])
+    summary["negative"]["geometry_classification"] = classify_geometry(
+        [summary["negative"]], variant="journal_free", width=500)
     for variant in ("main_journal", "journal_free"):
         for scheme in SCHEMES:
             summary["contact_sheets"].append(make_sheet(out, summary, variant, scheme))
@@ -378,7 +397,7 @@ def main():
     rows.append("Source main: `" + MAIN_SHA + "`; PR20: `" + PR20_SHA + "`.")
     rows.append("Light uses test-set Qt Light hint and native-style branch; Dark uses a test-set Dark hint and simulated Fusion palette. Both have authentic QWidget grabs on a Windows hosted runner.")
     rows.append("Comparison configuration overrides only the live test window's reflow to two columns; production stays unchanged. Logical pixels; PNG dimensions and Qt DPR recorded per capture.")
-    rows.append("GEOMETRY_PASS is assigned only by tests.qt_stage3_geometry_classifier.classify_geometry over every required control in every measured state; missing and partially clipped controls fail closed.")
+    rows.append("GEOMETRY_PASS derives from independent expected scenario/control contracts. Each measured widget must be fully contained both horizontally and vertically after individual programmatic scrolling; contradictions fail closed. This does NOT prove simultaneous on-screen visibility or human navigation.")
     rows.append("")
     rows.append("| Variant | Scheme | Minimum width | Max required | Viewport | Max horizontal scrollbar overflow | All key controls reachable | Geometry status |")
     rows.append("|---|---|---:|---:|---:|---:|---|---|")
@@ -398,6 +417,8 @@ def main():
     (out / "MEASUREMENTS.md").write_text("\n".join(rows) + "\n", encoding="utf-8")
     (out / "manifest.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    assert len(summary["cases"]) == len(VARIANTS) * len(SCHEMES) * len(WIDTHS)
+    assert all(len(c["states"]) == len(expected_states(c["width"])) for c in summary["cases"])
     if summary["negative"]["geometry_classification"]["status"] != "NOT_QUALIFIED":
         raise AssertionError("500px control must remain NOT_QUALIFIED; evidence was saved")
     print("STAGE3_COMPLETE", len(summary["cases"]), "cases;",
