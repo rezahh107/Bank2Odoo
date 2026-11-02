@@ -73,28 +73,52 @@ def control_report(result: Conversion) -> str:
     return "\n".join(lines) + "\n"
 
 
+class SavePublicationError(OSError):
+    """A save failed or cleanup was incomplete; outcome describes observed final files.
+
+    COMPLETE_PAIR means both expected byte-for-byte files exist but cleanup
+    failed, not that all filesystem housekeeping succeeded.
+    """
+
+    def __init__(self, message: str, *, outcome: str, cleanup_failed: bool) -> None:
+        super().__init__(message)
+        self.outcome = outcome
+        self.cleanup_failed = cleanup_failed
+
+
 def save_candidate(result: Conversion, csv_path: Path, report_path: Path) -> None:
-    """Prevent a partially failed run from leaving an apparently complete CSV."""
+    """Publish report first, never overwrite, and inspect the final pair after errors.
+
+    Two independent hard links are NOT a crash-atomic multi-file transaction.
+    Failures are classified from observed files; unsafe/unknown results fail
+    closed and require manual inspection rather than an automatic retry.
+    """
     csv_path, report_path = csv_path.resolve(), report_path.resolve()
     if csv_path == report_path or csv_path.exists() or report_path.exists():
         raise StatementError("Output files must be distinct and must not already exist")
     if csv_path.parent != report_path.parent or not csv_path.parent.is_dir():
         raise StatementError("Both outputs must use the same existing private directory")
-    # Git ignores are not sufficient to keep real bank data out of a public
-    # checkout, especially for plain-text control reports.
     checkout = Path(__file__).resolve().parents[2]
     if csv_path.is_relative_to(checkout) or report_path.is_relative_to(checkout):
         raise StatementError("Financial outputs must be saved outside the public source checkout")
-    # Publish the private report first: an interrupted run must never leave
-    # an unaccompanied Odoo-looking CSV behind.
+
+    # Order is deliberately report first: a disrupted save must not create a
+    # standalone Odoo-looking CSV before its private trace.
     files = (report_path, csv_path)
     contents = (control_report(result), output_csv(result))
-    staged = []
-    published = []
+    expected = tuple(content.encode("utf-8") for content in contents)
+    staged: list[Path] = []
+    published: list[Path] = []
+    rollback_failures: list[OSError] = []
+    cleanup_failures: list[OSError] = []
+    primary: Exception | None = None
+
     try:
         for content in contents:
-            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", newline="", dir=csv_path.parent,
-                                             prefix=".bank2odoo-", suffix=".tmp", delete=False) as handle:
+            with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", newline="", dir=csv_path.parent,
+                prefix=".bank2odoo-", suffix=".tmp", delete=False
+            ) as handle:
                 staged.append(Path(handle.name))
                 handle.write(content)
                 handle.flush()
@@ -102,13 +126,59 @@ def save_candidate(result: Conversion, csv_path: Path, report_path: Path) -> Non
         for temporary, destination in zip(staged, files):
             if destination.exists():
                 raise StatementError(f"Output appeared during conversion: {destination.name}")
-            # os.link refuses to overwrite existing destination on both POSIX/Windows.
+            # os.link fails rather than replacing a destination on Windows/NTFS
+            # and POSIX; do not substitute os.replace or rename.
             os.link(temporary, destination)
             published.append(destination)
-    except Exception:
-        for destination in published:
-            destination.unlink(missing_ok=True)
-        raise
+        if any(path.read_bytes() != data for path, data in zip(files, expected)):
+            raise OSError("Published output pair did not match the staged bytes")
+    except Exception as exc:
+        primary = exc
+        # Only paths created by THIS invocation may be removed. A failed
+        # rollback is separately recorded and never masks the first failure.
+        for destination in reversed(published):
+            try:
+                destination.unlink()
+            except OSError as rollback_error:
+                rollback_failures.append(rollback_error)
     finally:
         for temporary in staged:
-            temporary.unlink(missing_ok=True)
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError as cleanup_error:
+                cleanup_failures.append(cleanup_error)
+
+    def observed_outcome() -> str:
+        try:
+            present = tuple(path.exists() for path in files)
+            if any(exists and path not in published for path, exists in zip(files, present)):
+                return "AMBIGUOUS"
+            if not any(present):
+                return "NO_FINALS"
+            for path, exists, data in zip(files, present, expected):
+                if exists and (not path.is_file() or path.read_bytes() != data):
+                    return "AMBIGUOUS"
+            return "COMPLETE_PAIR" if all(present) else "PARTIAL"
+        except OSError:
+            return "AMBIGUOUS"
+
+    outcome = observed_outcome()
+    if primary is None and not cleanup_failures and outcome == "COMPLETE_PAIR":
+        return
+
+    # Preserve the originating publication exception as __cause__. Cleanup
+    # errors cannot silently rewrite a fully-published pair into "no outputs".
+    cause = primary or (cleanup_failures[0] if cleanup_failures else
+                        OSError("Final output verification was inconclusive"))
+    summary = f"{type(cause).__name__}: {cause}; final outcome={outcome}"
+    if rollback_failures:
+        summary += "; rollback failures=" + ", ".join(
+            f"{type(exc).__name__}: {exc}" for exc in rollback_failures
+        )
+    if cleanup_failures:
+        summary += "; temporary cleanup failures=" + ", ".join(
+            f"{type(exc).__name__}: {exc}" for exc in cleanup_failures
+        )
+    raise SavePublicationError(
+        summary, outcome=outcome, cleanup_failed=bool(cleanup_failures)
+    ) from cause
