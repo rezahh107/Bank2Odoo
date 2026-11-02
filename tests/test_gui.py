@@ -895,6 +895,83 @@ class AccountantUiTests(unittest.TestCase):
         self.app.processEvents()
         self.assertEqual(writer.call_count, 1)
 
+    def test_explicit_same_folder_retry_after_recoverable_error_needs_no_reconversion(self):
+        candidate = self._convert()
+        balance = self.window.result_state.text()
+        self.window.output_directory.setText(str(self.private))
+        with patch("bank2odoo.ui.window.save_candidate",
+                   side_effect=PermissionError("synthetic temporary denial")) as failing:
+            self._save()
+        self.assertEqual(failing.call_count, 1)
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertFalse(self.window.save_button.isEnabled())
+        with patch("bank2odoo.ui.window.QFileDialog.getExistingDirectory",
+                   return_value=str(self.private)) as picker:
+            self.window.convert_button.click()
+        picker.assert_called_once()
+        self.assertTrue(self.window.save_button.isEnabled())
+        self.window.convert_button.click()
+        self._wait_operation(self.window.save_done)
+        self.assertTrue(self.window._saved)
+        self.assertIs(self.window.result, candidate)
+        self.assertEqual(self.window.result_state.text(), balance)
+        self.assertTrue(self.window.approved.isChecked())
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
+
+    def test_same_source_new_valid_financial_context_does_not_overwrite(self):
+        self._convert()
+        self.window.output_directory.setText(str(self.private))
+        self._save()
+        original = {p.name: p.read_bytes()
+                    for p in self.private.glob("Bank2Odoo_*")}
+        self.assertEqual(len(original), 2)
+        self.window.target_unit.setCurrentIndex(self.window.target_unit.findData("TOMAN"))
+        self.window.factor.setText("0.1")
+        self.window.precision.setValue(1)
+        self._approve(source="IRR", target="TOMAN", factor="0.1")
+        self.window.start_conversion()
+        self._wait_conversion()
+        self.assertIsNotNone(self.window.result)
+        candidate = self.window.result
+        self.window.output_directory.setText(str(self.private))
+        self._save()
+        self.assertIs(self.window.result, candidate)
+        self.assertIn("هم‌نام", self.window.status.text())
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertEqual(
+            {p.name: p.read_bytes() for p in self.private.glob("Bank2Odoo_*")},
+            original)
+
+    def test_complete_pair_with_temp_cleanup_fault_is_warning_not_false_failure(self):
+        self._convert()
+        balance = self.window.result_state.text()
+        self.window.output_directory.setText(str(self.private))
+        real_unlink = Path.unlink
+        faulted = False
+        def cleanup_fails(path, *args, **kwargs):
+            nonlocal faulted
+            if path.name.startswith(".bank2odoo-") and not faulted:
+                faulted = True
+                raise PermissionError("synthetic temp cleanup fault")
+            return real_unlink(path, *args, **kwargs)
+        def write_with_cleanup_fault(result, csv_path, report_path):
+            with patch.object(Path, "unlink", autospec=True, side_effect=cleanup_fails):
+                actual_save_candidate(result, csv_path, report_path)
+        with patch("bank2odoo.ui.window.save_candidate",
+                   side_effect=write_with_cleanup_fault):
+            self._save()
+        self.assertTrue(self.window._saved)
+        self.assertEqual(self.window.result_state.text(), balance)
+        self.assertIn("با محتوای مورد انتظار", self.window.status.text())
+        self.assertNotIn("ذخیره هر دو فایل موفق بود", self.window.status.text())
+        self.assertTrue(self.window.saved_path_fields.isVisible())
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
+        self.assertEqual(len(list(self.private.glob(".bank2odoo-*.tmp"))), 1)
+        self.assertFalse(self.window.convert_button.isEnabled())
+        for path in self.private.glob(".bank2odoo-*.tmp"):
+            path.unlink()
+
     def test_async_save_failure_and_stale_finished_slot_never_publish_success(self):
         self._convert()
         self.window.output_directory.setText(str(self.private))
