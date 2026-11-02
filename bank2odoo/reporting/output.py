@@ -109,7 +109,6 @@ def save_candidate(result: Conversion, csv_path: Path, report_path: Path) -> Non
     expected = tuple(content.encode("utf-8") for content in contents)
     staged: list[Path] = []
     published: list[Path] = []
-    rollback_failures: list[OSError] = []
     cleanup_failures: list[OSError] = []
     primary: Exception | None = None
 
@@ -134,13 +133,10 @@ def save_candidate(result: Conversion, csv_path: Path, report_path: Path) -> Non
             raise OSError("Published output pair did not match the staged bytes")
     except Exception as exc:
         primary = exc
-        # Only paths created by THIS invocation may be removed. A failed
-        # rollback is separately recorded and never masks the first failure.
-        for destination in reversed(published):
-            try:
-                destination.unlink()
-            except OSError as rollback_error:
-                rollback_failures.append(rollback_error)
+        # Never unlink final output paths after publication. A different writer
+        # may have replaced a published path before this exception, so path
+        # membership in `published` does not prove current file ownership.
+        # Keep any partial outputs for explicit manual inspection instead.
     finally:
         for temporary in staged:
             try:
@@ -171,10 +167,6 @@ def save_candidate(result: Conversion, csv_path: Path, report_path: Path) -> Non
     cause = primary or (cleanup_failures[0] if cleanup_failures else
                         OSError("Final output verification was inconclusive"))
     summary = f"{type(cause).__name__}: {cause}; final outcome={outcome}"
-    if rollback_failures:
-        summary += "; rollback failures=" + ", ".join(
-            f"{type(exc).__name__}: {exc}" for exc in rollback_failures
-        )
     if cleanup_failures:
         summary += "; temporary cleanup failures=" + ", ".join(
             f"{type(exc).__name__}: {exc}" for exc in cleanup_failures

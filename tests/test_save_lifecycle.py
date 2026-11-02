@@ -106,7 +106,7 @@ class SavePublicationOutcomeTests(TestCase):
         self.assertIsInstance(captured.exception.__cause__, PermissionError)
         self.assertEqual(self.state(), {})
 
-    def test_second_link_failure_rolls_back_report_and_temps(self):
+    def test_second_link_failure_retains_report_and_cleans_temps(self):
         actual = output.os.link
         calls = []
         def fail_second(src, dst):
@@ -118,11 +118,14 @@ class SavePublicationOutcomeTests(TestCase):
             with self.assertRaises(SavePublicationError) as captured:
                 save_candidate(self.same, *self.pair())
         self.assertEqual(calls, [self.pair()[1].name, self.pair()[0].name])
-        self.assertEqual(captured.exception.outcome, "NO_FINALS")
+        self.assertEqual(captured.exception.outcome, "PARTIAL")
         self.assertIn("second-link fault", str(captured.exception.__cause__))
-        self.assertEqual(self.state(), {})
+        csv_path, report_path = self.pair()
+        self.assertFalse(csv_path.exists())
+        self.assertEqual(report_path.read_bytes(), control_report(self.same).encode("utf-8"))
+        self.assertEqual(len(list(self.folder.glob(".bank2odoo-*.tmp"))), 0)
 
-    def test_rollback_unlink_failure_preserves_primary_and_reports_partial(self):
+    def test_failed_publication_never_attempts_final_file_unlink(self):
         actual_link = output.os.link
         actual_unlink = Path.unlink
         count = 0
@@ -133,19 +136,43 @@ class SavePublicationOutcomeTests(TestCase):
             if count == 2:
                 raise OSError("primary synthetic publish fault")
             return actual_link(src, dst)
-        def report_rollback_fails(path, *args, **kwargs):
+        def forbid_final_unlink(path, *args, **kwargs):
             if path == report_path:
-                raise PermissionError("secondary synthetic rollback fault")
+                self.fail("Final output unlink must never be attempted")
             return actual_unlink(path, *args, **kwargs)
         with patch.object(output.os, "link", side_effect=second_link_fails), \
-             patch.object(Path, "unlink", autospec=True, side_effect=report_rollback_fails):
+             patch.object(Path, "unlink", autospec=True, side_effect=forbid_final_unlink):
             with self.assertRaises(SavePublicationError) as captured:
                 save_candidate(self.same, *self.pair())
         self.assertEqual(captured.exception.outcome, "PARTIAL")
         self.assertIn("primary synthetic publish fault", str(captured.exception.__cause__))
-        self.assertIn("secondary synthetic rollback fault", str(captured.exception))
         self.assertFalse(self.pair()[0].exists())
         self.assertEqual(report_path.read_bytes(), control_report(self.same).encode("utf-8"))
+        self.assertEqual(len(list(self.folder.glob(".bank2odoo-*.tmp"))), 0)
+
+    def test_published_report_replaced_by_independent_writer_survives_failure(self):
+        """Deterministic P0 regression: published pathname != current ownership."""
+        actual_link = output.os.link
+        csv_path, report_path = self.pair()
+        external = b"independent replacement - must survive"
+        calls = []
+        def replace_between_links(src, dst):
+            calls.append(Path(dst))
+            if len(calls) == 1:
+                actual_link(src, dst)
+                return
+            report_path.unlink()
+            report_path.write_bytes(external)
+            raise OSError("synthetic second-link failure after replacement")
+        with patch.object(output.os, "link", side_effect=replace_between_links):
+            with self.assertRaises(SavePublicationError) as captured:
+                save_candidate(self.same, csv_path, report_path)
+        self.assertEqual(calls, [report_path.resolve(), csv_path.resolve()])
+        self.assertEqual(report_path.read_bytes(), external)
+        self.assertFalse(csv_path.exists())
+        self.assertEqual(captured.exception.outcome, "AMBIGUOUS")
+        self.assertIn("second-link failure", str(captured.exception.__cause__))
+        self.assertFalse(captured.exception.cleanup_failed)
         self.assertEqual(len(list(self.folder.glob(".bank2odoo-*.tmp"))), 0)
 
     def test_cleanup_failure_after_complete_pair_is_not_false_no_outputs(self):
@@ -185,7 +212,7 @@ class SavePublicationOutcomeTests(TestCase):
             with self.assertRaises(SavePublicationError) as captured:
                 save_candidate(self.same, *self.pair())
         self.assertEqual(captured.exception.outcome, "AMBIGUOUS")
-        self.assertFalse(self.pair()[1].exists())
+        self.assertEqual(self.pair()[1].read_bytes(), control_report(self.same).encode("utf-8"))
         self.assertEqual(self.pair()[0].read_bytes(), b"other writer; do not delete")
         self.assertEqual(len(list(self.folder.glob(".bank2odoo-*.tmp"))), 0)
 

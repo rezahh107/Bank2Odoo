@@ -1037,13 +1037,9 @@ class AccountantUiTests(unittest.TestCase):
         from bank2odoo.reporting import output
         self._convert()
         self.window.output_directory.setText(str(self.private))
-        expected_report = (
-            self.private / f"Bank2Odoo_{self.source.stem}_{self.window.result.sha256[:10]}_control.txt"
-        ).resolve()
 
-        def fail_with_unremovable_report(result, csv_path, report_path):
+        def fail_after_report_published(result, csv_path, report_path):
             actual_link = output.os.link
-            actual_unlink = Path.unlink
             count = 0
             def link(src, dst):
                 nonlocal count
@@ -1051,16 +1047,11 @@ class AccountantUiTests(unittest.TestCase):
                 if count == 2:
                     raise OSError("synthetic CSV publication failed")
                 return actual_link(src, dst)
-            def unlink(path, *args, **kwargs):
-                if path == expected_report:
-                    raise PermissionError("synthetic rollback blocked")
-                return actual_unlink(path, *args, **kwargs)
-            with patch.object(output.os, "link", side_effect=link), \
-                 patch.object(Path, "unlink", autospec=True, side_effect=unlink):
+            with patch.object(output.os, "link", side_effect=link):
                 actual_save_candidate(result, csv_path, report_path)
 
         with patch("bank2odoo.ui.window.save_candidate",
-                   side_effect=fail_with_unremovable_report):
+                   side_effect=fail_after_report_published):
             self._save()
         self.assertFalse(self.window._saved)
         self.assertIn("بخشی", self.window.status.text())
@@ -1096,7 +1087,9 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIn("نامشخص", self.window.status.text())
         self.assertEqual(self.window.output_directory.text(), str(self.private))
         self.assertFalse(self.window.save_button.isEnabled())
-        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*.txt"))), 0)
+        report_files = list(self.private.glob("Bank2Odoo_*.txt"))
+        self.assertEqual(len(report_files), 1)
+        self.assertIn(b"PRIVATE accountant control report", report_files[0].read_bytes())
         csv_files = list(self.private.glob("Bank2Odoo_*.csv"))
         self.assertEqual(len(csv_files), 1)
         self.assertEqual(csv_files[0].read_bytes(), b"synthetic independent existing data")
