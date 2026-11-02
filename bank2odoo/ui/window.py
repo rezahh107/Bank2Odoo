@@ -210,17 +210,52 @@ GENERAL_REVIEW = (
 )
 
 
+def safe_save_error_detail(exc: Exception) -> str:
+    """Diagnostic metadata only: never copy arbitrary OS error text or filenames."""
+    cause = (exc.__cause__ if isinstance(exc, SavePublicationError)
+             and isinstance(exc.__cause__, Exception) else exc)
+    kind = type(cause).__name__
+    if isinstance(cause, StatementError):
+        # Only known, fixed program-generated messages are safe to retain.
+        message = str(cause)
+        if message == "Output files must be distinct and must not already exist":
+            kind = "output files already exist or are not distinct"
+        elif message.startswith("Output appeared during conversion: "):
+            kind = "output appeared during conversion"
+        elif message == "Both outputs must use the same existing private directory":
+            kind = "same existing private directory"
+        elif message == "Financial outputs must be saved outside the public source checkout":
+            kind = "outside the public source checkout"
+        else:
+            kind = "unclassified StatementError"
+    parts = [f"{type(exc).__name__}: {kind}"]
+    for label in ("errno", "winerror"):
+        number = getattr(cause, label, None)
+        if isinstance(number, int):
+            parts.append(f"{label}={number}")
+    if isinstance(exc, SavePublicationError):
+        parts.append(f"outcome={exc.outcome}")
+        parts.append(f"cleanup_failed={exc.cleanup_failed}")
+    return "; ".join(parts)
+
+
 def human_error(detail: str, *, saving: bool = False) -> str:
     """Human wording, not a claim about an unverified underlying cause."""
     message = detail.lower()
-    if "already exist" in message or "output appeared" in message:
+    if "already exist" in message or "output appeared" in message or (
+            saving and "fileexistserror" in message):
         return "فایل خروجی هم‌نام از قبل وجود دارد. پوشه‌ای دیگر انتخاب کنید یا فایل‌های قبلی را بررسی کنید."
     if "outside the public source checkout" in message:
         return "پوشه خروجی داخل پوشه کد برنامه است. یک پوشه خصوصی بیرون از آن انتخاب کنید."
     if "same existing private directory" in message:
         return "برای هر دو خروجی باید یک پوشه خصوصیِ موجود انتخاب شود."
+    if saving and ("permissionerror" in message or "errno=13" in message
+                   or "errno=1" in message or "winerror=5" in message):
+        return ("دسترسی فایل‌سیستم هنگام ذخیره رد شد؛ مجوز پوشه مقصد "
+                "و قفل‌بودن فایل‌ها را بررسی کنید.")
     if saving:
-        return "ذخیره هر دو فایل کامل نشد. مسیر، دسترسی و فضای دیسک را بررسی کنید؛ هیچ موفقیتی تأیید نشده است."
+        return ("علت دقیق خطای ذخیره مشخص نیست؛ نوع خطا و کد سیستم را "
+                "در جزئیات فنی بررسی کنید.")
     if "balance mismatch" in message or "closing minus" in message:
         return "مانده‌های گزارش با گردش‌ها تطابق ندارند؛ خروجی ساخته نشد. گزارش بانک را بررسی کنید."
     if "jalali date" in message or "transaction time" in message:
@@ -302,7 +337,10 @@ class _Job(QObject):
             else:
                 raise RuntimeError("Unsupported GUI background operation")
         except Exception as exc:
-            self.state["error"] = f"{type(exc).__name__}: {exc}"
+            # Save exceptions can embed private banking filenames in OS text.
+            # Preserve diagnostic type/codes and outcome, not raw filesystem paths.
+            self.state["error"] = (safe_save_error_detail(exc) if self.kind == "save"
+                                   else f"{type(exc).__name__}: {exc}")
             if isinstance(exc, SavePublicationError):
                 self.state["save_outcome"] = exc.outcome
                 self.state["cleanup_failed"] = exc.cleanup_failed
@@ -1199,7 +1237,10 @@ class MainWindow(QMainWindow):
                     guidance = ("وضعیت فایل‌های نهایی نامشخص است. پیش از اقدام دوباره "
                                 "پوشه را دستی بررسی کنید؛ موفقیت تأیید نشده است.")
                 elif outcome == "NO_FINALS":
-                    guidance = "هیچ خروجی نهایی جدیدی مشاهده نشد. علت خطا را بررسی کنید."
+                    # Disk outcome and cause are separate facts: no finals does
+                    # not explain whether access, naming or another I/O failed.
+                    guidance = ("هیچ خروجی نهایی جدیدی مشاهده نشد. "
+                                + human_error(error, saving=True))
                 else:
                     guidance = human_error(error, saving=True)
                 if state.get("cleanup_failed"):
