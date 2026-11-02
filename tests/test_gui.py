@@ -974,6 +974,75 @@ class AccountantUiTests(unittest.TestCase):
         for path in self.private.glob(".bank2odoo-*.tmp"):
             path.unlink()
 
+    def test_gui_partial_report_publication_requires_manual_review(self):
+        from bank2odoo.reporting import output
+        self._convert()
+        self.window.output_directory.setText(str(self.private))
+        expected_report = (
+            self.private / f"Bank2Odoo_{self.source.stem}_{self.window.result.sha256[:10]}_control.txt"
+        ).resolve()
+
+        def fail_with_unremovable_report(result, csv_path, report_path):
+            actual_link = output.os.link
+            actual_unlink = Path.unlink
+            count = 0
+            def link(src, dst):
+                nonlocal count
+                count += 1
+                if count == 2:
+                    raise OSError("synthetic CSV publication failed")
+                return actual_link(src, dst)
+            def unlink(path, *args, **kwargs):
+                if path == expected_report:
+                    raise PermissionError("synthetic rollback blocked")
+                return actual_unlink(path, *args, **kwargs)
+            with patch.object(output.os, "link", side_effect=link), \
+                 patch.object(Path, "unlink", autospec=True, side_effect=unlink):
+                actual_save_candidate(result, csv_path, report_path)
+
+        with patch("bank2odoo.ui.window.save_candidate",
+                   side_effect=fail_with_unremovable_report):
+            self._save()
+        self.assertFalse(self.window._saved)
+        self.assertIn("بخشی", self.window.status.text())
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertFalse(self.window.saved_path_fields.isVisible())
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*.txt"))), 1)
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*.csv"))), 0)
+        self.assertEqual(len(list(self.private.glob(".bank2odoo-*.tmp"))), 0)
+
+    def test_gui_ambiguous_external_race_does_not_claim_success(self):
+        from bank2odoo.reporting import output
+        self._convert()
+        self.window.output_directory.setText(str(self.private))
+
+        def ambiguous_second_link(result, csv_path, report_path):
+            actual_link = output.os.link
+            count = 0
+            def link(src, dst):
+                nonlocal count
+                count += 1
+                if count == 2:
+                    Path(dst).write_bytes(b"synthetic independent existing data")
+                    raise OSError("synthetic race after independent publish")
+                return actual_link(src, dst)
+            with patch.object(output.os, "link", side_effect=link):
+                actual_save_candidate(result, csv_path, report_path)
+
+        with patch("bank2odoo.ui.window.save_candidate",
+                   side_effect=ambiguous_second_link):
+            self._save()
+        self.assertFalse(self.window._saved)
+        self.assertIn("نامشخص", self.window.status.text())
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*.txt"))), 0)
+        csv_files = list(self.private.glob("Bank2Odoo_*.csv"))
+        self.assertEqual(len(csv_files), 1)
+        self.assertEqual(csv_files[0].read_bytes(), b"synthetic independent existing data")
+        self.assertEqual(len(list(self.private.glob(".bank2odoo-*.tmp"))), 0)
+
     def test_async_save_failure_and_stale_finished_slot_never_publish_success(self):
         self._convert()
         self.window.output_directory.setText(str(self.private))
