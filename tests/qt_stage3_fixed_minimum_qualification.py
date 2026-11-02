@@ -419,10 +419,10 @@ def main():
     interpretations = [
         "# Stage 3 — Fresh qualification interpretation (generated per exact Head)",
         "",
-        "Evidence run Head: \`" + summary["qualification_test_head"] + "\`",
+        "Evidence run Head: `" + summary["qualification_test_head"] + "`",
         "",
-        "Tested sources (pinned): main \`" + MAIN_SHA +
-        "\`; Journal-free PR #20 \`" + PR20_SHA + "\`.",
+        "Tested sources (pinned): main `" + MAIN_SHA +
+        "`; Journal-free PR #20 `" + PR20_SHA + "`.",
         "",
         f"Geometry qualified: {passed}/{len(summary['cases'])} combinations; "
         f"{sum(len(c['states']) for c in summary['cases'])} captured states.",
