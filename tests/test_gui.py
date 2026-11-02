@@ -874,6 +874,25 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
         self.assertFalse(self.window.save_button.isEnabled())
 
+    def test_save_failure_retains_folder_but_blocks_implicit_retry(self):
+        """P0 regression: a failure must not erase the selected private folder."""
+        candidate = self._convert()
+        evidence = self.window.result_state.text()
+        self.window.output_directory.setText(str(self.private))
+        with patch("bank2odoo.ui.window.save_candidate",
+                   side_effect=OSError("fictional permission failure")) as writer:
+            self._save()
+        self.assertEqual(writer.call_count, 1)
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertIs(self.window.result, candidate)
+        self.assertEqual(self.window.result_state.text(), evidence)
+        self.assertTrue(self.window.approved.isChecked())
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertIn("انتخاب", self.window.convert_button.text())
+        self.window.convert_button.click()  # Must ask, never retry automatically.
+        self.app.processEvents()
+        self.assertEqual(writer.call_count, 1)
+
     def test_async_save_failure_and_stale_finished_slot_never_publish_success(self):
         self._convert()
         self.window.output_directory.setText(str(self.private))
