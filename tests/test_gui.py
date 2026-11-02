@@ -927,8 +927,10 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(len(original), 2)
         self.window.target_unit.setCurrentIndex(self.window.target_unit.findData("TOMAN"))
         self.window.factor.setText("0.1")
-        self.window.precision.setValue(1)
         self._approve(source="IRR", target="TOMAN", factor="0.1")
+        # The shared test helper resets precision to zero.
+        self.window.precision.setValue(1)
+        self.window.approved.setChecked(True)
         self.window.start_conversion()
         self._wait_conversion()
         self.assertIsNotNone(self.window.result)
