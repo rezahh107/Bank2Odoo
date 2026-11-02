@@ -1,6 +1,6 @@
 # Stage 3 — Fresh qualification interpretation (generated per exact Head)
 
-Evidence run Head: `5c4f3566a02695efe9873c8d20252c7eede217cb`
+Evidence run Head: `bdda9436e5127e719befe1f3226af09e0a30d3fd`
 
 Tested sources (pinned): main `e0f50ab8605024896bf6975050fb4034b874514e`; Journal-free PR #20 `aa4362adfa8cd3e6e2873c8b36de79ce8183e3bd`.
 
