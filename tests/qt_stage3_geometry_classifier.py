@@ -138,9 +138,11 @@ def classify_geometry(states: object, *, variant: str, width: int) -> dict:
         hidden_names = set(expected_hidden)
         known_names = set((*ALWAYS_VISIBLE, "journal", *CONDITIONAL_CONTROLS))
         contract_names = known_names - ({"journal"} if variant == "journal_free" else set())
-        if (not isinstance(observed_required, list)
-                or len(observed_required) != len(set(observed_required))
-                or not required_names.issubset(set(observed_required))):
+        valid_required = (isinstance(observed_required, list)
+                          and all(isinstance(name, str) and bool(name)
+                                  for name in observed_required)
+                          and len(observed_required) == len(set(observed_required)))
+        if not valid_required or not required_names.issubset(set(observed_required)):
             failures.append(prefix + "required_control_registry_mismatch")
             reachable_ok = False
         if not isinstance(visible, dict) or not isinstance(measured, dict):
@@ -153,7 +155,7 @@ def classify_geometry(states: object, *, variant: str, width: int) -> dict:
         if set(visible) != contract_names:
             failures.append(prefix + "control_visibility_registry_mismatch")
             reachable_ok = False
-        if (isinstance(observed_required, list) and
+        if (valid_required and
                 (set(measured) != set(observed_required)
                  or {k for k, v in visible.items() if v is True} != set(observed_required))):
             failures.append(prefix + "reachability_registry_mismatch")
