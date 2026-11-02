@@ -249,8 +249,10 @@ def human_error(detail: str, *, saving: bool = False) -> str:
         return "پوشه خروجی داخل پوشه کد برنامه است. یک پوشه خصوصی بیرون از آن انتخاب کنید."
     if "same existing private directory" in message:
         return "برای هر دو خروجی باید یک پوشه خصوصیِ موجود انتخاب شود."
-    if saving and ("permissionerror" in message or "errno=13" in message
-                   or "errno=1" in message or "winerror=5" in message):
+    # Match complete diagnostic fields; errno=1234 is not errno=1.
+    diagnostic_fields = {part.strip() for part in message.split(";")} if saving else set()
+    if saving and ("permissionerror" in message
+                   or diagnostic_fields.intersection({"errno=13", "errno=1", "winerror=5"})):
         return ("دسترسی فایل‌سیستم هنگام ذخیره رد شد؛ مجوز پوشه مقصد "
                 "و قفل‌بودن فایل‌ها را بررسی کنید.")
     if saving:
