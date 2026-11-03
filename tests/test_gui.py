@@ -666,30 +666,37 @@ class AccountantUiTests(unittest.TestCase):
             self.assertIsNone(self.window._thread)
             self.assertEqual(len(list(directory.glob("Bank2Odoo_*"))), 2)
 
+
     def test_save_invalid_directory_and_collision_fail_cleanly(self):
-        self._convert()
+        from bank2odoo.reporting.output import control_report, output_csv
+        result = self._convert()
         self._save()
         self.assertIn("پوشه خصوصی", self.window.status.text())
-        not_folder = self.private / "missing"
-        self.window.output_directory.setText(str(not_folder))
+        missing = self.private / "missing"
+        self.window.output_directory.setText(str(missing))
         self._save()
         self.assertIn("خطای ذخیره", self.window.status.text())
         self.assertIn("پوشه خصوصیِ موجود", self.window.status.text())
         self.assertNotIn("هم‌نام", self.window.status.text())
         self.assertFalse(list(self.private.glob("Bank2Odoo_*")))
-        # Manually pre-existing private name is not replaced and partner not created.
         self.window.output_directory.setText(str(self.private))
-        prefix = f"Bank2Odoo_{self.source.stem}_{self.window.result.sha256[:10]}"
-        report = self.private / f"{prefix}_control.txt"
-        report.write_text("keep", encoding="utf-8")
-        self._save()
-        self.assertEqual(report.read_text(encoding="utf-8"), "keep")
-        self.assertFalse((self.private / f"{prefix}_candidate.csv").exists())
-        self.assertIn("هم‌نام", self.window.status.text())
-        self.assertNotIn("محتوای یکسان", self.window.status.text())
-        self.assertIn("already exist", self.window.details.toPlainText())
-        self.assertNotIn(str(self.private), self.window.details.toPlainText())
-
+        prefix = f"Bank2Odoo_{self.source.stem}_{result.sha256[:10]}_20261102_171105"
+        prior_report = self.private / f"{prefix}_control.txt"
+        prior_report.write_bytes(b"existing private report; keep")
+        with patch("bank2odoo.ui.window.datetime") as clock:
+            clock.now.return_value.strftime.return_value = "20261102_171105"
+            self._save()
+            clock.now.assert_called_once_with()
+        self.assertTrue(self.window._saved)
+        self.assertEqual(prior_report.read_bytes(), b"existing private report; keep")
+        csv_path = self.private / f"{prefix}_02_candidate.csv"
+        report_path = self.private / f"{prefix}_02_control.txt"
+        self.assertEqual(csv_path.read_bytes(), output_csv(result).encode("utf-8"))
+        self.assertEqual(report_path.read_bytes(), control_report(result).encode("utf-8"))
+        self.assertEqual(self.window.saved_csv_path.text(), str(csv_path))
+        self.assertEqual(self.window.saved_report_path.text(), str(report_path))
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertNotIn("خطای ذخیره", self.window.status.text())
     def test_failed_conversion_does_not_enable_save(self):
         self._select(self.source)
         self._approve()
@@ -977,33 +984,44 @@ class AccountantUiTests(unittest.TestCase):
         self.assertTrue(self.window.approved.isChecked())
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
 
+
     def test_same_source_new_valid_financial_context_does_not_overwrite(self):
-        self._convert()
+        from bank2odoo.reporting.output import control_report, output_csv
+        first = self._convert()
         self.window.output_directory.setText(str(self.private))
-        self._save()
+        with patch("bank2odoo.ui.window.datetime") as clock:
+            clock.now.return_value.strftime.return_value = "20261102_171105"
+            self._save()
         original = {p.name: p.read_bytes()
                     for p in self.private.glob("Bank2Odoo_*")}
         self.assertEqual(len(original), 2)
         self.window.target_unit.setCurrentIndex(self.window.target_unit.findData("TOMAN"))
         self.window.factor.setText("0.1")
         self._approve(source="IRR", target="TOMAN", factor="0.1")
-        # The shared test helper resets precision to zero.
         self.window.precision.setValue(1)
         self.window.approved.setChecked(True)
         self.window.start_conversion()
         self._wait_conversion()
-        self.assertIsNotNone(self.window.result)
         candidate = self.window.result
+        self.assertIsNotNone(candidate)
+        self.assertEqual(first.sha256, candidate.sha256)
+        self.assertNotEqual(output_csv(first), output_csv(candidate))
         self.window.output_directory.setText(str(self.private))
-        self._save()
+        with patch("bank2odoo.ui.window.datetime") as clock:
+            clock.now.return_value.strftime.return_value = "20261102_171105"
+            self._save()
+        self.assertTrue(self.window._saved)
         self.assertIs(self.window.result, candidate)
-        self.assertIn("هم‌نام", self.window.status.text())
+        self.assertTrue(self.window.approved.isChecked())
         self.assertEqual(self.window.output_directory.text(), str(self.private))
-        self.assertFalse(self.window.save_button.isEnabled())
-        self.assertEqual(
-            {p.name: p.read_bytes() for p in self.private.glob("Bank2Odoo_*")},
-            original)
-
+        self.assertEqual({p.name: p.read_bytes() for p in self.private.glob("Bank2Odoo_*")
+                          if p.name in original}, original)
+        csv_path = Path(self.window.saved_csv_path.text())
+        report_path = Path(self.window.saved_report_path.text())
+        self.assertIn("_02_candidate.csv", csv_path.name)
+        self.assertEqual(csv_path.read_bytes(), output_csv(candidate).encode("utf-8"))
+        self.assertEqual(report_path.read_bytes(), control_report(candidate).encode("utf-8"))
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 4)
     def test_complete_pair_with_temp_cleanup_fault_is_warning_not_false_failure(self):
         self._convert()
         balance = self.window.result_state.text()
@@ -1333,67 +1351,186 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(len(list(recovered.glob("Bank2Odoo_*"))), 2)
         self.assertFalse(self.window.convert_button.isEnabled())
 
+
     def test_genuine_repeated_save_same_statement_preserves_existing_pair(self):
-        original_candidate = self._convert()
-        first_folder = self.private / "original_pair"
-        first_folder.mkdir()
-        self.window.output_directory.setText(str(first_folder))
-        self._save()
-        self.assertTrue(self.window._saved)
-        original = {path.name: path.read_bytes()
-                    for path in first_folder.glob("Bank2Odoo_*")}
+        from bank2odoo.reporting.output import control_report, output_csv
+        first = self._convert()
+        folder = self.private / "original_pair"
+        folder.mkdir()
+        self.window.output_directory.setText(str(folder))
+        with patch("bank2odoo.ui.window.datetime") as clock:
+            clock.now.return_value.strftime.return_value = "20261102_171105"
+            self._save()
+        original = {p.name: p.read_bytes() for p in folder.glob("Bank2Odoo_*")}
         self.assertEqual(len(original), 2)
-
-        # A deliberate repeat is a NEW conversion of the same source bytes,
-        # not an automatic save retry; the pre-existing pair remains immutable.
-        repeated_candidate = self._convert()
-        self.assertEqual(original_candidate.sha256, repeated_candidate.sha256)
-        self.window.output_directory.setText(str(first_folder))
-        self._save()
-        self.assertFalse(self.window._saved)
-        self.assertIn("هم‌نام", self.window.status.text())
-        self.assertEqual(self.window.output_directory.text(), str(first_folder))
-        self.assertEqual(
-            {path.name: path.read_bytes() for path in first_folder.glob("Bank2Odoo_*")},
-            original)
-        self.assertFalse(self.window.save_button.isEnabled())
-
-        another_folder = self.private / "alternate_folder"
-        another_folder.mkdir()
-        with patch("bank2odoo.ui.window.QFileDialog.getExistingDirectory",
-                   return_value=str(another_folder)) as picker:
-            self.window.convert_button.click()
-        picker.assert_called_once()
-        self.assertEqual(self.window.output_directory.text(), str(another_folder))
-        self.window.convert_button.click()
-        self._wait_operation(self.window.save_done)
         self.assertTrue(self.window._saved)
-        self.assertIs(self.window.result, repeated_candidate)
-        self.assertEqual(len(list(another_folder.glob("Bank2Odoo_*"))), 2)
-        self.assertEqual(
-            {path.name: path.read_bytes() for path in first_folder.glob("Bank2Odoo_*")},
-            original)
+        # Another intentional conversion is not an implicit retry.
+        repeated = self._convert()
+        self.assertEqual(first.sha256, repeated.sha256)
+        self.window.output_directory.setText(str(folder))
+        with patch("bank2odoo.ui.window.datetime") as clock:
+            clock.now.return_value.strftime.return_value = "20261102_171105"
+            self._save()
+        self.assertTrue(self.window._saved)
+        self.assertIs(self.window.result, repeated)
+        self.assertEqual({p.name: p.read_bytes() for p in folder.glob("Bank2Odoo_*")
+                          if p.name in original}, original)
+        csv_path = Path(self.window.saved_csv_path.text())
+        report_path = Path(self.window.saved_report_path.text())
+        self.assertEqual(csv_path.read_bytes(), output_csv(repeated).encode("utf-8"))
+        self.assertEqual(report_path.read_bytes(), control_report(repeated).encode("utf-8"))
+        self.assertIn("_02_candidate.csv", csv_path.name)
+        self.assertEqual(report_path.name, csv_path.name.replace("_candidate.csv", "_control.txt"))
+        self.assertEqual(len(list(folder.glob("Bank2Odoo_*"))), 4)
 
     def test_existing_output_collision_keeps_file_and_requires_reselection(self):
+        from bank2odoo.reporting.output import control_report, output_csv
         candidate = self._convert()
         evidence = self.window.result_state.text()
-        collision_dir = self.private / "collision"
-        collision_dir.mkdir()
-        expected = collision_dir / (
-            f"Bank2Odoo_{self.source.stem}_{candidate.sha256[:10]}_candidate.csv"
-        )
+        folder = self.private / "collision"
+        folder.mkdir()
+        prefix = f"Bank2Odoo_{self.source.stem}_{candidate.sha256[:10]}_20261102_171105"
+        expected = folder / f"{prefix}_candidate.csv"
         expected.write_bytes(b"existing fictional export; must not overwrite")
-        self.window.output_directory.setText(str(collision_dir))
-        self._save()
-        self._assert_folder_reselection_after_failed_save(candidate, evidence)
-        self.assertEqual(expected.read_bytes(), b"existing fictional export; must not overwrite")
-        self.assertEqual(len(list(collision_dir.glob("Bank2Odoo_*"))), 1)
-        alternate = self.private / "collision_recovery"
-        alternate.mkdir()
-        self.window.output_directory.setText(str(alternate))
-        self._save()
+        self.window.output_directory.setText(str(folder))
+        with patch("bank2odoo.ui.window.datetime") as clock:
+            clock.now.return_value.strftime.return_value = "20261102_171105"
+            self._save()
         self.assertTrue(self.window._saved)
-        self.assertEqual(len(list(alternate.glob("Bank2Odoo_*"))), 2)
+        self.assertEqual(self.window.result_state.text(), evidence)
+        self.assertEqual(expected.read_bytes(), b"existing fictional export; must not overwrite")
+        csv_path = folder / f"{prefix}_02_candidate.csv"
+        report_path = folder / f"{prefix}_02_control.txt"
+        self.assertEqual(csv_path.read_bytes(), output_csv(candidate).encode("utf-8"))
+        self.assertEqual(report_path.read_bytes(), control_report(candidate).encode("utf-8"))
+        self.assertEqual(self.window.saved_csv_path.text(), str(csv_path))
+        self.assertEqual(self.window.saved_report_path.text(), str(report_path))
+        self.assertEqual(len(list(folder.glob("Bank2Odoo_*"))), 3)
+
+    def test_repeated_or_rolled_back_clock_skips_occupied_single_file(self):
+        from bank2odoo.reporting.output import control_report, output_csv
+        result = self._convert()
+        folder = self.private / "خروجی فارسی"
+        folder.mkdir()
+        folder.joinpath("unrelated.txt").write_bytes(b"do not touch")
+        self.window.output_directory.setText(str(folder))
+        with patch("bank2odoo.ui.window.datetime") as clock:
+            clock.now.return_value.strftime.return_value = "20261102_171105"
+            self._save()
+            clock.now.assert_called_once_with()
+        first_csv = Path(self.window.saved_csv_path.text())
+        first_report = Path(self.window.saved_report_path.text())
+        first = {p: p.read_bytes() for p in (first_csv, first_report)}
+        self.assertEqual(first_csv.read_bytes(), output_csv(result).encode("utf-8"))
+        self.assertEqual(first_report.read_bytes(), control_report(result).encode("utf-8"))
+
+        # Rollback timestamp is already occupied by only the control file.
+        rollback_base = first_csv.name.split("_20261102_171105_candidate.csv")[0] + "_20261101_080000"
+        old_report = folder / (rollback_base + "_control.txt")
+        old_report.write_bytes(b"private older content")
+        self._convert()
+        self.window.output_directory.setText(str(folder))
+        with patch("bank2odoo.ui.window.datetime") as clock:
+            clock.now.return_value.strftime.return_value = "20261101_080000"
+            self._save()
+            clock.now.assert_called_once_with()
+        rolled_csv = Path(self.window.saved_csv_path.text())
+        rolled_report = Path(self.window.saved_report_path.text())
+        self.assertEqual(rolled_csv.name, rollback_base + "_02_candidate.csv")
+        self.assertEqual(rolled_report.name, rollback_base + "_02_control.txt")
+        self.assertEqual(rolled_csv.read_bytes(), output_csv(result).encode("utf-8"))
+        self.assertEqual(rolled_report.read_bytes(), control_report(result).encode("utf-8"))
+        self.assertEqual({p: p.read_bytes() for p in first}, first)
+        self.assertEqual(old_report.read_bytes(), b"private older content")
+        self.assertEqual((folder / "unrelated.txt").read_bytes(), b"do not touch")
+
+    def test_post_selection_competing_writer_fails_closed_without_retry(self):
+        from bank2odoo.reporting import output
+        candidate = self._convert()
+        self.window.output_directory.setText(str(self.private))
+        actual_link = output.os.link
+        called = []
+        def competing_writer(src, dst):
+            called.append(Path(dst))
+            if len(called) == 1:
+                Path(dst).write_bytes(b"independent writer")
+                raise FileExistsError(17, "synthetic concurrent destination exists")
+            return actual_link(src, dst)
+        with patch.object(output.os, "link", side_effect=competing_writer):
+            self._save()
+        self.assertEqual(len(called), 1, "An unsafe publication error must not retry")
+        self.assertEqual(called[0].read_bytes(), b"independent writer")
+        self.assertIn("AMBIGUOUS", self.window.details.toPlainText())
+        self.assertFalse(self.window._saved)
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertIs(self.window.result, candidate)
+        self.assertTrue(self.window.approved.isChecked())
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 1)
+        self.assertEqual(len(list(self.private.glob(".bank2odoo-*.tmp"))), 0)
+
+    def test_real_competing_paired_publications_never_overwrite(self):
+        """Two writers choose the same free pair before either can publish."""
+        from concurrent.futures import ThreadPoolExecutor
+        from decimal import Decimal
+        from threading import Barrier
+        from bank2odoo.ui.window import _available_paired_save_paths
+        from bank2odoo.reporting.output import (
+            SavePublicationError, control_report, output_csv, save_candidate,
+        )
+        from bank2odoo.validation.financial import StatementError
+
+        first = self._convert()
+        other = actual_convert(
+            self.source, Context("IRR", "TOMAN", decimal_places=1, approved_factor=Decimal("0.1"))
+        )
+        self.assertEqual(first.sha256, other.sha256)
+        self.assertNotEqual(output_csv(first), output_csv(other))
+        folder = self.private / "parallel_save"
+        folder.mkdir()
+        basename = f"Bank2Odoo_{self.source.stem}_{first.sha256[:10]}_20261102_171105"
+        csv_path = folder / f"{basename}_candidate.csv"
+        report_path = folder / f"{basename}_control.txt"
+        both_selected = Barrier(2)
+
+        def publish(result):
+            selected = _available_paired_save_paths(csv_path, report_path)
+            both_selected.wait(timeout=10)
+            try:
+                save_candidate(result, *selected)
+            except (SavePublicationError, StatementError) as exc:
+                return ("rejected", exc)
+            return ("published", result)
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(publish, candidate)
+                       for candidate in (first, other)]
+            outcomes = [future.result(timeout=15) for future in futures]
+        successes = [value for label, value in outcomes if label == "published"]
+        failures = [value for label, value in outcomes if label == "rejected"]
+        self.assertEqual(len(successes), 1)
+        self.assertEqual(len(failures), 1)
+        winner = successes[0]
+        self.assertEqual(csv_path.read_bytes(), output_csv(winner).encode("utf-8"))
+        self.assertEqual(report_path.read_bytes(), control_report(winner).encode("utf-8"))
+        self.assertEqual(len(list(folder.glob("Bank2Odoo_*"))), 2)
+        self.assertEqual(len(list(folder.glob(".bank2odoo-*.tmp"))), 0)
+
+    def test_collision_probe_access_denied_is_not_a_fake_name_conflict(self):
+        result = self._convert()
+        self.window.output_directory.setText(str(self.private))
+        with patch("bank2odoo.ui.window.Path.lstat",
+                   side_effect=PermissionError(13, "synthetic folder access denied")):
+            self._save()
+        self.assertFalse(self.window._saved)
+        self.assertIs(self.window.result, result)
+        self.assertEqual(self.window.output_directory.text(), str(self.private))
+        self.assertFalse(self.window.save_button.isEnabled())
+        self.assertIn("دسترسی", self.window.status.text())
+        self.assertNotIn("هم‌نام", self.window.status.text())
+        self.assertIn("PermissionError", self.window.details.toPlainText())
+        self.assertNotIn("موفق بود", self.window.status.text())
+        self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 0)
 
     def test_prohibited_checkout_destination_requires_private_reselection(self):
         candidate = self._convert()
