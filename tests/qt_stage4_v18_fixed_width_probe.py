@@ -6,6 +6,9 @@ Synthetic statement input is created in a private TemporaryDirectory.
 from __future__ import annotations
 import json, os, platform, subprocess, tempfile
 from pathlib import Path
+from threading import Event
+from unittest.mock import patch
+from PySide6.QtTest import QTest
 from PySide6.QtCore import QPoint, Qt, QEventLoop, QTimer, qVersion
 from PySide6.QtGui import QFontInfo
 from PySide6.QtWidgets import QApplication, QBoxLayout
@@ -15,7 +18,7 @@ from adapters.qt_style_probe.font_runtime import initialize_font, assert_widget_
 
 REF = "ccec758c92b65469403533d946b69d3035c09779"
 CANDIDATES = (900, 940)
-STATES = ("initial", "detected", "approval", "not_proven", "save_error_simulation", "saved_simulation")
+STATES = ("initial", "detected", "approval", "busy", "cancel_requested", "cancel_completed", "not_proven", "save_error_simulation", "saved_simulation", "pass")
 CONTROLS = ("select_button","path_field","detected","source_unit",
             "target_unit","precision","factor","approved","convert_button","status")
 RESULT_CONTROLS = ("result_state","summary","directory_button","output_directory","saved_paths")
@@ -105,6 +108,58 @@ def measure(app,w,scheme,width,state):
     row["screenshots"]=shots
     return row
 
+
+def keyboard_approval_check(app,w):
+    # Physical Tab keys via QTest. This is Qt-hosted keyboard simulation, not
+    # proof of an accountant navigating a real keyboard.
+    w.select_button.setFocus(Qt.TabFocusReason)
+    app.processEvents()
+    trail=[]
+    found=False
+    for _ in range(32):
+        focused=app.focusWidget()
+        trail.append(type(focused).__name__ if focused is not None else "NONE")
+        if focused is w.approved:
+            found=True
+            break
+        QTest.keyClick(focused or w,Qt.Key_Tab)
+        app.processEvents()
+    if not found:
+        raise AssertionError("Financial approval absent from Tab traversal")
+    # Toggle real native checkbox by Space; preserve digest-bound semantics.
+    QTest.keyClick(w.approved,Qt.Key_Space)
+    app.processEvents()
+    if w.approved.isChecked() or w._approved_digest is not None:
+        raise AssertionError("Space failed to revoke financial approval")
+    QTest.keyClick(w.approved,Qt.Key_Space)
+    app.processEvents()
+    if not (w.approved.isChecked() and w._approved_digest==w._selected_digest):
+        raise AssertionError("Space did not bind financial approval")
+    return {"found_approval_in_tab_path":True,"number_of_tabs":len(trail)-1,
+            "space_revocation_and_reapproval":True}
+
+def negative_control(app):
+    # Deliberately too narrow. Demonstrates that the measurement can FAIL,
+    # rather than returning PASS regardless of geometry.
+    app.styleHints().setColorScheme(Qt.ColorScheme.Light)
+    ui.configure_application(app)
+    w=ui.MainWindow()
+    w.setMinimumSize(500,480)
+    force_two_columns(w)
+    w.resize(500,650)
+    w.show()
+    settle(app,w)
+    w.resize(500,650)
+    settle(app,w)
+    try:
+        result=measure(app,w,"light_negative",500,"initial")
+        if result["geometry_verdict"]!="GEOMETRY_FAIL":
+            raise AssertionError("Negative fixture did not expose insufficient width")
+        return result
+    finally:
+        w.close()
+        settle(app,w)
+
 def run_one(app,scheme,width,source):
     app.styleHints().setColorScheme(Qt.ColorScheme.Dark if scheme=="simulated_dark"
                                      else Qt.ColorScheme.Light)
@@ -130,6 +185,28 @@ def run_one(app,scheme,width,source):
         if not (w.approved.isChecked() and w._approved_digest==w._selected_digest):
             raise AssertionError("source SHA approval did not bind")
         out.append(measure(app,w,scheme,width,"approval"))
+        keyboard=keyboard_approval_check(app,w)
+        out[-1]["keyboard"]=keyboard
+        entered,release=Event(),Event()
+        actual_convert=ui.convert
+        def controlled_convert(path,context):
+            entered.set()
+            if not release.wait(12):
+                raise RuntimeError("Synthetic conversion hold timed out")
+            return actual_convert(path,context)
+        with patch.object(ui,"convert",side_effect=controlled_convert):
+            try:
+                w.start_conversion()
+                if not entered.wait(10):
+                    raise AssertionError("Synthetic busy state not reached")
+                out.append(measure(app,w,scheme,width,"busy"))
+                w.cancel_conversion()
+                out.append(measure(app,w,scheme,width,"cancel_requested"))
+            finally:
+                release.set()
+            wait_finished(w,w.conversion_done,app)
+        if w.result is not None:raise AssertionError("Cancelled operation produced a result")
+        out.append(measure(app,w,scheme,width,"cancel_completed"))
         w.start_conversion()
         wait_finished(w,w.conversion_done,app)
         if w.result is None or not w.result.balance_status.startswith("NOT_PROVEN"):
@@ -146,6 +223,18 @@ def run_one(app,scheme,width,source):
         w.saved_path_fields.show()
         w._sync_actions()
         out.append(measure(app,w,scheme,width,"saved_simulation"))
+        balanced=Path(source.parent)/("synthetic_balanced_"+scheme+"_"+str(width)+".csv")
+        fixture(balanced,balanced=True)
+        w.set_source(balanced)
+        wait_finished(w,w.detection_done,app)
+        w.source_unit.setCurrentIndex(w.source_unit.findData("IRR"))
+        w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
+        w.approved.setChecked(True)
+        w.start_conversion()
+        wait_finished(w,w.conversion_done,app)
+        if w.result is None or not w.result.balance_status.startswith("PASS"):
+            raise AssertionError("Expected synthetic PASS result")
+        out.append(measure(app,w,scheme,width,"pass"))
         return out
     finally:
         w.close()
@@ -180,12 +269,13 @@ def main():
         for scheme in ("light","simulated_dark"):
             for width in CANDIDATES:
                 rows.extend(run_one(app,scheme,width,f))
+    negative=negative_control(app)
     bad=[x for x in rows if x["geometry_verdict"]!="GEOMETRY_PASS"]
-    result={"metadata":metadata,"cases":rows,"total":len(rows),"geometry_fail_count":len(bad),
+    result={"metadata":metadata,"cases":rows,"negative_control":negative,"total":len(rows),"geometry_fail_count":len(bad),
             "decision":"NOT_PROVEN: geometry alone cannot approve minimum width or v18 appearance"}
     (OUTPUT/"manifest.json").write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding="utf-8")
     print("STAGE4_SUMMARY "+json.dumps({"head":rev,"total":len(rows),"failures":len(bad),
-         "work_area":metadata["screen_available"],"qpa":metadata["qpa"]},ensure_ascii=False))
+         "work_area":metadata["screen_available"],"qpa":metadata["qpa"],"negative":negative["geometry_verdict"]},ensure_ascii=False))
     for row in rows:
         print("STAGE4_CASE "+json.dumps({k:row[k] for k in ("scheme","candidate_width","state",
             "geometry_verdict","horizontal_overflow_px","failed_reachability")},ensure_ascii=False))
