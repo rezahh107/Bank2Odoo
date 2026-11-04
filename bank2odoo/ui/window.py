@@ -818,7 +818,7 @@ class MainWindow(QMainWindow):
             active_stage = 3
         elif active and self._job_state and self._job_state["kind"] == "convert":
             active_stage = 2
-        elif ready_to_select := (self.source is not None and self.approved.isChecked()
+        elif (self.source is not None and self.approved.isChecked()
                                  and self._approved_digest == self._selected_digest):
             active_stage = 2
         elif self.source is not None:
@@ -827,7 +827,7 @@ class MainWindow(QMainWindow):
             active_stage = 0
         for index, label in enumerate(self._stage_labels):
             font = QFont(label.font())
-            font.setWeight(QFont.Weight.DemiBold if index == active_stage
+            font.setWeight(QFont.Weight.Bold if index == active_stage
                            else QFont.Weight.Normal)
             label.setFont(font)
         # An enabled validation button can guide missing inputs without being
