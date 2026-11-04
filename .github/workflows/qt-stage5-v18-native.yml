@@ -1,0 +1,93 @@
+name: Bank2Odoo Stage 5 native v18 candidate / Windows evidence
+on:
+  pull_request:
+    paths:
+      - 'bank2odoo/ui/window.py'
+      - 'tests/test_gui.py'
+      - 'tests/qt_stage5_v18_native_probe.py'
+      - 'tests/stage5_v18_acceptance_frozen_v1.json'
+      - '.github/workflows/qt-stage5-v18-native.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stage5-native-windows:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout exact Stage 5 PR Head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Prove exact Head and enforce UI-only diff scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=ccec758c92b65469403533d946b69d3035c09779
+          echo "STAGE5_HEAD=$(git rev-parse HEAD)"
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          fi
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git diff --name-only "$BASE" HEAD > changed-files.txt
+          cat changed-files.txt
+          if grep -Ev '^(bank2odoo/ui/window.py|tests/test_gui.py|tests/qt_stage5_v18_native_probe.py|tests/stage5_v18_acceptance_frozen_v1.json|.github/workflows/qt-stage5-v18-native.yml)$' changed-files.txt; then
+            echo "::error::Out of authorized UI/test/evidence scope"
+            exit 1
+          fi
+          if git diff --name-only "$BASE" HEAD | grep -E '(^bank2odoo/(core|banks|validation|reporting)/|GOAL_AUTHORITY)'; then
+            echo "::error::Financial or Owner-goal change forbidden"
+            exit 1
+          fi
+      - name: Checkout pinned test-only font helper
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: rezahh107/UI-UX-Test-Lab
+          ref: 6e9da83efe2208e8dac5cf293d3fc9f4e14796b9
+          path: qt-lab
+          persist-credentials: false
+      - name: Install pinned uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: '0.10.0'
+      - name: Install Python 3.13 and locked dependencies
+        shell: pwsh
+        run: |
+          uv python install 3.13
+          if ($LASTEXITCODE -ne 0) { throw "Python install failed" }
+          uv sync --locked
+          if ($LASTEXITCODE -ne 0) { throw "Locked dependency sync failed" }
+      - name: Financial, worker, private save and Qt regression suite
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONFAULTHANDLER: '1'
+        run: |
+          uv run --locked python -m unittest discover -s tests -v
+          if ($LASTEXITCODE -ne 0) { throw "Synthetic regression suite failed" }
+      - name: Real Windows QPA native render and synthetic conversion/save at three independent scale factors
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+          STAGE5_OUTPUT: ${{ runner.temp }}/bank2odoo-stage5-v18
+          PYTHONFAULTHANDLER: '1'
+        run: |
+          foreach ($factor in @("1.0","1.25","1.5")) {
+            $env:QT_SCALE_FACTOR = $factor
+            Write-Output "STAGE5_QT_FACTOR_SIMULATION=$factor (not Windows OS DPI)"
+            uv run --locked python -m tests.qt_stage5_v18_native_probe
+            if ($LASTEXITCODE -ne 0) { throw "Stage5 Windows QPA probe failed at $factor" }
+          }
+          Remove-Item Env:\QT_SCALE_FACTOR -ErrorAction SilentlyContinue
+      - name: Upload original-resolution synthetic Windows PNG and trace manifests
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bank2odoo-stage5-v18-native-original-windows
+          path: ${{ runner.temp }}/bank2odoo-stage5-v18/
+          retention-days: 14
+          if-no-files-found: warn
