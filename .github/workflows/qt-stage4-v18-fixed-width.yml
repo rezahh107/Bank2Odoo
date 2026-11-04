@@ -27,7 +27,211 @@ jobs:
           git fetch --no-tags --depth=1 origin "$BASE"
           test "$(git show "$BASE":bank2odoo/ui/window.py | git hash-object --stdin)" = "$(git hash-object bank2odoo/ui/window.py)"
           git diff --name-only "$BASE" HEAD | tee changed-files.txt
-          if grep -v -e '^tests/qt_stage4_v18_fixed_width_probe.py$' -e '^.github/workflows/qt-stage4-v18-fixed-width.yml$' changed-files.txt; then
+          if grep -v -e '^tests/qt_stage4_v18_fixed_width_probe.py changed-files.txt; then
+            echo "Unexpected production or other file diff"; exit 1
+          fi
+      - name: Checkout immutable bundled Vazirmatn test font
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: rezahh107/UI-UX-Test-Lab
+          ref: 6e9da83efe2208e8dac5cf293d3fc9f4e14796b9
+          path: qt-lab
+          persist-credentials: false
+      - name: Configure locked Python and dependencies
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: '0.10.0'
+      - shell: pwsh
+        name: Install Python and sync lock
+        run: |
+          uv python install 3.13
+          if ($LASTEXITCODE -ne 0) { throw "python install failed" }
+          uv sync --locked
+          if ($LASTEXITCODE -ne 0) { throw "dependency sync failed" }
+      - name: Native Windows QPA candidate tests and full-resolution captures
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+          STAGE4_OUTPUT: ${{ runner.temp }}/bank2odoo-stage4-evidence
+          PYTHONFAULTHANDLER: '1'
+        run: |
+          uv run --locked python -m tests.qt_stage4_v18_fixed_width_probe
+          if ($LASTEXITCODE -ne 0) { throw "Stage4 evidence-only Qt test failed; inspect logs and artifacts" }
+      - name: Simulate Qt 100/125/150 percent DPI in separate processes
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+          STAGE4_OUTPUT: ${{ runner.temp }}/bank2odoo-stage4-evidence
+          PYTHONFAULTHANDLER: '1'
+        run: |
+          foreach ($factor in @("1.0","1.25","1.5")) {
+            $env:QT_SCALE_FACTOR = $factor
+            Write-Output "STAGE4_QT_SCALE_OVERRIDE=$factor (simulation, not native Windows DPI)"
+            uv run --locked python -m tests.qt_stage4_v18_scale_probe
+            if ($LASTEXITCODE -ne 0) { throw "Stage4 scale simulation $factor failed" }
+          }
+          Remove-Item Env:\QT_SCALE_FACTOR -ErrorAction SilentlyContinue
+      - name: Provide concise summary if manifest exists
+        if: always()
+        shell: pwsh
+        env:
+          STAGE4_OUTPUT: ${{ runner.temp }}/bank2odoo-stage4-evidence
+        run: |
+          if (Test-Path "$env:STAGE4_OUTPUT/manifest.json") {
+            $m = Get-Content "$env:STAGE4_OUTPUT/manifest.json" -Raw | ConvertFrom-Json
+            "## Stage4 v18 Qt-host qualification (not v18 implementation)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            "Source test Head: $($m.metadata.target_git_head)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            "QPA: $($m.metadata.qpa), work area: $($m.metadata.screen_available)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            "Cases: $($m.total); geometry failures: $($m.geometry_fail_count)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            "No minimum width or v18 implementation approval is implied." | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          }
+      - name: Upload original Qt captures and machine-readable manifest
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bank2odoo-stage4-qt-v18-900-940-evidence
+          path: ${{ runner.temp }}/bank2odoo-stage4-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+ -e '^tests/qt_stage4_v18_scale_probe.py changed-files.txt; then
+            echo "Unexpected production or other file diff"; exit 1
+          fi
+      - name: Checkout immutable bundled Vazirmatn test font
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: rezahh107/UI-UX-Test-Lab
+          ref: 6e9da83efe2208e8dac5cf293d3fc9f4e14796b9
+          path: qt-lab
+          persist-credentials: false
+      - name: Configure locked Python and dependencies
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: '0.10.0'
+      - shell: pwsh
+        name: Install Python and sync lock
+        run: |
+          uv python install 3.13
+          if ($LASTEXITCODE -ne 0) { throw "python install failed" }
+          uv sync --locked
+          if ($LASTEXITCODE -ne 0) { throw "dependency sync failed" }
+      - name: Native Windows QPA candidate tests and full-resolution captures
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+          STAGE4_OUTPUT: ${{ runner.temp }}/bank2odoo-stage4-evidence
+          PYTHONFAULTHANDLER: '1'
+        run: |
+          uv run --locked python -m tests.qt_stage4_v18_fixed_width_probe
+          if ($LASTEXITCODE -ne 0) { throw "Stage4 evidence-only Qt test failed; inspect logs and artifacts" }
+      - name: Simulate Qt 100/125/150 percent DPI in separate processes
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+          STAGE4_OUTPUT: ${{ runner.temp }}/bank2odoo-stage4-evidence
+          PYTHONFAULTHANDLER: '1'
+        run: |
+          foreach ($factor in @("1.0","1.25","1.5")) {
+            $env:QT_SCALE_FACTOR = $factor
+            Write-Output "STAGE4_QT_SCALE_OVERRIDE=$factor (simulation, not native Windows DPI)"
+            uv run --locked python -m tests.qt_stage4_v18_scale_probe
+            if ($LASTEXITCODE -ne 0) { throw "Stage4 scale simulation $factor failed" }
+          }
+          Remove-Item Env:\QT_SCALE_FACTOR -ErrorAction SilentlyContinue
+      - name: Provide concise summary if manifest exists
+        if: always()
+        shell: pwsh
+        env:
+          STAGE4_OUTPUT: ${{ runner.temp }}/bank2odoo-stage4-evidence
+        run: |
+          if (Test-Path "$env:STAGE4_OUTPUT/manifest.json") {
+            $m = Get-Content "$env:STAGE4_OUTPUT/manifest.json" -Raw | ConvertFrom-Json
+            "## Stage4 v18 Qt-host qualification (not v18 implementation)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            "Source test Head: $($m.metadata.target_git_head)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            "QPA: $($m.metadata.qpa), work area: $($m.metadata.screen_available)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            "Cases: $($m.total); geometry failures: $($m.geometry_fail_count)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            "No minimum width or v18 implementation approval is implied." | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          }
+      - name: Upload original Qt captures and machine-readable manifest
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bank2odoo-stage4-qt-v18-900-940-evidence
+          path: ${{ runner.temp }}/bank2odoo-stage4-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+ -e '^.github/workflows/qt-stage4-v18-fixed-width.yml changed-files.txt; then
+            echo "Unexpected production or other file diff"; exit 1
+          fi
+      - name: Checkout immutable bundled Vazirmatn test font
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: rezahh107/UI-UX-Test-Lab
+          ref: 6e9da83efe2208e8dac5cf293d3fc9f4e14796b9
+          path: qt-lab
+          persist-credentials: false
+      - name: Configure locked Python and dependencies
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: '0.10.0'
+      - shell: pwsh
+        name: Install Python and sync lock
+        run: |
+          uv python install 3.13
+          if ($LASTEXITCODE -ne 0) { throw "python install failed" }
+          uv sync --locked
+          if ($LASTEXITCODE -ne 0) { throw "dependency sync failed" }
+      - name: Native Windows QPA candidate tests and full-resolution captures
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+          STAGE4_OUTPUT: ${{ runner.temp }}/bank2odoo-stage4-evidence
+          PYTHONFAULTHANDLER: '1'
+        run: |
+          uv run --locked python -m tests.qt_stage4_v18_fixed_width_probe
+          if ($LASTEXITCODE -ne 0) { throw "Stage4 evidence-only Qt test failed; inspect logs and artifacts" }
+      - name: Simulate Qt 100/125/150 percent DPI in separate processes
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+          STAGE4_OUTPUT: ${{ runner.temp }}/bank2odoo-stage4-evidence
+          PYTHONFAULTHANDLER: '1'
+        run: |
+          foreach ($factor in @("1.0","1.25","1.5")) {
+            $env:QT_SCALE_FACTOR = $factor
+            Write-Output "STAGE4_QT_SCALE_OVERRIDE=$factor (simulation, not native Windows DPI)"
+            uv run --locked python -m tests.qt_stage4_v18_scale_probe
+            if ($LASTEXITCODE -ne 0) { throw "Stage4 scale simulation $factor failed" }
+          }
+          Remove-Item Env:\QT_SCALE_FACTOR -ErrorAction SilentlyContinue
+      - name: Provide concise summary if manifest exists
+        if: always()
+        shell: pwsh
+        env:
+          STAGE4_OUTPUT: ${{ runner.temp }}/bank2odoo-stage4-evidence
+        run: |
+          if (Test-Path "$env:STAGE4_OUTPUT/manifest.json") {
+            $m = Get-Content "$env:STAGE4_OUTPUT/manifest.json" -Raw | ConvertFrom-Json
+            "## Stage4 v18 Qt-host qualification (not v18 implementation)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            "Source test Head: $($m.metadata.target_git_head)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            "QPA: $($m.metadata.qpa), work area: $($m.metadata.screen_available)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            "Cases: $($m.total); geometry failures: $($m.geometry_fail_count)" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+            "No minimum width or v18 implementation approval is implied." | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          }
+      - name: Upload original Qt captures and machine-readable manifest
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bank2odoo-stage4-qt-v18-900-940-evidence
+          path: ${{ runner.temp }}/bank2odoo-stage4-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+ changed-files.txt; then
             echo "Unexpected production or other file diff"; exit 1
           fi
       - name: Checkout immutable bundled Vazirmatn test font
