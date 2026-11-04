@@ -55,8 +55,11 @@ def inspect_control(app, window, item):
     viewport = window.scroll.viewport()
     scroll = window.scroll.verticalScrollBar()
     original = scroll.value()
+    initial_pos = widget.mapTo(viewport, QPoint(0, 0))
+    absolute_y = initial_pos.y() + original
+    reveal_position = max(0, min(scroll.maximum(), absolute_y + widget.height() - viewport.height()))
     reaches = False
-    for position in (0, scroll.maximum()):
+    for position in (0, reveal_position, scroll.maximum()):
         scroll.setValue(position)
         app.processEvents()
         p = widget.mapTo(viewport, QPoint(0, 0))
