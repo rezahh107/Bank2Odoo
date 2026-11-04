@@ -4,6 +4,7 @@ on:
     paths:
       - '.github/workflows/qt-stage4-v18-fixed-width.yml'
       - 'tests/qt_stage4_v18_fixed_width_probe.py'
+      - 'tests/qt_stage4_v18_scale_probe.py'
   workflow_dispatch:
 
 permissions:
