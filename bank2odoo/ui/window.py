@@ -440,11 +440,16 @@ class MainWindow(QMainWindow):
         step_row = QHBoxLayout()
         step_row.setSpacing(8)
         self._stage_labels = []
-        for caption in ("۱  انتخاب فایل", "۲  تأیید مالی", "۳  تبدیل و بررسی", "۴  ذخیره خصوصی"):
+        for caption in ("۱  انتخاب فایل", "۲  تأیید مالی", "۳  تبدیل",
+                        "۴  بررسی نتیجه", "۵  ذخیره خصوصی"):
             label = QLabel(caption)
             label.setWordWrap(True)
             label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             label.setAccessibleName(caption)
+            label.setContentsMargins(5, 8, 5, 8)
+            label.setMinimumHeight(40)
+            label.setAutoFillBackground(True)
+            label.setProperty("stageActive", False)
             step_row.addWidget(label, 1)
             self._stage_labels.append(label)
         root.addLayout(step_row)
@@ -589,6 +594,12 @@ class MainWindow(QMainWindow):
         self.result_state = QLabel("هنوز تبدیل انجام نشده است")
         self.result_state.setAccessibleName("وضعیت واقعی تبدیل و شواهد مانده")
         self.result_state.setWordWrap(True)
+        self.result_state.setFrameShape(QFrame.Shape.StyledPanel)
+        self.result_state.setBackgroundRole(QPalette.ColorRole.AlternateBase)
+        self.result_state.setForegroundRole(QPalette.ColorRole.Text)
+        self.result_state.setAutoFillBackground(True)
+        self.result_state.setContentsMargins(10, 10, 10, 10)
+        self.result_state.setMinimumHeight(46)
         review_layout.addWidget(self.result_state)
         self.result_state.hide()
         self.metrics_panel = QWidget(review_box)
@@ -814,7 +825,7 @@ class MainWindow(QMainWindow):
         # The rail follows existing authoritative selection/approval/result/
         # save state; no parallel business state is introduced.
         if self._saved or (active and self._job_state and self._job_state["kind"] == "save"):
-            active_stage = 3
+            active_stage = 4
         elif has_result:
             active_stage = 3
         elif active and self._job_state and self._job_state["kind"] == "convert":
@@ -831,6 +842,7 @@ class MainWindow(QMainWindow):
             font.setWeight(QFont.Weight.Bold if index == active_stage
                            else QFont.Weight.Normal)
             label.setFont(font)
+            label.setProperty("stageActive", index == active_stage)
         # An enabled validation button can guide missing inputs without being
         # the primary action before SHA-bound financial approval.
         ready_to_convert = self._conversion_is_ready_for_emphasis()
@@ -849,6 +861,8 @@ class MainWindow(QMainWindow):
             active and self._job_state is not None and self._job_state["kind"] == "convert"
         )
         self._apply_theme_controls()
+        # Apply the stage palette after publishing the new active step.
+        self._apply_step_colors()
         QTimer.singleShot(0, self._reflow_workspace)
 
     def _reveal_result(self) -> None:
@@ -896,6 +910,37 @@ class MainWindow(QMainWindow):
         # hardcoded navy/red/green on a potentially dark card background.
         self.status.setPalette(QPalette(self.status.parentWidget().palette()))
 
+    def _apply_step_colors(self) -> None:
+        """Palette-driven, semantic Qt progression and outcome presentation."""
+        palette = QApplication.palette()
+        # Qt-owned progress labels: a single softly tinted current step, with
+        # contrast from the effective native palette. Avoid theme-specific QSS
+        # colors, custom painting, and extra interactive controls.
+        surface = palette.color(QPalette.ColorRole.Window)
+        accent = palette.color(QPalette.ColorRole.Highlight)
+        for label in self._stage_labels:
+            active = bool(label.property("stageActive"))
+            chosen = QColor(
+                round(surface.red() * 0.86 + accent.red() * 0.14),
+                round(surface.green() * 0.86 + accent.green() * 0.14),
+                round(surface.blue() * 0.86 + accent.blue() * 0.14),
+            ) if active else surface
+            label_palette = QPalette(palette)
+            label_palette.setColor(QPalette.ColorRole.Window, chosen)
+            label_palette.setColor(QPalette.ColorRole.WindowText,
+                                   palette.color(QPalette.ColorRole.WindowText))
+            label.setPalette(label_palette)
+
+        # Preserve the outcome as one consistent, clearly legible native
+        # status surface; the text remains the PASS/NOT_PROVEN/ERROR authority.
+        result_palette = QPalette(palette)
+        result_palette.setColor(QPalette.ColorRole.Window,
+                                palette.color(QPalette.ColorRole.AlternateBase))
+        result_palette.setColor(QPalette.ColorRole.WindowText,
+                                palette.color(QPalette.ColorRole.Text))
+        self.result_state.setPalette(result_palette)
+
+
     def _conversion_is_ready_for_emphasis(self) -> bool:
         """Match primary styling to the existing authoritative financial preflight."""
         if self.result is not None:
@@ -938,6 +983,7 @@ class MainWindow(QMainWindow):
         self._presentation_refresh_queued = False
         self._apply_surface_palette()
         self._apply_theme_controls()
+        self._apply_step_colors()
 
     def changeEvent(self, event) -> None:
         super().changeEvent(event)
@@ -951,6 +997,7 @@ class MainWindow(QMainWindow):
         """Local card chrome with colors derived from the native Qt palette."""
         self._apply_surface_palette()
         self._apply_theme_controls()
+        self._apply_step_colors()
         base_font = QFont(self.font())
         base_font.setPointSize(11)
         self.setFont(base_font)
@@ -960,7 +1007,8 @@ class MainWindow(QMainWindow):
         self.heading.setFont(title_font)
         action_font = QFont(base_font)
         action_font.setWeight(QFont.Weight.DemiBold)
-        for widget in (self.convert_button, self.save_button, self.approved, self.status):
+        for widget in (self.convert_button, self.save_button, self.approved,
+                       self.result_state):
             widget.setFont(action_font)
 
     def _toggle_details(self, visible: bool) -> None:
