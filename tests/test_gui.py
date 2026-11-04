@@ -1795,7 +1795,42 @@ class AccountantUiTests(unittest.TestCase):
         self.assertTrue(w._saved)
         self.assertIn("بعدی", w.select_button.text())
         self.assertTrue(w._stage_labels[4].font().bold())
+        self.assertTrue(w.select_button.styleSheet(),
+                        "Next valid source must be the sole accented post-save action")
+        self.assertFalse(w.convert_button.styleSheet(),
+                         "Disabled saved action must not compete as a primary action")
+        self.assertTrue(w.select_button.isEnabled())
         self.assertEqual(w.scroll.horizontalScrollBar().maximum(), 0)
+
+    def test_stage5_cancel_file_picker_preserves_existing_saved_candidate_and_sha(self):
+        """A cancelled actual picker action is not selecting a new source."""
+        w = self.window
+        self._convert()
+        w.output_directory.setText(str(self.private))
+        self._save()
+        self.assertTrue(w._saved)
+        source, digest, approved, result = (
+            w.source, w._selected_digest, w._approved_digest, w.result
+        )
+        saved = (w.saved_csv_path.text(), w.saved_report_path.text())
+        before = {p.name: p.read_bytes()
+                  for p in self.private.glob("Bank2Odoo_*")}
+        self.assertEqual(len(before), 2)
+        with patch("bank2odoo.ui.window.QFileDialog.getOpenFileName",
+                   return_value=("", "")) as picker:
+            w.select_button.click()
+        picker.assert_called_once()
+        self.assertEqual(w.source, source)
+        self.assertEqual(w._selected_digest, digest)
+        self.assertEqual(w._approved_digest, approved)
+        self.assertIs(w.result, result)
+        self.assertTrue(w._saved)
+        self.assertTrue(w.approved.isChecked())
+        self.assertEqual((w.saved_csv_path.text(), w.saved_report_path.text()), saved)
+        self.assertEqual({p.name: p.read_bytes()
+                          for p in self.private.glob("Bank2Odoo_*")}, before)
+        self.assertTrue(w.select_button.styleSheet())
+        self.assertFalse(w.convert_button.styleSheet())
 
     def test_error_summary_does_not_dump_source_fields(self):
         detail = "Invalid/ambiguous numeric format: 'customer-private-value'"
