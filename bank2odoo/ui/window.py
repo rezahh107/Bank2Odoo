@@ -954,17 +954,19 @@ class MainWindow(QMainWindow):
     def _apply_theme_controls(self) -> None:
         pilot = getattr(QApplication.instance(), "_bank2odoo_appearance_pilot", None)
         dark = bool(pilot is not None and pilot.dark)
-        # Choose exactly one accented action in any phase. A missing source
-        # accents selection; approval-incomplete conversion stays clickable
-        # but native/secondary. This creates no additional business state.
+        # One accented next action: choose the first/next source when no
+        # candidate exists OR after the verified pair was saved. Never keep
+        # the now-disabled "saved" action highlighted alongside it.
         select = (
             (_SOURCE_DARK_QSS if dark else _SOURCE_LIGHT_QSS)
-            if self.source is None and not (self._thread is not None or self._ui_busy)
+            if (self.source is None or self._saved)
+            and not (self._thread is not None or self._ui_busy)
             else ""
         )
         primary = (
             (_PRIMARY_DARK_QSS if dark else _PRIMARY_LIGHT_QSS)
-            if self._conversion_is_ready_for_emphasis() else ""
+            if not self._saved and self._conversion_is_ready_for_emphasis()
+            else ""
         )
         approval = _APPROVAL_DARK_QSS if dark else ""
         if self.select_button.styleSheet() != select:
