@@ -1,0 +1,238 @@
+{
+  "title": "Bank2Odoo Stage 5 v18 native Qt evidence verdicts",
+  "version": "1",
+  "created_from_exact_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+  "original_baseline_matrix": {
+    "path": "baseline/BANK2ODOO_STAGE5_V18_ACCEPTANCE_MATRIX_v1.json",
+    "sha256": "4192f9d46498afbe752679b362d999d7c3e9175435a5685b9442b51e2eae7537",
+    "unaltered": true
+  },
+  "proposed_html_sha256": "76d7aebc127b8ef9ec0c90be0ba6d0d9a19bb7e8565ef8ec91d18f9254e5e6db",
+  "base_commit": "ccec758c92b65469403533d946b69d3035c09779",
+  "head_commit": "8da16e4cb037bc9555020271033dd98801c89cb8",
+  "draft_pr": "https://github.com/rezahh107/Bank2Odoo/pull/31",
+  "windows": {
+    "qpa": "windows",
+    "host": "Windows-2025Server-10.0.26100-SP0",
+    "qt": "6.11.2",
+    "pyside6": "6.11.2",
+    "font": "Vazirmatn v33.003",
+    "python": "3.13",
+    "scales": [
+      "1.0",
+      "1.25",
+      "1.5"
+    ],
+    "scale_type": "Qt override simulation, not physical DPI",
+    "full_frame_fit_counts": [
+      112,
+      0,
+      0
+    ],
+    "internal_geometry_cases": 336,
+    "png_hash_matches": 483,
+    "png_hash_mismatches": 0,
+    "forced_too_narrow_negative_results": [
+      "NEEDS_REVIEW",
+      "NEEDS_REVIEW",
+      "NEEDS_REVIEW"
+    ]
+  },
+  "runs": {
+    "dedicated": {
+      "run_id": 41813271466,
+      "job_id": 126517567094,
+      "conclusion": "success"
+    },
+    "publisher": {
+      "job_id": 126518681262,
+      "conclusion": "success"
+    },
+    "general": {
+      "run_id": 41813271476,
+      "job_id": 126517570105,
+      "conclusion": "IN_PROGRESS_AT_ASSESSMENT"
+    }
+  },
+  "artifact": {
+    "id": 13312919314,
+    "name": "bank2odoo-stage5-v18-native-original-windows",
+    "zip_sha256": "96324ab032e4267659281ea1848856e437303b2246b28e292af444cee91ef747"
+  },
+  "synthetic_source_fixture_sha256": "4295cad2a40ec5e483d6a8f76aaeccc6cc6f1eb07544ad3e1289eeb46b0ae075",
+  "criteria": [
+    {
+      "id": "G1",
+      "verdict": "PASS",
+      "tested_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+      "evidence_run": 41813271466,
+      "observation": "Picker cancellation on a real converted/saved synthetic statement retains selected source, approved SHA, saved pair bytes and current result; native dialog return was simulated.",
+      "scope_limit": "PASS is limited to Windows hosted synthetic workflow; no physical accountant acceptance.",
+      "evidence": [
+        "https://github.com/rezahh107/Bank2Odoo/blob/8da16e4cb037bc9555020271033dd98801c89cb8/tests/test_gui.py:test_stage5_cancel_file_picker_preserves_existing_saved_candidate_and_sha",
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_initial_top.png"
+      ]
+    },
+    {
+      "id": "G2",
+      "verdict": "PASS",
+      "tested_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+      "evidence_run": 41813271466,
+      "observation": "Unsupported synthetic format returns no detected bank, no SHA/source and native detect_error; ambiguous bank/parser behavior covered by existing real synthetic suite.",
+      "scope_limit": "PASS is limited to Windows hosted synthetic workflow; no physical accountant acceptance.",
+      "evidence": [
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_detect_error_top.png"
+      ]
+    },
+    {
+      "id": "G3",
+      "verdict": "PASS",
+      "tested_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+      "evidence_run": 41813271466,
+      "observation": "SHA-bound consent revoked/reapproved by real QTest Space; source/factor/precision context changes and tampered source rejected in synthetic test suite.",
+      "scope_limit": "PASS is limited to Windows hosted synthetic workflow; no physical accountant acceptance.",
+      "evidence": [
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_approval_top.png"
+      ]
+    },
+    {
+      "id": "G4",
+      "verdict": "PASS",
+      "tested_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+      "evidence_run": 41813271466,
+      "observation": "Held native Qt worker: busy, cancellation requested/completed and no stale result.",
+      "scope_limit": "PASS is limited to Windows hosted synthetic workflow; no physical accountant acceptance.",
+      "evidence": [
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_cancel_requested_top.png",
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_cancel_completed_top.png"
+      ]
+    },
+    {
+      "id": "G5",
+      "verdict": "PASS",
+      "tested_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+      "evidence_run": 41813271466,
+      "observation": "Injected conversion failure is ERROR, no result available to save; recovery then real synthetic NOT_PROVEN.",
+      "scope_limit": "PASS is limited to Windows hosted synthetic workflow; no physical accountant acceptance.",
+      "evidence": [
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_convert_error_top.png"
+      ]
+    },
+    {
+      "id": "G6",
+      "verdict": "PASS",
+      "tested_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+      "evidence_run": 41813271466,
+      "observation": "Independent real synthetic engine PASS and NOT_PROVEN states; keyboard Space disclosure opens report-backed details; neither authorizes Odoo import.",
+      "scope_limit": "PASS is limited to Windows hosted synthetic workflow; no physical accountant acceptance.",
+      "evidence": [
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_not_proven_top.png",
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_940x650_pass_top.png",
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_detail_open_bottom.png"
+      ]
+    },
+    {
+      "id": "G7",
+      "verdict": "PASS",
+      "tested_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+      "evidence_run": 41813271466,
+      "observation": "Held real Qt paired-save worker exposes saving; synthetic I/O failure does not mark saved and blocks silent retry; suite tests partial/ambiguous publication and recovery.",
+      "scope_limit": "PASS is limited to Windows hosted synthetic workflow; no physical accountant acceptance.",
+      "evidence": [
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_saving_top.png",
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_save_error_top.png"
+      ]
+    },
+    {
+      "id": "G8",
+      "verdict": "PASS",
+      "tested_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+      "evidence_run": 41813271466,
+      "observation": "Actual separate private synthetic CSV/control files saved, filenames timestamped, bytes and paths verified; no-overwrite and new-source reset covered.",
+      "scope_limit": "PASS is limited to Windows hosted synthetic workflow; no physical accountant acceptance.",
+      "evidence": [
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_saved_top.png",
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_saved_bottom.png"
+      ]
+    },
+    {
+      "id": "G9",
+      "verdict": "PASS",
+      "tested_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+      "evidence_run": 41813271466,
+      "observation": "177 synthetic regression tests (one skipped), real accepted Melli XLS/Mellat CSV paths preserve Decimal/date/sign/fees/order, standard UTF-8 Date,Label,Amount; finance files unchanged.",
+      "scope_limit": "PASS is limited to Windows hosted synthetic workflow; no physical accountant acceptance.",
+      "evidence": [
+        "https://github.com/rezahh107/Bank2Odoo/blob/8da16e4cb037bc9555020271033dd98801c89cb8/tests/test_conversion.py",
+        "https://github.com/rezahh107/Bank2Odoo/blob/8da16e4cb037bc9555020271033dd98801c89cb8/tests/test_converter_oracle.py",
+        "https://github.com/rezahh107/Bank2Odoo/blob/8da16e4cb037bc9555020271033dd98801c89cb8/tests/test_gui.py"
+      ]
+    },
+    {
+      "id": "G10",
+      "verdict": "NOT_PROVEN",
+      "tested_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+      "evidence_run": 41813271466,
+      "observation": "RTL geometry, LTR copyable paths, Qt Space and long-path tests run; complete native-dialog/focus/high-contrast accessibility across physical Windows not observed.",
+      "scope_limit": "The missing stated evidence is not inferred from automated checks.",
+      "evidence": [
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_initial_top.png",
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/simulated_dark_900x650_saved_top.png"
+      ]
+    },
+    {
+      "id": "G11",
+      "verdict": "PASS",
+      "tested_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+      "evidence_run": 41813271466,
+      "observation": "336/336 internal native geometry states PASS; 483 PNG hashes verified. Host work area fits 112/112 at Qt factor1.0, 0/112 at factors1.25 and1.5; smaller work areas explicitly OUTSIDE PROVEN ENVELOPE. Insufficient-width negative controls all NEEDS_REVIEW.",
+      "scope_limit": "PASS is limited to Windows hosted synthetic workflow; no physical accountant acceptance.",
+      "evidence": [
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/manifest.json",
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_25/manifest.json",
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_5/manifest.json"
+      ]
+    },
+    {
+      "id": "G12",
+      "verdict": "NOT_PROVEN",
+      "tested_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+      "evidence_run": 41813271466,
+      "observation": "Seven expert screenshot heuristic critiques documented with before/after correction of sole next-source CTA; desirable-level entire-screen calm requires independent UI/UX specialist judgment, not automatically proven by automation.",
+      "scope_limit": "The missing stated evidence is not inferred from automated checks.",
+      "evidence": [
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_initial_top.png",
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_saved_top.png"
+      ]
+    },
+    {
+      "id": "G13",
+      "verdict": "NOT_PROVEN",
+      "tested_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+      "evidence_run": 41813271466,
+      "observation": "Native composition compared to PROPOSED v18 intent (five stages, two columns, source/context/result/save, result integrity). Visual/interaction deviations remain; Owner has not approved v18.",
+      "scope_limit": "The missing stated evidence is not inferred from automated checks.",
+      "evidence": [
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/light_900x650_not_proven_top.png"
+      ]
+    },
+    {
+      "id": "G14",
+      "verdict": "NOT_PROVEN",
+      "tested_head": "8da16e4cb037bc9555020271033dd98801c89cb8",
+      "evidence_run": 41813271466,
+      "observation": "Exact base/head, eight changed UI/test/CI files and persistent non-main original PNG/manifests verified; dedicated native Windows and publisher SUCCESS. General Windows run still in_progress at observation: do not declare complete CI.",
+      "scope_limit": "The missing stated evidence is not inferred from automated checks.",
+      "evidence": [
+        "https://github.com/rezahh107/Bank2Odoo/blob/evidence/stage5-v18-native-20261104/stage5/8da16e4cb037bc9555020271033dd98801c89cb8/41813271466/scale_sim_1_0/manifest.json"
+      ]
+    }
+  ],
+  "owner_boundaries": [
+    "No merge/release/deploy",
+    "GOAL_AUTHORITY not modified",
+    "Proposed v18 not Owner approved",
+    "Physical DPI/accountant comprehension NOT_PROVEN",
+    "900 vs 940 minimum requires separate Owner/specialist decision"
+  ]
+}
