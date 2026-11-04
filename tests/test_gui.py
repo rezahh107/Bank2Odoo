@@ -1775,7 +1775,7 @@ class AccountantUiTests(unittest.TestCase):
         w = self.window
         self.assertEqual(w.minimumWidth(), 900)
         self.assertEqual(w.minimumHeight(), 480)
-        self.assertEqual(len(w._stage_labels), 4)
+        self.assertEqual(len(w._stage_labels), 5)
         self.assertEqual(w._workspace.direction(), QBoxLayout.Direction.LeftToRight)
         w.resize(600, 480)  # Deliberately unsupported width: Qt must clamp it.
         self.app.processEvents()
@@ -1794,7 +1794,7 @@ class AccountantUiTests(unittest.TestCase):
         self._save()
         self.assertTrue(w._saved)
         self.assertIn("بعدی", w.select_button.text())
-        self.assertTrue(w._stage_labels[3].font().bold())
+        self.assertTrue(w._stage_labels[4].font().bold())
         self.assertEqual(w.scroll.horizontalScrollBar().maximum(), 0)
 
     def test_error_summary_does_not_dump_source_fields(self):
