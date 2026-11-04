@@ -1,0 +1,219 @@
+{
+  "schema": "stage5-native-acceptance-freeze-v1",
+  "baseline": "BANK2ODOO_STAGE5_V18_ACCEPTANCE_MATRIX_v1.json",
+  "baseline_sha256": "4192f9d46498afbe752679b362d999d7c3e9175435a5685b9442b51e2eae7537",
+  "html_sha256": "76d7aebc127b8ef9ec0c90be0ba6d0d9a19bb7e8565ef8ec91d18f9254e5e6db",
+  "baseline_zip_sha256": "1ceb0d47e56670b832b3d90756ed62263d37e6b23570de2f0d885bb08593604b",
+  "source_status": "PROPOSED / NOT_OWNER_APPROVED",
+  "baseline_commit": "ccec758c92b65469403533d946b69d3035c09779",
+  "frozen_before_first_native_render": true,
+  "verdict_values": [
+    "PASS",
+    "FAIL",
+    "NOT_PROVEN"
+  ],
+  "execution_rule": "Each result must bind exact head, Windows host/Qt version/QPA, real state, evidence id, expected/actual, remediation and same-test retest; offline test ≠ native Windows proof.",
+  "host_matrix": {
+    "widths": [
+      900,
+      940
+    ],
+    "heights": [
+      480,
+      650
+    ],
+    "qt_scale_simulations": [
+      1,
+      1.25,
+      1.5
+    ],
+    "themes": [
+      "effective-light",
+      "simulated-dark-if-used"
+    ],
+    "states": [
+      "start",
+      "detected",
+      "approved",
+      "busy",
+      "cancel_requested",
+      "cancelled",
+      "error",
+      "PASS",
+      "NOT_PROVEN",
+      "save_error",
+      "saved"
+    ]
+  },
+  "negative_controls": [
+    "forced narrower than minimum test-only",
+    "unreachable mandatory control",
+    "stale SHA consent",
+    "partial save failure",
+    "invalid detection"
+  ],
+  "explicitly_not_proven": [
+    "physical screen and OS DPI",
+    "accountant comprehension",
+    "Owner design approval",
+    "real bank private data",
+    "Odoo Import/Reconcile",
+    "final 900 versus 940 minimum"
+  ],
+  "criteria": [
+    {
+      "id": "G1",
+      "goal": "Source picker, cancelled dialog retains valid prior context",
+      "required_test": "Native picker cancellation + state digest",
+      "required_evidence": "Window PNG and state trace",
+      "initial_status": "PLANNED_NOT_RUN",
+      "verdict": "NOT_PROVEN",
+      "tested_head": null,
+      "evidence_uri": null,
+      "retest_head": null
+    },
+    {
+      "id": "G2",
+      "goal": "Unsupported or ambiguous statement never becomes a recognized bank",
+      "required_test": "Synthetic malformed/ambiguous parser input",
+      "required_evidence": "Detection trace and error PNG",
+      "initial_status": "PLANNED_NOT_RUN",
+      "verdict": "NOT_PROVEN",
+      "tested_head": null,
+      "evidence_uri": null,
+      "retest_head": null
+    },
+    {
+      "id": "G3",
+      "goal": "Explicit SHA-bound financial consent and keyboard operation",
+      "required_test": "Tab/Space + new bytes, unit, factor and precision invalidation",
+      "required_evidence": "Digest and focus trace",
+      "initial_status": "PLANNED_NOT_RUN",
+      "verdict": "NOT_PROVEN",
+      "tested_head": null,
+      "evidence_uri": null,
+      "retest_head": null
+    },
+    {
+      "id": "G4",
+      "goal": "Busy → cancel requested → cancelled, no stale success",
+      "required_test": "Actual QThread conversion/cancel",
+      "required_evidence": "Signal/thread trace and state PNG",
+      "initial_status": "PLANNED_NOT_RUN",
+      "verdict": "NOT_PROVEN",
+      "tested_head": null,
+      "evidence_uri": null,
+      "retest_head": null
+    },
+    {
+      "id": "G5",
+      "goal": "Conversion failure is honest, reversible and distinct from save failure",
+      "required_test": "Synthetic conversion error injection",
+      "required_evidence": "Error trace and native PNG",
+      "initial_status": "PLANNED_NOT_RUN",
+      "verdict": "NOT_PROVEN",
+      "tested_head": null,
+      "evidence_uri": null,
+      "retest_head": null
+    },
+    {
+      "id": "G6",
+      "goal": "PASS / NOT_PROVEN are different and neither licenses Odoo import",
+      "required_test": "Real synthetic engine outputs, keyboard disclosure",
+      "required_evidence": "Result traces and top/bottom PNG",
+      "initial_status": "PLANNED_NOT_RUN",
+      "verdict": "NOT_PROVEN",
+      "tested_head": null,
+      "evidence_uri": null,
+      "retest_head": null
+    },
+    {
+      "id": "G7",
+      "goal": "Ready/save-in-flight/failed or uncertain paired save",
+      "required_test": "Temporary path + paired-save failure injection",
+      "required_evidence": "Filesystem, state and native PNG",
+      "initial_status": "PLANNED_NOT_RUN",
+      "verdict": "NOT_PROVEN",
+      "tested_head": null,
+      "evidence_uri": null,
+      "retest_head": null
+    },
+    {
+      "id": "G8",
+      "goal": "Successful two private files, timestamp, no overwrite, new source reset",
+      "required_test": "Two-file save into temporary private dir + collision",
+      "required_evidence": "File checksums and saved/reset PNG",
+      "initial_status": "PLANNED_NOT_RUN",
+      "verdict": "NOT_PROVEN",
+      "tested_head": null,
+      "evidence_uri": null,
+      "retest_head": null
+    },
+    {
+      "id": "G9",
+      "goal": "Unchanged Date,Label,Amount ISO/Decimal/order/fees/schema",
+      "required_test": "Existing synthetic engine/CLI acceptance regressions",
+      "required_evidence": "Golden output assertion and test log",
+      "initial_status": "PLANNED_NOT_RUN",
+      "verdict": "NOT_PROVEN",
+      "tested_head": null,
+      "evidence_uri": null,
+      "retest_head": null
+    },
+    {
+      "id": "G10",
+      "goal": "Persian RTL, technical LTR and keyboard/focus/copy",
+      "required_test": "QTest tab + select/copy long path; native picker",
+      "required_evidence": "Full-resolution PNG and focus trace",
+      "initial_status": "PLANNED_NOT_RUN",
+      "verdict": "NOT_PROVEN",
+      "tested_head": null,
+      "evidence_uri": null,
+      "retest_head": null
+    },
+    {
+      "id": "G11",
+      "goal": "Fixed two-column 900/940 by 480/650 under simulated 1/1.25/1.5",
+      "required_test": "Windows QPA subprocess per scale; full frame AND internal reachability; negative under-min",
+      "required_evidence": "Environment/geometry manifest and original PNG",
+      "initial_status": "PLANNED_NOT_RUN",
+      "verdict": "NOT_PROVEN",
+      "tested_head": null,
+      "evidence_uri": null,
+      "retest_head": null
+    },
+    {
+      "id": "G12",
+      "goal": "Whole-screen calm and singular primary action",
+      "required_test": "Seven critique tests: Squint/Blur, grayscale, 3-sec expert, removal, next-step, count, longest-content",
+      "required_evidence": "Before/after original PNG + repeat review",
+      "initial_status": "PLANNED_NOT_RUN",
+      "verdict": "NOT_PROVEN",
+      "tested_head": null,
+      "evidence_uri": null,
+      "retest_head": null
+    },
+    {
+      "id": "G13",
+      "goal": "Proposed v18 composition—not pixel or Owner-approved fidelity",
+      "required_test": "Reference to Qt intent/state comparison",
+      "required_evidence": "Original HTML SHA + screenshot + differences",
+      "initial_status": "PLANNED_NOT_RUN",
+      "verdict": "NOT_PROVEN",
+      "tested_head": null,
+      "evidence_uri": null,
+      "retest_head": null
+    },
+    {
+      "id": "G14",
+      "goal": "Exact head provenance and no prohibited business changes",
+      "required_test": "Fresh SHA + PR diff + CI observation",
+      "required_evidence": "Changed-files, runs, artifact checksums",
+      "initial_status": "PLANNED_NOT_RUN",
+      "verdict": "NOT_PROVEN",
+      "tested_head": null,
+      "evidence_uri": null,
+      "retest_head": null
+    }
+  ]
+}

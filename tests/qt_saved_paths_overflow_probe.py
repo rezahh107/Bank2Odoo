@@ -148,7 +148,7 @@ def make_contact_sheets(output):
         sheet.fill(QColor("#f4f5f7"))
         painter = QPainter(sheet)
         try:
-            for row, size in enumerate(("940x830", "650x520", "600x480")):
+            for row, size in enumerate(("940x650", "900x520", "900x480")):
                 for col, phase in enumerate(("production_after", "legacy_long_injected_after")):
                     name = f"{theme}_{size}_{phase}.png"
                     picture = QImage(str(output / name))
@@ -179,7 +179,7 @@ def main():
     for theme in ("light","dark"):
         app.styleHints().setColorScheme(Qt.ColorScheme.Light if theme=="light" else Qt.ColorScheme.Dark)
         app.processEvents();configure_application(app)
-        for size in ((940,830),(650,520),(600,480)):
+        for size in ((940,650),(900,520),(900,480)):
             data.extend(run_case(app,args.output,theme,*size))
     payload={"environment":{"platform":platform.platform(),"python":sys.version,
              "qpa":app.platformName(),"qt":qVersion(),"pyside6":pyside_version,

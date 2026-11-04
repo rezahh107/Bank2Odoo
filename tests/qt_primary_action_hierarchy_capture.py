@@ -26,7 +26,7 @@ from PySide6.QtWidgets import QApplication
 from bank2odoo.ui import window as product
 from tests.qt_theme_pilot_capture import fixture, load_before, wait_finished
 
-SIZES = ((940, 830), (650, 520), (600, 480))
+SIZES = ((940, 650), (900, 520), (900, 480))
 PHASES = ("baseline", "variant_A", "variant_B", "product")
 
 
@@ -297,7 +297,7 @@ def main():
         "product candidate. All are genuine product Qt windows.\n\n"
         f"Base: {args.baseline_sha}; head: {report['checkout_head']}\n"
         f"Cases: {len(report['cases'])}; source selected vs SHA-approved "
-        "and initial, Light/Dark, 940/650/600 requested widths.\n"
+        "and initial, Light/Dark, 940/900 requested widths.\n"
         "Negative control on product reintroduces prominent invalid conversion "
         "and must be detected. Original PNGs and effective environment in JSON.\n"
         "This does not prove physical Windows 11, alternate DPI, Persian font "
@@ -314,7 +314,7 @@ def main():
         from PySide6.QtGui import QImage
         for variant in PHASES:
             for scheme in ("light", "dark"):
-                label = f"{variant}_{scheme}_940x830_initial_top.png"
+                label = f"{variant}_{scheme}_940x650_initial_top.png"
                 preview = QImage(str(args.output / label))
                 if preview.isNull():
                     raise RuntimeError("Missing native Qt screenshot: " + label)
