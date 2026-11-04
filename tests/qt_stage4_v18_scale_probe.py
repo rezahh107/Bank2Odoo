@@ -87,7 +87,7 @@ def screen_info(app):
     }
 
 
-def capture(app, w, scheme, width, state, position):
+def capture(app, w, scheme, width, height, state, position):
     bar = w.scroll.verticalScrollBar()
     bar.setValue(position)
     settle(app, w)
@@ -100,7 +100,7 @@ def capture(app, w, scheme, width, state, position):
     # Fractional DPR can introduce up to 1px rounding difference.
     if any(abs(a - b) > 2 for a, b in zip(px, expected)):
         raise AssertionError("Qt PNG dimension disagrees with widget x DPR")
-    file = "%s_%s_%s_%s.png" % (scheme, width, state, "bottom" if position else "top")
+    file = "%s_%sx%s_%s_%s.png" % (scheme, width, height, state, "bottom" if position else "top")
     if not grab.save(str(OUT / file), "PNG"):
         raise AssertionError("Could not save original QWidget PNG")
     return {"name": file, "png_physical_px": px, "grab_dpr": grab.devicePixelRatio(),
@@ -108,7 +108,7 @@ def capture(app, w, scheme, width, state, position):
             "scroll_value": bar.value()}
 
 
-def measure(app, w, scheme, width, state):
+def measure(app, w, scheme, width, height, state):
     settle(app, w)
     screen = app.primaryScreen()
     work = screen.availableGeometry()
@@ -121,6 +121,7 @@ def measure(app, w, scheme, width, state):
     checks = {x: inspect_control(app, w, x) for x in base}
     s = {
         "candidate_width_logical": width,
+        "candidate_height_logical": height,
         "scheme": scheme,
         "state": state,
         "window_logical": [w.width(), w.height()],
@@ -138,22 +139,21 @@ def measure(app, w, scheme, width, state):
         "qstyle": app.style().objectName(),
         "source_sha_bound_approved": bool(w._selected_digest and w._approved_digest == w._selected_digest),
     }
-    if w.width() != width:
-        s["requested_width_realized"] = False
-    else:
-        s["requested_width_realized"] = True
-    if s["horizontal_scroll_max"] or any(not x["fully_reachable"] for x in checks.values()):
+    s["requested_width_realized"] = w.width() == width
+    s["requested_height_realized"] = w.height() == height
+    if (not s["requested_width_realized"] or not s["requested_height_realized"]
+            or s["horizontal_scroll_max"] or any(not x["fully_reachable"] for x in checks.values())):
         s["internal_geometry_result"] = "NEEDS_REVIEW"
     else:
         s["internal_geometry_result"] = "PASS_IN_TEST"
-    s["images"] = [capture(app, w, scheme, width, state, 0)]
+    s["images"] = [capture(app, w, scheme, width, height, state, 0)]
     if state == "not_proven":
-        s["images"].append(capture(app, w, scheme, width, state,
+        s["images"].append(capture(app, w, scheme, width, height, state,
                                    w.scroll.verticalScrollBar().maximum()))
     return s
 
 
-def run_one(app, width, scheme, input_file):
+def run_one(app, width, height, scheme, input_file):
     app.styleHints().setColorScheme(Qt.ColorScheme.Dark if scheme == "simulated_dark"
                                      else Qt.ColorScheme.Light)
     app.processEvents()
@@ -162,13 +162,13 @@ def run_one(app, width, scheme, input_file):
     w = ui.MainWindow()
     w.setMinimumSize(width, 480)
     force_two_columns(w)
-    w.resize(width, 650)
+    w.resize(width, height)
     w.show()
     settle(app, w)
-    w.resize(width, 650)
+    w.resize(width, height)
     settle(app, w)
     try:
-        rows = [measure(app, w, scheme, width, "initial")]
+        rows = [measure(app, w, scheme, width, height, "initial")]
         w.set_source(input_file)
         wait_finished(w, w.detection_done, app)
         if w.source is None:
@@ -178,12 +178,12 @@ def run_one(app, width, scheme, input_file):
         w.approved.setChecked(True)
         if not (w._selected_digest and w._approved_digest == w._selected_digest):
             raise AssertionError("SHA-bound financial consent failed in test")
-        rows.append(measure(app, w, scheme, width, "approval"))
+        rows.append(measure(app, w, scheme, width, height, "approval"))
         w.start_conversion()
         wait_finished(w, w.conversion_done, app)
         if w.result is None or not w.result.balance_status.startswith("NOT_PROVEN"):
             raise AssertionError("Synthetic NOT_PROVEN conversion did not complete")
-        rows.append(measure(app, w, scheme, width, "not_proven"))
+        rows.append(measure(app, w, scheme, width, height, "not_proven"))
         return rows
     finally:
         if w._thread is not None:
@@ -218,11 +218,14 @@ def main():
         fixture(source, balanced=False)
         for scheme in ("light", "simulated_dark"):
             for width in (900, 940):
-                cases.extend(run_one(app, width, scheme, source))
+                for height in (480, 650):
+                    cases.extend(run_one(app, width, height, scheme, source))
     summary = {
         "host": host, "cases": cases,
         "window_fits_work_area_count": sum(x["fully_fits_at_some_position"] for x in cases),
         "cases_total": len(cases),
+        "candidate_heights_logical": [480, 650],
+        "candidate_widths_logical": [900, 940],
         "geometry_needs_review": sum(x["internal_geometry_result"] != "PASS_IN_TEST" for x in cases),
         "decision": "Window/workarea fit and Qt-host-scaled rendering only; actual OS scaling, Owner hardware, v18 Qt and accessibility NOT_PROVEN",
     }
@@ -237,11 +240,13 @@ def main():
     }, ensure_ascii=False))
     for r in cases:
         print("STAGE4_SCALE_CASE " + json.dumps({
-            k: r[k] for k in ("scheme", "candidate_width_logical", "state",
+            k: r[k] for k in ("scheme", "candidate_width_logical", "candidate_height_logical", "state",
                               "window_logical", "frame_width_fits_work_area",
                               "frame_height_fits_work_area", "fully_fits_at_some_position",
                               "internal_geometry_result")
         }, ensure_ascii=False))
+    if summary["geometry_needs_review"]:
+        raise AssertionError("Stage4 scale/height internal geometry needs review; see persisted manifest")
 
 
 if __name__ == "__main__":
