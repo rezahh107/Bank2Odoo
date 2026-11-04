@@ -101,6 +101,9 @@ jobs:
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    concurrency:
+      group: bank2odoo-stage5-v18-evidence-branch
+      cancel-in-progress: false
     permissions:
       actions: read
       contents: write
@@ -173,4 +176,17 @@ jobs:
           git add -- "$DEST"
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "evidence(stage5): original Qt images and manifests for $HEAD_SHA run $RUN_ID"
-          git push origin HEAD:evidence/stage5-v18-native-20261104
+          # The evidence branch is append-only; concurrent older runs can
+          # advance it. Reconcile by fetching its latest Head and replaying
+          # only this run's unique additive commit; never force-push.
+          for attempt in 1 2 3; do
+            git fetch origin evidence/stage5-v18-native-20261104
+            git rebase FETCH_HEAD
+            if git push origin HEAD:evidence/stage5-v18-native-20261104; then
+              echo "EVIDENCE_PUBLISHED_HEAD=$(git rev-parse HEAD)"
+              exit 0
+            fi
+            echo "Evidence branch advanced concurrently, reconciling attempt $attempt"
+          done
+          echo "::error::Non-main evidence publication could not be reconciled"
+          exit 1
