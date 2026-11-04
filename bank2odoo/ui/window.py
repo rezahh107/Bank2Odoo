@@ -405,8 +405,13 @@ class MainWindow(QMainWindow):
         self._presentation_ready = False
         self._presentation_refresh_queued = False
         self.setWindowTitle("Bank2Odoo | تبدیل گزارش بانک")
-        self.resize(940, 830)
-        self.setMinimumSize(600, 480)
+        # Proposed Stage 5 supported envelope: fixed two-column layout.
+        # Height follows the Qt work area; Qt scale simulations do not prove
+        # fit on an actual accountant display.
+        screen = QApplication.primaryScreen()
+        usable_height = screen.availableGeometry().height() if screen else 650
+        self.setMinimumSize(900, 480)
+        self.resize(940, max(480, min(650, usable_height - 48)))
         self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self._build()
         self._configure_presentation()
@@ -424,18 +429,31 @@ class MainWindow(QMainWindow):
         body = QWidget()
         scroll.setWidget(body)
         root = QVBoxLayout(body)
-        root.setContentsMargins(18, 18, 18, 20)
-        root.setSpacing(12)
+        root.setContentsMargins(16, 16, 16, 20)
+        root.setSpacing(14)
 
         self.heading = QLabel("آماده‌سازی گردش بانک برای Odoo")
         root.addWidget(self.heading)
-        lead = QLabel("Bank2Odoo  |  انتخاب فایل ← تأیید مالی ← تبدیل ← بررسی ← ذخیره")
-        lead.setWordWrap(True)
-        root.addWidget(lead)
+        # A native, state-derived process rail, not a second controller.
+        # Labels are deliberately informational; focus remains on real actions.
+        step_row = QHBoxLayout()
+        step_row.setSpacing(8)
+        self._stage_labels = []
+        for caption in ("۱  انتخاب فایل", "۲  تأیید مالی", "۳  تبدیل و بررسی", "۴  ذخیره خصوصی"):
+            label = QLabel(caption)
+            label.setWordWrap(True)
+            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            label.setAccessibleName(caption)
+            step_row.addWidget(label, 1)
+            self._stage_labels.append(label)
+        root.addLayout(step_row)
         notice_panel = QFrame()
         notice_panel.setFrameShape(QFrame.Shape.StyledPanel)
         notice_panel.setAutoFillBackground(True)
         self.notice_panel = notice_panel
+        # Keep the essential Odoo authorization warning, but avoid adding
+        # another prominent bordered card inside the four work groups.
+        notice_panel.setFrameShape(QFrame.Shape.NoFrame)
         notice_layout = QVBoxLayout(notice_panel)
         notice_layout.setContentsMargins(14, 10, 14, 10)
         warning = QLabel("فقط تهیه نامزد بررسی؛ این برنامه هیچ اطلاعاتی را وارد Odoo نمی‌کند و تأیید حسابداری نمی‌دهد.")
@@ -456,6 +474,8 @@ class MainWindow(QMainWindow):
         source_row.addWidget(self.select_button)
         self.path_field = QLineEdit()
         self.path_field.setReadOnly(True)
+        self.path_field.setMinimumWidth(0)
+        self.path_field.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         self.path_field.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.path_field.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.path_field.setMinimumHeight(40)
@@ -712,7 +732,7 @@ class MainWindow(QMainWindow):
         self._reflow_workspace()
 
     def _reflow_workspace(self) -> None:
-        """Use actual Persian font/widget metrics, not a CSS or fixed viewport guess."""
+        """Record actual font/widget metrics, without silently changing columns."""
         if not hasattr(self, "_workspace"):
             return
         fm = self.fontMetrics()
@@ -733,22 +753,18 @@ class MainWindow(QMainWindow):
             self.convert_button.sizeHint().width()
             + self.cancel_button.sizeHint().width() + 70,
         )
-        self._workspace_breakpoint = input_required + result_required + 12
+        self._workspace_breakpoint = self.minimumWidth()
         self._workspace_measurements = (input_required, result_required,
                                         self._input_column.minimumSizeHint().width(),
                                         self._result_column.minimumSizeHint().width())
-        available = self.scroll.viewport().width()
-        target = (QBoxLayout.Direction.LeftToRight
-                  if available >= self._workspace_breakpoint
-                  else QBoxLayout.Direction.TopToBottom)
-        if self._workspace.direction() != target:
-            self._workspace.setDirection(target)
+        # Preserve the Owner's two-column RTL direction. A viewport smaller
+        # than the supported 900 logical px is NOT a passing responsive mode.
+        # QScrollArea handles vertical overflow; it must never silently stack
+        # the accountant's financial and result columns.
+        if self._workspace.direction() != QBoxLayout.Direction.LeftToRight:
+            self._workspace.setDirection(QBoxLayout.Direction.LeftToRight)
             self._workspace.invalidate()
             self.scroll.widget().updateGeometry()
-            # The scroll bars are recalculated after the new Qt layout turn.
-            # A result already on screen must remain findable after a resize.
-            if self.result is not None:
-                QTimer.singleShot(0, self._reveal_result)
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
@@ -793,6 +809,27 @@ class MainWindow(QMainWindow):
         else:
             caption = "اعتبارسنجی و تبدیل"
         self.convert_button.setText(caption)
+        self.select_button.setText("انتخاب گزارش بعدی…" if self._saved else "انتخاب فایل…")
+        # The rail follows existing authoritative selection/approval/result/
+        # save state; no parallel business state is introduced.
+        if self._saved or (active and self._job_state and self._job_state["kind"] == "save"):
+            active_stage = 3
+        elif has_result:
+            active_stage = 3
+        elif active and self._job_state and self._job_state["kind"] == "convert":
+            active_stage = 2
+        elif ready_to_select := (self.source is not None and self.approved.isChecked()
+                                 and self._approved_digest == self._selected_digest):
+            active_stage = 2
+        elif self.source is not None:
+            active_stage = 1
+        else:
+            active_stage = 0
+        for index, label in enumerate(self._stage_labels):
+            font = QFont(label.font())
+            font.setWeight(QFont.Weight.DemiBold if index == active_stage
+                           else QFont.Weight.Normal)
+            label.setFont(font)
         # An enabled validation button can guide missing inputs without being
         # the primary action before SHA-bound financial approval.
         ready_to_convert = self._conversion_is_ready_for_emphasis()
