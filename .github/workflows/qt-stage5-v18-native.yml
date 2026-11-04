@@ -134,6 +134,8 @@ jobs:
           # All additional original images remain in the Actions artifact.
           for image in \
             scale_sim_1_0/light_900x480_initial_top.png \
+            scale_sim_1_0/light_900x650_initial_top.png \
+            scale_sim_1_0/light_900x650_detect_error_top.png \
             scale_sim_1_0/light_900x650_approval_top.png \
             scale_sim_1_0/light_900x650_cancel_requested_top.png \
             scale_sim_1_0/light_900x650_cancel_completed_top.png \
@@ -142,7 +144,10 @@ jobs:
             scale_sim_1_0/light_900x650_not_proven_bottom.png \
             scale_sim_1_0/light_900x650_detail_open_bottom.png \
             scale_sim_1_0/light_900x650_save_error_top.png \
+            scale_sim_1_0/light_900x650_saving_top.png \
+            scale_sim_1_0/light_900x650_saved_top.png \
             scale_sim_1_0/light_900x650_saved_bottom.png \
+            scale_sim_1_0/simulated_dark_900x650_saved_top.png \
             scale_sim_1_0/light_940x650_pass_top.png \
             scale_sim_1_25/light_900x480_initial_top.png \
             scale_sim_1_5/light_900x480_initial_top.png
