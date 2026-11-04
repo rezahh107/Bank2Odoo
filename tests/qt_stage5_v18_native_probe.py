@@ -13,6 +13,9 @@ import subprocess
 import tempfile
 from pathlib import Path
 from hashlib import sha256
+from threading import Event
+from unittest.mock import patch
+from PySide6.QtTest import QTest
 
 from PySide6.QtCore import Qt, QPoint, qVersion
 from PySide6.QtGui import QFontInfo
@@ -108,7 +111,7 @@ def measure(app, w, scheme, width, height, state):
     vp = w.scroll.viewport()
     base = ("select_button", "path_field", "detected", "source_unit",
             "target_unit", "precision", "factor", "approved", "convert_button", "status")
-    if state in ("not_proven", "saved", "pass"):
+    if state in ("not_proven", "save_error", "saved", "pass", "detail_open"):
         base += ("result_state", "summary", "directory_button", "output_directory", "saved_paths")
     if state == "saved":
         base += ("saved_csv_path", "saved_report_path")
@@ -148,7 +151,7 @@ def measure(app, w, scheme, width, height, state):
     else:
         s["internal_geometry_result"] = "PASS_IN_TEST"
     s["images"] = [capture(app, w, scheme, width, height, state, 0)]
-    if state in ("not_proven", "saved", "pass"):
+    if state in ("not_proven", "save_error", "saved", "pass", "detail_open"):
         s["images"].append(capture(app, w, scheme, width, height, state,
                                    w.scroll.verticalScrollBar().maximum()))
     return s
@@ -173,19 +176,83 @@ def run_one(app, width, height, scheme, input_file):
         wait_finished(w, w.detection_done, app)
         if w.source is None:
             raise AssertionError("Synthetic file detection did not complete")
+        rows.append(measure(app, w, scheme, width, height, "detected"))
         w.source_unit.setCurrentIndex(w.source_unit.findData("IRR"))
         w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
         w.approved.setChecked(True)
         if not (w._selected_digest and w._approved_digest == w._selected_digest):
             raise AssertionError("SHA-bound financial consent failed in test")
         rows.append(measure(app, w, scheme, width, height, "approval"))
+        # Actual Qt Space semantics, never setting the checkbox for the test.
+        w.approved.setFocus(Qt.FocusReason.TabFocusReason)
+        app.processEvents()
+        if app.focusWidget() is not w.approved:
+            raise AssertionError("Financial approval cannot receive native focus")
+        QTest.keyClick(w.approved, Qt.Key.Key_Space)
+        app.processEvents()
+        if w.approved.isChecked() or w._approved_digest is not None:
+            raise AssertionError("Native Space did not revoke SHA consent")
+        QTest.keyClick(w.approved, Qt.Key.Key_Space)
+        app.processEvents()
+        if not (w.approved.isChecked() and w._approved_digest == w._selected_digest):
+            raise AssertionError("Native Space did not restore exact-source consent")
+        rows[-1]["space_consent_revoke_restore"] = True
+        # Real worker with an artificially held synthetic conversion.
+        entered, release = Event(), Event()
+        actual_convert = ui.convert
+        def held_convert(path, context):
+            entered.set()
+            if not release.wait(12):
+                raise RuntimeError("Synthetic conversion hold timeout")
+            return actual_convert(path, context)
+        with patch.object(ui, "convert", side_effect=held_convert):
+            try:
+                w.start_conversion()
+                if not entered.wait(10):
+                    raise AssertionError("Qt conversion worker did not start")
+                rows.append(measure(app, w, scheme, width, height, "busy"))
+                w.cancel_conversion()
+                if w._stop is None or not w._stop.is_set():
+                    raise AssertionError("Qt worker cancellation not signaled")
+                rows.append(measure(app, w, scheme, width, height, "cancel_requested"))
+            finally:
+                release.set()
+            wait_finished(w, w.conversion_done, app)
+        if w.result is not None or "توقف" not in w.status.text():
+            raise AssertionError("Cancelled conversion left stale success")
+        rows.append(measure(app, w, scheme, width, height, "cancel_completed"))
+        # Conversion error is not a balance NOT_PROVEN result.
+        with patch.object(ui, "convert", side_effect=RuntimeError("synthetic conversion failure")):
+            w.start_conversion()
+            wait_finished(w, w.conversion_done, app)
+        if w.result is not None or not w.result_state.text().startswith("ERROR"):
+            raise AssertionError("Conversion ERROR did not fail closed")
+        rows.append(measure(app, w, scheme, width, height, "convert_error"))
         w.start_conversion()
         wait_finished(w, w.conversion_done, app)
         if w.result is None or not w.result.balance_status.startswith("NOT_PROVEN"):
-            raise AssertionError("Synthetic NOT_PROVEN conversion did not complete")
+            raise AssertionError("Actual synthetic NOT_PROVEN conversion did not complete")
         rows.append(measure(app, w, scheme, width, height, "not_proven"))
-        # Exercise actual paired publication, never synthesized save text.
+        if w.details_button.isVisible():
+            w.details_button.click()
+            app.processEvents()
+            if not w.details.isVisible():
+                raise AssertionError("Native technical disclosure did not open")
+            rows.append(measure(app, w, scheme, width, height, "detail_open"))
+            w.details_button.click()
+        # Real paired-save worker with injected I/O failure.
         w.output_directory.setText(str(input_file.parent))
+        with patch.object(ui, "save_candidate", side_effect=OSError("synthetic permission fault")):
+            w.save_files()
+            wait_finished(w, w.save_done, app)
+        if w._saved or not w._destination_retry_blocked():
+            raise AssertionError("Failed paired save incorrectly permitted success")
+        rows.append(measure(app, w, scheme, width, height, "save_error"))
+        with patch.object(ui.QFileDialog, "getExistingDirectory", return_value=str(input_file.parent)):
+            w._browse_directory()  # An explicit confirmation, not a hidden retry.
+        if w._destination_retry_blocked():
+            raise AssertionError("Explicit folder confirmation did not enable safe retry")
+        # Actual paired publication; never synthesized success text.
         w.save_files()
         wait_finished(w, w.save_done, app)
         if not w._saved:
@@ -247,6 +314,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="stage5-scale-synthetic-") as temp:
         source = Path(temp) / "bank_fixture_synthetic.csv"
         fixture(source, balanced=False)
+        host["source_fixture_sha256"] = sha256(source.read_bytes()).hexdigest()
         for scheme in ("light", "simulated_dark"):
             for width in (900, 940):
                 for height in (480, 650):
