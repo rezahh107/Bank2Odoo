@@ -257,9 +257,9 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIn("PASS", w.result_state.text())
         self.assertIn("تأیید حسابداری", w.result_state.text())
         self.assertIn("خصوصی", w.directory_button.text())
-        w.resize(600, 480)
+        w.resize(900, 480)
         QTest.qWait(30)
-        self.assertEqual(w._workspace.direction(), QBoxLayout.Direction.TopToBottom)
+        self.assertEqual(w._workspace.direction(), QBoxLayout.Direction.LeftToRight)
         self.assertEqual(w.scroll.horizontalScrollBar().maximum(), 0)
         for control in (w.output_directory, w.directory_button):
             self.assertTrue(control.isVisible())
@@ -368,7 +368,7 @@ class AccountantUiTests(unittest.TestCase):
         forms = self.window.findChildren(QFormLayout)
         self.assertEqual(len(forms), 1)
         self.assertEqual(forms[0].rowWrapPolicy(), QFormLayout.RowWrapPolicy.WrapLongRows)
-        for width, height in ((940, 830), (650, 520), (600, 480)):
+        for width, height in ((940, 650), (940, 520), (900, 480)):
             self.window.resize(width, height)
             self.app.processEvents()
             for widget in (self.window.approved, self.window.convert_button):
@@ -381,7 +381,7 @@ class AccountantUiTests(unittest.TestCase):
         # Folder selection is intentionally progressive, not available before
         # conversion. Prove the actual control becomes reachable after a result.
         self._convert()
-        for width, height in ((940, 830), (650, 520), (600, 480)):
+        for width, height in ((940, 650), (940, 520), (900, 480)):
             self.window.resize(width, height)
             self.app.processEvents()
             widget = self.window.directory_button
@@ -1315,7 +1315,7 @@ class AccountantUiTests(unittest.TestCase):
         self.assertFalse(w.saved_path_fields.isVisible())
         # The primary action must explicitly confirm a destination, not retry.
         self.assertFalse(w.save_button.isVisible())
-        for width, height in ((940, 830), (650, 520), (600, 480)):
+        for width, height in ((940, 650), (940, 520), (900, 480)):
             with self.subTest(size=(width, height)):
                 w.resize(width, height)
                 self.app.processEvents()
@@ -1599,16 +1599,16 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(before, {path.name: path.read_bytes() for path in paths})
 
 
-    def test_workspace_responsive_columns_and_long_mixed_direction_paths(self):
+    def test_workspace_fixed_columns_and_long_mixed_direction_paths(self):
         self.assertEqual(self.window.source_unit.accessibleName(), "واحد پول فایل بانک")
         self.assertEqual(self.window.target_unit.accessibleName(), "واحد پول ژورنال مقصد")
         very_long = "C:/Private/" + ("مسیر_ساختگی_" * 24) + "statement_2026_10_IRR_A" + "f" * 64 + ".csv"
         self.window.path_field.setText(very_long)
         self.window.output_directory.setText(very_long + "/output")
         for width, height, direction in (
-            (940, 830, QBoxLayout.Direction.LeftToRight),
-            (650, 520, QBoxLayout.Direction.TopToBottom),
-            (600, 480, QBoxLayout.Direction.TopToBottom),
+            (940, 650, QBoxLayout.Direction.LeftToRight),
+            (940, 520, QBoxLayout.Direction.LeftToRight),
+            (900, 480, QBoxLayout.Direction.LeftToRight),
         ):
             with self.subTest(size=(width, height)):
                 self.window.resize(width, height)
@@ -1665,7 +1665,7 @@ class AccountantUiTests(unittest.TestCase):
     def test_primary_action_tracks_real_candidate_folder_and_saved_pair(self):
         self._convert()
         self.assertTrue(self.window.result_state.text().startswith("PASS"))
-        self.window.resize(650, 520)
+        self.window.resize(900, 520)
         self.app.processEvents()
         self.window._reflow_workspace()
         self.window._reveal_result()
@@ -1735,7 +1735,7 @@ class AccountantUiTests(unittest.TestCase):
         self._save()  # Real fictional paired save.
         paths = sorted(private.glob("Bank2Odoo_*"))
         self.assertEqual(len(paths), 2)
-        for width, height in ((940, 830), (650, 520), (600, 480)):
+        for width, height in ((940, 650), (940, 520), (900, 480)):
             with self.subTest(width=width):
                 self.window.resize(width, height)
                 self.app.processEvents()
@@ -1769,6 +1769,33 @@ class AccountantUiTests(unittest.TestCase):
             self.assertEqual(self.app.clipboard().text(), str(path))
         self.assertNotEqual(self.window.saved_csv_path.accessibleName(),
                             self.window.saved_report_path.accessibleName())
+
+    def test_stage5_fixed_minimum_and_single_native_workflow_rail(self):
+        """Fixed envelope and active step follow real UI-owned state."""
+        w = self.window
+        self.assertEqual(w.minimumWidth(), 900)
+        self.assertEqual(w.minimumHeight(), 480)
+        self.assertEqual(len(w._stage_labels), 4)
+        self.assertEqual(w._workspace.direction(), QBoxLayout.Direction.LeftToRight)
+        w.resize(600, 480)  # Deliberately unsupported width: Qt must clamp it.
+        self.app.processEvents()
+        self.assertGreaterEqual(w.width(), 900)
+        self.assertEqual(w._workspace.direction(), QBoxLayout.Direction.LeftToRight)
+        self.assertEqual(w.scroll.horizontalScrollBar().maximum(), 0)
+        self.assertTrue(w._stage_labels[0].font().bold())
+        self._select(self.source)
+        self.assertTrue(w._stage_labels[1].font().bold())
+        self._approve()
+        self.assertTrue(w._stage_labels[2].font().bold())
+        w.start_conversion()
+        self._wait_conversion()
+        self.assertTrue(w._stage_labels[3].font().bold())
+        w.output_directory.setText(str(self.private))
+        self._save()
+        self.assertTrue(w._saved)
+        self.assertIn("بعدی", w.select_button.text())
+        self.assertTrue(w._stage_labels[3].font().bold())
+        self.assertEqual(w.scroll.horizontalScrollBar().maximum(), 0)
 
     def test_error_summary_does_not_dump_source_fields(self):
         detail = "Invalid/ambiguous numeric format: 'customer-private-value'"
