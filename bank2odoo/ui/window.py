@@ -417,6 +417,7 @@ class MainWindow(QMainWindow):
         self._configure_presentation()
         self._presentation_ready = True
         self._update_units()
+        self._sync_actions()  # First native paint must identify the initial action.
         self._set_message("گام بعد: فایل گزارش بانک را انتخاب کنید؛ سپس اطلاعات مالی را بررسی و تأیید کنید.")
 
     def _build(self) -> None:
