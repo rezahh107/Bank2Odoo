@@ -111,7 +111,7 @@ def measure(app, w, scheme, width, height, state):
     vp = w.scroll.viewport()
     base = ("select_button", "path_field", "detected", "source_unit",
             "target_unit", "precision", "factor", "approved", "convert_button", "status")
-    if state in ("not_proven", "save_error", "saved", "pass", "detail_open"):
+    if state in ("not_proven", "save_error", "saving", "saved", "pass", "detail_open"):
         base += ("result_state", "summary", "directory_button", "output_directory", "saved_paths")
     if state == "saved":
         base += ("saved_csv_path", "saved_report_path")
@@ -151,7 +151,7 @@ def measure(app, w, scheme, width, height, state):
     else:
         s["internal_geometry_result"] = "PASS_IN_TEST"
     s["images"] = [capture(app, w, scheme, width, height, state, 0)]
-    if state in ("not_proven", "save_error", "saved", "pass", "detail_open"):
+    if state in ("not_proven", "save_error", "saving", "saved", "pass", "detail_open"):
         s["images"].append(capture(app, w, scheme, width, height, state,
                                    w.scroll.verticalScrollBar().maximum()))
     return s
@@ -172,6 +172,16 @@ def run_one(app, width, height, scheme, input_file):
     settle(app, w)
     try:
         rows = [measure(app, w, scheme, width, height, "initial")]
+        malformed = input_file.with_name("synthetic_invalid_format.csv")
+        malformed.write_text("Fictional unrecognized format\nnot a bank statement\n",
+                             encoding="utf-8")
+        w.set_source(malformed)
+        wait_finished(w, w.detection_done, app)
+        if w.source is not None or w._selected_digest is not None:
+            raise AssertionError("Unsupported synthetic source accepted as a bank")
+        if "شناسایی نشد" not in w.detected.text():
+            raise AssertionError("Unrecognized bank was not disclosed")
+        rows.append(measure(app, w, scheme, width, height, "detect_error"))
         w.set_source(input_file)
         wait_finished(w, w.detection_done, app)
         if w.source is None:
@@ -234,12 +244,17 @@ def run_one(app, width, height, scheme, input_file):
             raise AssertionError("Actual synthetic NOT_PROVEN conversion did not complete")
         rows.append(measure(app, w, scheme, width, height, "not_proven"))
         if w.details_button.isVisible():
-            w.details_button.click()
+            w.details_button.setFocus(Qt.FocusReason.TabFocusReason)
+            app.processEvents()
+            if app.focusWidget() is not w.details_button:
+                raise AssertionError("Native disclosure cannot receive keyboard focus")
+            QTest.keyClick(w.details_button, Qt.Key.Key_Space)
             app.processEvents()
             if not w.details.isVisible():
-                raise AssertionError("Native technical disclosure did not open")
+                raise AssertionError("Native keyboard disclosure did not open")
             rows.append(measure(app, w, scheme, width, height, "detail_open"))
-            w.details_button.click()
+            rows[-1]["space_disclosure_operated"] = True
+            QTest.keyClick(w.details_button, Qt.Key.Key_Space)
         # Real paired-save worker with injected I/O failure.
         w.output_directory.setText(str(input_file.parent))
         with patch.object(ui, "save_candidate", side_effect=OSError("synthetic permission fault")):
@@ -252,9 +267,25 @@ def run_one(app, width, height, scheme, input_file):
             w._browse_directory()  # An explicit confirmation, not a hidden retry.
         if w._destination_retry_blocked():
             raise AssertionError("Explicit folder confirmation did not enable safe retry")
-        # Actual paired publication; never synthesized success text.
-        w.save_files()
-        wait_finished(w, w.save_done, app)
+        # Capture the actual non-cancellable Qt save-worker lifecycle.
+        save_entered, save_release = Event(), Event()
+        actual_save_candidate = ui.save_candidate
+        def held_save(result, csv_path, report_path):
+            save_entered.set()
+            if not save_release.wait(12):
+                raise RuntimeError("Synthetic save worker hold timed out")
+            return actual_save_candidate(result, csv_path, report_path)
+        with patch.object(ui, "save_candidate", side_effect=held_save):
+            try:
+                w.save_files()
+                if not save_entered.wait(10):
+                    raise AssertionError("Qt paired save worker did not start")
+                if w._saved or w.convert_button.isEnabled():
+                    raise AssertionError("Saving incorrectly reports success or permits another action")
+                rows.append(measure(app, w, scheme, width, height, "saving"))
+            finally:
+                save_release.set()
+            wait_finished(w, w.save_done, app)
         if not w._saved:
             raise AssertionError("Expected real paired save of synthetic fixture")
         saved = [Path(w.saved_csv_path.text()), Path(w.saved_report_path.text())]
