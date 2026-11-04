@@ -4,6 +4,9 @@ on:
     paths:
       - 'bank2odoo/ui/window.py'
       - 'tests/test_gui.py'
+      - 'tests/qt_theme_pilot_capture.py'
+      - 'tests/qt_primary_action_hierarchy_capture.py'
+      - 'tests/qt_saved_paths_overflow_probe.py'
       - 'tests/qt_stage5_v18_native_probe.py'
       - 'tests/stage5_v18_acceptance_frozen_v1.json'
       - '.github/workflows/qt-stage5-v18-native.yml'
@@ -34,7 +37,7 @@ jobs:
           git fetch --no-tags --depth=1 origin "$BASE"
           git diff --name-only "$BASE" HEAD > changed-files.txt
           cat changed-files.txt
-          if grep -Ev '^(bank2odoo/ui/window.py|tests/test_gui.py|tests/qt_stage5_v18_native_probe.py|tests/stage5_v18_acceptance_frozen_v1.json|.github/workflows/qt-stage5-v18-native.yml)$' changed-files.txt; then
+          if grep -Ev '^(bank2odoo/ui/window.py|tests/test_gui.py|tests/qt_stage5_v18_native_probe.py|tests/stage5_v18_acceptance_frozen_v1.json|tests/qt_theme_pilot_capture.py|tests/qt_primary_action_hierarchy_capture.py|tests/qt_saved_paths_overflow_probe.py|.github/workflows/qt-stage5-v18-native.yml)
             echo "::error::Out of authorized UI/test/evidence scope"
             exit 1
           fi
@@ -91,3 +94,135 @@ jobs:
           path: ${{ runner.temp }}/bank2odoo-stage5-v18/
           retention-days: 14
           if-no-files-found: warn
+ changed-files.txt; then
+            echo "::error::Out of authorized UI/test/evidence scope"
+            exit 1
+          fi
+          if git diff --name-only "$BASE" HEAD | grep -E '(^bank2odoo/(core|banks|validation|reporting)/|GOAL_AUTHORITY)'; then
+            echo "::error::Financial or Owner-goal change forbidden"
+            exit 1
+          fi
+      - name: Checkout pinned test-only font helper
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: rezahh107/UI-UX-Test-Lab
+          ref: 6e9da83efe2208e8dac5cf293d3fc9f4e14796b9
+          path: qt-lab
+          persist-credentials: false
+      - name: Install pinned uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: '0.10.0'
+      - name: Install Python 3.13 and locked dependencies
+        shell: pwsh
+        run: |
+          uv python install 3.13
+          if ($LASTEXITCODE -ne 0) { throw "Python install failed" }
+          uv sync --locked
+          if ($LASTEXITCODE -ne 0) { throw "Locked dependency sync failed" }
+      - name: Financial, worker, private save and Qt regression suite
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONFAULTHANDLER: '1'
+        run: |
+          uv run --locked python -m unittest discover -s tests -v
+          if ($LASTEXITCODE -ne 0) { throw "Synthetic regression suite failed" }
+      - name: Real Windows QPA native render and synthetic conversion/save at three independent scale factors
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+          STAGE5_OUTPUT: ${{ runner.temp }}/bank2odoo-stage5-v18
+          PYTHONFAULTHANDLER: '1'
+        run: |
+          foreach ($factor in @("1.0","1.25","1.5")) {
+            $env:QT_SCALE_FACTOR = $factor
+            Write-Output "STAGE5_QT_FACTOR_SIMULATION=$factor (not Windows OS DPI)"
+            uv run --locked python -m tests.qt_stage5_v18_native_probe
+            if ($LASTEXITCODE -ne 0) { throw "Stage5 Windows QPA probe failed at $factor" }
+          }
+          Remove-Item Env:\QT_SCALE_FACTOR -ErrorAction SilentlyContinue
+      - name: Upload original-resolution synthetic Windows PNG and trace manifests
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bank2odoo-stage5-v18-native-original-windows
+          path: ${{ runner.temp }}/bank2odoo-stage5-v18/
+          retention-days: 14
+          if-no-files-found: warn
+
+  publish-curated-stage5-evidence:
+    name: Publish immutable original PNG subset to non-main evidence branch
+    needs: stage5-native-windows
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Check out dedicated evidence branch (never main)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: evidence/stage5-v18-native-20261104
+          persist-credentials: true
+      - name: Retrieve original PNG and machine-readable manifest from same successful run
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_ID: ${{ github.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          SOURCE="$RUNNER_TEMP/stage5-original"
+          mkdir -p "$SOURCE"
+          gh run download "$RUN_ID" --repo "$REPO" --name bank2odoo-stage5-v18-native-original-windows --dir "$SOURCE"
+          DEST="stage5/$HEAD_SHA/$RUN_ID"
+          mkdir -p "$DEST"
+          for factor in 1_0 1_25 1_5; do
+            src="$SOURCE/scale_sim_$factor"
+            test -s "$src/manifest.json"
+            mkdir -p "$DEST/scale_sim_$factor"
+            cp "$src/manifest.json" "$DEST/scale_sim_$factor/manifest.json"
+          done
+          # Curate only unmodified original-resolution Windows QWidget.grab PNGs.
+          # All additional original images remain in the Actions artifact.
+          for image in \
+            scale_sim_1_0/light_900x480_initial_top.png \
+            scale_sim_1_0/light_900x650_approval_top.png \
+            scale_sim_1_0/light_900x650_cancel_requested_top.png \
+            scale_sim_1_0/light_900x650_cancel_completed_top.png \
+            scale_sim_1_0/light_900x650_convert_error_top.png \
+            scale_sim_1_0/light_900x650_not_proven_top.png \
+            scale_sim_1_0/light_900x650_not_proven_bottom.png \
+            scale_sim_1_0/light_900x650_detail_open_bottom.png \
+            scale_sim_1_0/light_900x650_save_error_top.png \
+            scale_sim_1_0/light_900x650_saved_bottom.png \
+            scale_sim_1_0/light_940x650_pass_top.png \
+            scale_sim_1_25/light_900x480_initial_top.png \
+            scale_sim_1_5/light_900x480_initial_top.png
+          do
+            test -s "$SOURCE/$image"
+            cp "$SOURCE/$image" "$DEST/$image"
+          done
+          (
+            cd "$DEST"
+            find . -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+            cat > README.md <<EOF
+          Exact Stage 5 candidate Head: $HEAD_SHA
+          Exact GitHub Actions run: $RUN_ID
+          All input statements and output filenames are synthetic.
+          These are original Qt Windows-QPA captures, not browser mockups.
+          Qt scale overrides 1.25/1.5 are simulations, not physical OS DPI.
+          Designer/Owner acceptance, human comprehension, physical device fit: NOT_PROVEN.
+          The main branch and financial engine were not changed by this evidence job.
+          EOF
+          )
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "$DEST"
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "evidence(stage5): original Qt images and manifests for $HEAD_SHA run $RUN_ID"
+          git push origin HEAD:evidence/stage5-v18-native-20261104
