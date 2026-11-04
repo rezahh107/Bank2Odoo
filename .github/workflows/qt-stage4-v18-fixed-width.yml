@@ -58,6 +58,21 @@ jobs:
         run: |
           uv run --locked python -m tests.qt_stage4_v18_fixed_width_probe
           if ($LASTEXITCODE -ne 0) { throw "Stage4 evidence-only Qt test failed; inspect logs and artifacts" }
+      - name: Simulate Qt 100/125/150 percent DPI in separate processes
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONPATH: ${{ github.workspace }}/qt-lab
+          STAGE4_OUTPUT: ${{ runner.temp }}/bank2odoo-stage4-evidence
+          PYTHONFAULTHANDLER: '1'
+        run: |
+          foreach ($factor in @("1.0","1.25","1.5")) {
+            $env:QT_SCALE_FACTOR = $factor
+            Write-Output "STAGE4_QT_SCALE_OVERRIDE=$factor (simulation, not native Windows DPI)"
+            uv run --locked python -m tests.qt_stage4_v18_scale_probe
+            if ($LASTEXITCODE -ne 0) { throw "Stage4 scale simulation $factor failed" }
+          }
+          Remove-Item Env:\QT_SCALE_FACTOR -ErrorAction SilentlyContinue
       - name: Provide concise summary if manifest exists
         if: always()
         shell: pwsh
