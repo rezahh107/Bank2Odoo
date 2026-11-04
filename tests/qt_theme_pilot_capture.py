@@ -30,7 +30,7 @@ BASE_SHA = "1ff8057945abacf1ae8a2532ac37b9fe9dd43361"
 STATES = ("initial", "validation_error", "approval_unchecked",
           "approval_checked", "keyboard_focus", "conversion_busy",
           "not_proven_result", "ready_to_save")
-SIZES = ((940, 830), (650, 520), (600, 480))
+SIZES = ((940, 650), (900, 520), (900, 480))
 
 
 def fixture(file: Path, *, balanced: bool = False) -> None:
@@ -387,7 +387,7 @@ def verify_native_restoration(app, root: Path, metadata: dict) -> None:
                         f"{exit_scheme.name}: {mismatches}"
                     )
                 window = current_ui.MainWindow()
-                window.resize(650, 520)
+                window.resize(900, 520)
                 window.show()
                 app.processEvents()
                 frames = []
