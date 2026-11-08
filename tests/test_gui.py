@@ -305,9 +305,14 @@ class AccountantUiTests(unittest.TestCase):
             assert_no_unearned_review()
         w._sync_actions()
         assert_no_unearned_review()
-        # A clickable primary action must not bypass incomplete-input validation.
-        w.convert_button.click()
+        # Concept A's initial primary action opens the real native source
+        # picker; cancel it synthetically rather than blocking headless CI.
+        with patch("bank2odoo.ui.window.QFileDialog.getOpenFileName",
+                   return_value=("", "")) as picker:
+            w.convert_button.click()
+        picker.assert_called_once()
         self.assertIsNone(w._thread)
+        self.assertIsNone(w.source)
         self.assertIsNone(w.result)
         self.assertFalse(w.approved.isChecked())
         self.assertFalse(w.save_button.isEnabled())
