@@ -1,6 +1,12 @@
 name: Bank2Odoo PR32 Windows 11 ARM64 native Qt qualification
 
 on:
+  push:
+    branches:
+      - 'ux/concept-a-current-decision-desk-20261108'
+    paths:
+      - '.github/workflows/qt-win11-arm-pr32.yml'
+      - 'tests/qt_concept_a_probe.py'
   pull_request:
     paths:
       - '.github/workflows/qt-win11-arm-pr32.yml'
@@ -11,7 +17,7 @@ permissions:
 
 jobs:
   windows11-arm-native-qt:
-    if: github.event.pull_request.number == 32 && github.event.pull_request.head.repo.full_name == 'rezahh107/Bank2Odoo'
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.number == 32 && github.event.pull_request.head.repo.full_name == 'rezahh107/Bank2Odoo')
     runs-on: windows-11-arm
     timeout-minutes: 35
     env:
@@ -21,12 +27,12 @@ jobs:
       - name: Check out exact PR Head (no stored credentials)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - name: Verify exact checkout and Windows 11 ARM64 runner
         shell: pwsh
         env:
-          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           $ErrorActionPreference = 'Stop'
           $actual = (git rev-parse HEAD).Trim()
