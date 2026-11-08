@@ -50,6 +50,8 @@ def capture(app, window, name, directory, report):
     # Include focus/scroll reachability as well as horizontal geometry.
     visible_controls = [
         window.convert_button, window.approved, window.path_field,
+        window.candidate_state, window.result_state, window.summary,
+        window.save_outcome_label, window.saved_paths,
         window.output_directory, window.saved_csv_path, window.saved_report_path,
     ]
     reachable = {}
@@ -73,6 +75,17 @@ def capture(app, window, name, directory, report):
     internal = (window._workspace.direction() == QBoxLayout.Direction.LeftToRight
                 and right.center().x() > left.center().x()
                 and after_scroll_hmax == 0 and all(reachable.values()))
+    # Native Qt geometry/reading-order discriminator, not widget existence.
+    layout = window._review_layout
+    action_index = next(i for i in range(layout.count())
+                        if layout.itemAt(i).layout() is window._actions_layout)
+    evidence = (window.candidate_state, window.result_state, window.summary,
+                window.save_outcome_label, window.saved_paths,
+                window.saved_path_fields, window.status)
+    evidence_first = all(layout.indexOf(widget) < action_index
+                         for widget in evidence if widget.isVisible())
+    support_after = (layout.indexOf(window.metrics_panel) > action_index
+                     and layout.indexOf(window.save_box) > action_index)
     # The window may be larger than the logical work area at simulated scale.
     frame_fits = frame.width() <= available.width() and frame.height() <= available.height()
     image_file = directory / (name + ".png")
@@ -90,6 +103,8 @@ def capture(app, window, name, directory, report):
         "column_metrics": list(window._workspace_measurements),
         "horizontal_overflow": after_scroll_hmax,
         "control_reachable": reachable, "internal_reachability": internal,
+        "evidence_before_action": evidence_first,
+        "secondary_after_action": support_after,
         "frame_fits_work_area": frame_fits,
         "font": QFontInfo(window.font()).family(),
         "font_point_size": QFontInfo(window.font()).pointSize(),
@@ -108,6 +123,8 @@ def capture(app, window, name, directory, report):
     })
     if not internal:
         raise AssertionError("Concept A native internal RTL/scroll/focus geometry failed: " + name)
+    if not evidence_first or not support_after:
+        raise AssertionError("Concept A evidence/action hierarchy failed: " + name)
 
 
 def run(output):
@@ -122,12 +139,12 @@ def run(output):
         statement(source, not_proven=True)
         dest = tmpdir / "private"
         dest.mkdir()
-        for width in (900, 940):
+        for width, height in ((900, 480), (900, 650), (940, 480), (940, 650)):
             w = MainWindow()
-            w.resize(width, 650)
+            w.resize(width, height)
             w.show()
             app.processEvents()
-            label = str(width)
+            label = f"{width}x{height}"
             try:
                 capture(app, w, label + "_initial", output, results)
                 w.set_source(source)

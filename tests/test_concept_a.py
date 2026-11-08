@@ -69,6 +69,65 @@ class ConceptADecisionDeskTests(unittest.TestCase):
         self.assertIsNotNone(self.w.result)
         return self.w.result
 
+
+    def _assert_evidence_before_primary(self, *widgets):
+        layout = self.w._review_layout
+        action = next(i for i in range(layout.count())
+                      if layout.itemAt(i).layout() is self.w._actions_layout)
+        for widget in widgets:
+            self.assertTrue(widget.isVisible())
+            self.assertGreaterEqual(layout.indexOf(widget), 0)
+            self.assertLess(layout.indexOf(widget), action,
+                            "Material evidence follows the primary action")
+        self.assertGreater(layout.indexOf(self.w.metrics_panel), action)
+        self.assertGreater(layout.indexOf(self.w.save_box), action)
+
+    def test_short_viewport_pass_evidence_precedes_action(self):
+        w = self.w
+        self._convert()
+        for height in (480, 650):
+            w.resize(900, height)
+            self.app.processEvents()
+            self._assert_evidence_before_primary(
+                w.candidate_state, w.result_state, w.summary, w.status)
+            self.assertIn("خلاصهٔ بررسی", w.summary.text())
+            for widget in (w.result_state, w.summary, w.convert_button):
+                w.scroll.ensureWidgetVisible(widget)
+                self.app.processEvents()
+                pos = widget.mapTo(w.scroll.viewport(), widget.rect().center())
+                self.assertTrue(w.scroll.viewport().rect().contains(pos))
+
+    def test_mutated_source_rejects_and_clears_old_verified_sha_label(self):
+        self._detect()
+        self._approve()
+        old_digest = self.w._selected_digest[:12]
+        self.assertIn(old_digest, self.w.source_digest.text())
+        statement(self.source, duplicate=True)
+        self.w.start_conversion()
+        self._await(self.w.conversion_done)
+        self.assertIsNone(self.w.source)
+        self.assertIsNone(self.w._selected_digest)
+        self.assertIsNone(self.w._approved_digest)
+        self.assertIsNone(self.w.result)
+        self.assertFalse(self.w.approved.isChecked())
+        self.assertNotIn(old_digest, self.w.source_digest.text())
+        self.assertIn("شناسایی مجدد", self.w.source_digest.text())
+        self.assertFalse(self.w.save_button.isEnabled())
+
+    def test_cancelled_pickers_restore_launcher_keyboard_focus(self):
+        w = self.w
+        with patch("bank2odoo.ui.window.QFileDialog.getOpenFileName",
+                   return_value=("", "")) as picker:
+            w.select_button.click()
+        picker.assert_called_once()
+        self.assertIs(self.app.focusWidget(), w.select_button)
+        self._convert()
+        with patch("bank2odoo.ui.window.QFileDialog.getExistingDirectory",
+                   return_value="") as picker:
+            w.directory_button.click()
+        picker.assert_called_once()
+        self.assertIs(self.app.focusWidget(), w.directory_button)
+
     def test_initial_invalid_file_and_no_visual_authority(self):
         w = self.w
         self.assertEqual(w._decision_phase(), "initial")
@@ -128,12 +187,21 @@ class ConceptADecisionDeskTests(unittest.TestCase):
         self.assertEqual(w._decision_phase(), "pass")
         self.assertTrue(w.candidate_state.isVisible())
         self.assertIn("تأیید حسابداری نیست", w.candidate_state.text())
+        self._assert_evidence_before_primary(w.candidate_state, w.result_state, w.summary, w.status)
         w.output_directory.setText(str(self.private))
         w.convert_button.click()
         self._await(w.save_done)
         self.assertTrue(w._saved)
         self.assertEqual(w._decision_phase(), "saved")
         self.assertIn("COMPLETE_PAIR", w.save_outcome_label.text())
+        self._assert_evidence_before_primary(
+            w.save_outcome_label, w.saved_paths, w.saved_path_fields, w.status)
+        for field in (w.saved_csv_path, w.saved_report_path):
+            self.assertTrue(field.isReadOnly())
+            self.assertEqual(field.layoutDirection(), Qt.LayoutDirection.LeftToRight)
+            field.selectAll()
+            field.copy()
+            self.assertEqual(self.app.clipboard().text(), field.text())
         csv, report = Path(w.saved_csv_path.text()), Path(w.saved_report_path.text())
         self.assertNotEqual(csv, report)
         self.assertEqual(csv.read_text(encoding="utf-8-sig").splitlines()[0],
@@ -156,6 +224,8 @@ class ConceptADecisionDeskTests(unittest.TestCase):
         self.assertFalse(result.balance_status.startswith("PASS"))
         self.assertEqual(w._decision_phase(), "not_proven")
         self.assertIn("NOT_PROVEN", w.result_state.text())
+        self._assert_evidence_before_primary(
+            w.candidate_state, w.result_state, w.summary, w.status)
         self.assertTrue(w.save_box.isVisible())
         w.output_directory.setText(str(self.private))
         with patch("bank2odoo.ui.window.save_candidate",
@@ -166,6 +236,9 @@ class ConceptADecisionDeskTests(unittest.TestCase):
         self.assertEqual(w._decision_phase(), "save_error")
         self.assertFalse(w._saved)
         self.assertNotIn("COMPLETE_PAIR", w.save_outcome_label.text())
+        self._assert_evidence_before_primary(
+            w.candidate_state, w.result_state, w.summary,
+            w.save_outcome_label, w.saved_paths, w.status)
         self.assertFalse(w.saved_path_fields.isVisible())
         self.assertFalse(w.save_button.isEnabled())
         with patch("bank2odoo.ui.window.QFileDialog.getExistingDirectory",

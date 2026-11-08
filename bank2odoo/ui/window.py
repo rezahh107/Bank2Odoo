@@ -559,6 +559,7 @@ class MainWindow(QMainWindow):
         self.decision_heading = QLabel("انتخاب صورت‌حساب")
         self.decision_heading.setObjectName("currentDecisionHeading")
         self.decision_heading.setAccessibleName("تصمیم جاری حسابدار")
+        self.decision_heading.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.decision_heading.setWordWrap(True)
         review_layout.addWidget(self.decision_heading)
         self.decision_hint = QLabel("بانک از روی محتوای فایل تعیین می‌شود، نه نام یا پسوند آن.")
@@ -583,22 +584,18 @@ class MainWindow(QMainWindow):
         self.status = QLabel()
         self.status.setObjectName("status")
         self.status.setWordWrap(True)
-        review_layout.addWidget(self.status)
-        review_layout.addLayout(actions)
         self.busy = QProgressBar()
         self.busy.setRange(0, 0)
         self.busy.setVisible(False)
         self.busy.setAccessibleName("پردازش در حال اجرا")
-        review_layout.addWidget(self.busy)
         self.result_state = QLabel("هنوز تبدیل انجام نشده است")
         self.result_state.setAccessibleName("وضعیت واقعی تبدیل و شواهد مانده")
+        self.result_state.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.result_state.setWordWrap(True)
-        review_layout.addWidget(self.result_state)
         self.result_state.hide()
         self.candidate_state = QLabel("تبدیل: کاندیدای بررسی تولید شد؛ هنوز تأیید حسابداری نیست.")
         self.candidate_state.setWordWrap(True)
         self.candidate_state.setAccessibleName("نتیجه مستقل تولید کاندیدا")
-        review_layout.addWidget(self.candidate_state)
         self.candidate_state.hide()
         self.metrics_panel = QWidget(review_box)
         metrics = QGridLayout(self.metrics_panel)
@@ -629,18 +626,15 @@ class MainWindow(QMainWindow):
             metrics.addWidget(value, row, 1)
             self._metrics[key] = value
         metrics.setColumnStretch(1, 1)
-        review_layout.addWidget(self.metrics_panel)
         self.metrics_panel.hide()
         self.summary = QLabel("هنوز خروجی برای بررسی تولید نشده است.")
         self.summary.setWordWrap(True)
         self.summary.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.summary.setMinimumHeight(42)
-        review_layout.addWidget(self.summary)
         self.summary.hide()
         self.details_button = QPushButton("نمایش جزئیات فنی")
         self.details_button.setCheckable(True)
         self.details_button.toggled.connect(self._toggle_details)
-        review_layout.addWidget(self.details_button, alignment=Qt.AlignmentFlag.AlignRight)
         self.details_button.hide()
         self.details = QPlainTextEdit()
         self.details.setReadOnly(True)
@@ -648,7 +642,6 @@ class MainWindow(QMainWindow):
         self.details.setVisible(False)
         self.details.setMinimumHeight(110)
         self.details.setAccessibleName("جزئیات فنی تبدیل و کنترل")
-        review_layout.addWidget(self.details)
 
         # The private destination belongs to the same active decision surface,
         # not a second competing stage/card. Publisher and save guards are reused.
@@ -687,11 +680,10 @@ class MainWindow(QMainWindow):
         self.saved_paths.setWordWrap(True)
         self.saved_paths.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.saved_paths.setFocusPolicy(Qt.FocusPolicy.TabFocus)
-        save_layout.addWidget(self.saved_paths)
         # Full technical paths live in bounded, individually copyable native
         # controls. A wrapped QLabel containing an unbroken LTR filename made
         # the entire result column demand thousands of logical pixels.
-        self.saved_path_fields = QWidget(save_box)
+        self.saved_path_fields = QWidget(review_box)
         path_layout = QVBoxLayout(self.saved_path_fields)
         path_layout.setContentsMargins(0, 0, 0, 0)
         path_layout.setSpacing(6)
@@ -714,16 +706,30 @@ class MainWindow(QMainWindow):
             field.setAccessibleName(accessible)
             path_layout.addWidget(field)
         self.saved_path_fields.hide()
-        save_layout.addWidget(self.saved_path_fields)
         next_step = QLabel(GENERAL_REVIEW)
         next_step.setWordWrap(True)
         save_layout.addWidget(next_step)
         self.save_outcome_label = QLabel("")
         self.save_outcome_label.setWordWrap(True)
         self.save_outcome_label.setAccessibleName("وضعیت واقعی انتشار جفت فایل")
-        save_layout.insertWidget(0, self.save_outcome_label)
         self.save_outcome_label.hide()
+        # Evidence is read before acting; supplemental controls follow the CTA.
+        # No duplicate consent, conversion or publisher state is introduced.
+        self._review_layout = review_layout
+        self._actions_layout = actions
+        review_layout.addWidget(self.candidate_state)
+        review_layout.addWidget(self.result_state)
+        review_layout.addWidget(self.summary)
+        review_layout.addWidget(self.save_outcome_label)
+        review_layout.addWidget(self.saved_paths)
+        review_layout.addWidget(self.saved_path_fields)
+        review_layout.addWidget(self.status)
+        review_layout.addLayout(actions)
+        review_layout.addWidget(self.busy)
+        review_layout.addWidget(self.metrics_panel)
         review_layout.addWidget(save_box)
+        review_layout.addWidget(self.details_button, alignment=Qt.AlignmentFlag.AlignRight)
+        review_layout.addWidget(self.details)
         # Source/financial inputs stay at the right; all active decisions live
         # in the left surface. No duplicate finance or publisher controls.
         self._input_column = QWidget(body)
@@ -916,20 +922,27 @@ class MainWindow(QMainWindow):
         self.save_outcome_label.setVisible(
             has_result and bool(self.save_outcome_label.text())
         )
+        self.saved_paths.setVisible(
+            has_result and (self._saved or self._feedback_phase == "save_error")
+        )
         self._apply_theme_controls()
         QTimer.singleShot(0, self._reflow_workspace)
 
     def _reveal_result(self) -> None:
         """Keep the outcome and its single next action together, including narrow mode."""
-        # Place the action first, then give the outcome itself breathing room
-        # in the narrow viewport. Otherwise focusing the action can push the
-        # second line of NOT_PROVEN below the visible edge.
+        # Native focus on the CTA would scroll warnings out of short viewports.
         self._workspace.activate()
         self.scroll.widget().layout().activate()
-        self.scroll.ensureWidgetVisible(self.convert_button, 0, 18)
-        self.scroll.ensureWidgetVisible(self.result_state, 0, 64)
-        if self.convert_button.isEnabled():
-            self.convert_button.setFocus(Qt.FocusReason.OtherFocusReason)
+        self.decision_heading.setFocus(Qt.FocusReason.OtherFocusReason)
+        if self._saved or self._feedback_phase == "save_error":
+            evidence = self.save_outcome_label
+        elif self.result is not None:
+            evidence = self.candidate_state
+        elif self.result_state.isVisible():
+            evidence = self.result_state
+        else:
+            evidence = self.status
+        self.scroll.ensureWidgetVisible(evidence, 0, 40)
 
     def _apply_surface_palette(self) -> None:
         """Pair paint surfaces with their text roles from the current Qt palette."""
@@ -1117,10 +1130,13 @@ class MainWindow(QMainWindow):
             self.factor_help.setText("برای واحدهای یکسان ضریب لازم نیست؛ واحدهای هر دو طرف باید تأیید شوند.")
 
     def _browse_source(self) -> None:
+        launcher = self.sender()
         name, _ = QFileDialog.getOpenFileName(self, "انتخاب صورت‌حساب بانکی", "",
                                                "گزارش‌های بانکی پشتیبانی‌شده (*.xls *.csv);;همه فایل‌ها (*)")
         if name:
             self.set_source(Path(name))
+        elif isinstance(launcher, QPushButton):
+            launcher.setFocus(Qt.FocusReason.OtherFocusReason)
 
     def set_source(self, path: Path) -> None:
         if self._thread is not None:
@@ -1267,10 +1283,12 @@ class MainWindow(QMainWindow):
         # The narrative is reserved for unresolved checks, not a second,
         # space-consuming copy of all six metrics.
         self.summary.setText(
-            "موارد نیازمند بررسی:\n"
-            + ("\n".join("• " + issue_label(issue) for issue in result.issues[:4])
-               if result.issues
-               else "مورد اضافی گزارش نشده؛ بررسی مستقل حسابدار همچنان لازم است.")
+            "خلاصهٔ بررسی: " + latin(len(result.rows)) + " گردش، "
+            + latin(len(result.issues)) + " مورد نیازمند بررسی.\n"
+            + ("هشدارهای مؤثر:\n"
+               + "\n".join("• " + issue_label(issue) for issue in result.issues[:4])
+               if result.issues else
+               "مورد اضافی گزارش نشده؛ بررسی مستقل حسابدار همچنان لازم است.")
         )
         self._set_message("نامزد بررسی آماده است؛ هشدارها و پوشه خصوصی را بررسی و سپس دو فایل را ذخیره کنید. این تأیید حسابداری نیست.",
                           "Balance: " + result.balance_status + "\n" + "\n".join(result.issues))
@@ -1363,6 +1381,7 @@ class MainWindow(QMainWindow):
                 self.source = None
                 self._selected_digest = None
                 self._invalidate()
+                self.source_digest.setText("شناسه محتوای منبع: نامعتبر؛ شناسایی مجدد لازم است.")
                 self.detected.setText("هویت فایل تغییر کرده؛ شناسایی مجدد ضروری است.")
                 self._set_message(
                     "فایل پس از شناسایی تغییر کرده است؛ نامزد پذیرفته نشد. "
@@ -1437,6 +1456,7 @@ class MainWindow(QMainWindow):
             self.save_done.emit()
 
     def _browse_directory(self) -> None:
+        launcher = self.sender()
         folder = QFileDialog.getExistingDirectory(self, "پوشه خصوصی برای دو فایل خروجی")
         if folder:
             self.output_directory.setText(folder)
@@ -1446,6 +1466,8 @@ class MainWindow(QMainWindow):
             self._feedback_phase = None
             self._sync_actions()
             self.convert_button.setFocus(Qt.FocusReason.OtherFocusReason)
+        elif isinstance(launcher, QPushButton):
+            launcher.setFocus(Qt.FocusReason.OtherFocusReason)
 
     def save_files(self) -> None:
         if self._thread is not None:
