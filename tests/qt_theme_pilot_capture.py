@@ -145,17 +145,18 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
     module.configure_application(app)
     # No actual OS scheme is inferred. A Qt test-set hint is app-specific.
     w = module.MainWindow()
-    w.resize(width, height)
+    # Keep historical requested widths in filenames, but measure native clamp:
+    # Concept A never silently becomes one column below its minimum width.
+    effective_width = max(width, w.minimumWidth()) if phase == "after" else width
+    w.resize(effective_width, height)
     w.show()
     app.processEvents()
-    # Windows QPA can shrink an oversized top-level widget at first show.
-    # Resize *after* native window creation; never relabel the reduced capture.
-    w.resize(width, height)
+    w.resize(effective_width, height)
     app.processEvents()
-    if (w.width(), w.height()) != (width, height):
+    if (w.width(), w.height()) != (effective_width, height):
         raise RuntimeError(
             f"Windows Qt could not establish requested geometry: "
-            f"requested={(width, height)} actual={(w.width(), w.height())}"
+            f"requested={(effective_width, height)} actual={(w.width(), w.height())}"
         )
     label = f"{phase}_{scheme}_{width}x{height}"
     cb = w.approved
@@ -180,6 +181,8 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
     case = {
         "phase": phase, "requested_test_scheme": scheme,
         "requested_size": [width, height],
+        "actual_native_widget_size": [effective_width, height],
+        "fixed_two_column_clamped": bool(effective_width != width),
         "approval_indicator_geometry": metric,
         "qt_effective_color_scheme": app.styleHints().colorScheme().name,
         "effective_style": app.style().objectName(),
@@ -199,10 +202,10 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
     try:
         def grab(state):
             if capture_states is None or state in capture_states:
-                if (w.width(), w.height()) != (width, height):
+                if (w.width(), w.height()) != (effective_width, height):
                     raise RuntimeError(
                         f"Window geometry drift in {label}/{state}: "
-                        f"{(w.width(), w.height())} != {(width, height)}"
+                        f"{(w.width(), w.height())} != {(effective_width, height)}"
                     )
                 before = len(case["capture_records"])
                 snapshot(app, w, root, label + "_" + state,
@@ -210,7 +213,7 @@ def take(app, module, phase: str, scheme: str, width: int, height: int,
                 for item in case["capture_records"][before:]:
                     dpr = item["device_pixel_ratio"]
                     if (item["width"], item["height"]) != (
-                        round(width * dpr), round(height * dpr)
+                        round(effective_width * dpr), round(height * dpr)
                     ):
                         raise RuntimeError(
                             f"PNG dimensions differ from requested QWidget geometry: "
@@ -455,7 +458,7 @@ def main() -> None:
         "# Bank2Odoo dark theme pilot — synthetic Windows QPA evidence\n\n"
         f"Baseline: {args.baseline_sha}\nFeature checkout HEAD: {metadata['actual_checkout_head']}\n"
         f"GitHub event SHA (may be PR merge commit): {metadata['github_event_sha']}\n"
-        f"Cases: {len(metadata['cases'])}; before/after × light/dark × three window sizes.\n"
+        f"Cases: {len(metadata['cases'])}; before/after × light/dark × three nominal historical widths; actual after widths obey the fixed two-column minimum.\n"
         f"Each case captures {len(args.capture_states) if args.capture_states else 13} states × 3 scroll positions at native QWidget.grab resolution.\n"
         f"Native restoration audit: {len(metadata['palette_restoration'])} Qt style/scheme cases.\n"
         "The NOT_PROVEN financial result is computed with a fictional two-row statement.\n"
