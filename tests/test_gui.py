@@ -940,6 +940,8 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(self.window.output_directory.text(), str(self.private))
         self.assertFalse(self.window.save_button.isEnabled())
         self.assertFalse(self.window._saved)
+        self.assertIn("NO_FINALS", self.window.save_outcome_label.text())
+        self.assertFalse(self.window.saved_path_fields.isVisible())
         self.assertIs(self.window.result, candidate)
         self.assertEqual(self.window.result_state.text(), balance)
         self.assertTrue(self.window.approved.isChecked())
@@ -1050,6 +1052,8 @@ class AccountantUiTests(unittest.TestCase):
                    side_effect=write_with_cleanup_fault):
             self._save()
         self.assertTrue(self.window._saved)
+        self.assertIn("COMPLETE_PAIR", self.window.save_outcome_label.text())
+        self.assertIn("هشدار", self.window.save_outcome_label.text())
         self.assertEqual(self.window.result_state.text(), balance)
         self.assertIn("با محتوای مورد انتظار", self.window.status.text())
         self.assertNotIn("ذخیره هر دو فایل موفق بود", self.window.status.text())
@@ -1082,6 +1086,9 @@ class AccountantUiTests(unittest.TestCase):
                    side_effect=fail_after_report_published):
             self._save()
         self.assertFalse(self.window._saved)
+        self.assertIn("PARTIAL", self.window.save_outcome_label.text())
+        self.assertTrue(self.window.save_outcome_label.isVisible())
+        self.assertFalse(self.window.saved_path_fields.isVisible())
         self.assertIn("بخشی", self.window.status.text())
         self.assertEqual(self.window.output_directory.text(), str(self.private))
         self.assertFalse(self.window.save_button.isEnabled())
@@ -1112,6 +1119,9 @@ class AccountantUiTests(unittest.TestCase):
                    side_effect=ambiguous_second_link):
             self._save()
         self.assertFalse(self.window._saved)
+        self.assertIn("AMBIGUOUS", self.window.save_outcome_label.text())
+        self.assertTrue(self.window.save_outcome_label.isVisible())
+        self.assertFalse(self.window.saved_path_fields.isVisible())
         self.assertIn("نامشخص", self.window.status.text())
         self.assertEqual(self.window.output_directory.text(), str(self.private))
         self.assertFalse(self.window.save_button.isEnabled())
