@@ -1127,6 +1127,7 @@ class MainWindow(QMainWindow):
         self._selected_digest = None
         self._invalidate()
         self.path_field.setText(str(path))
+        self.source_digest.setText("شناسه محتوای منبع: در حال شناسایی")
         self.detected.setText("در حال بررسی قالب…")
         self._set_message("در حال خواندن و شناسایی فایل؛ لطفاً پایان بررسی را مشاهده کنید.")
         self._begin("detect", path=path)
@@ -1438,7 +1439,9 @@ class MainWindow(QMainWindow):
             # Explicit picker confirmation permits a deliberate retry, even
             # when the repaired destination has the same textual path.
             self._retry_blocked_directory = None
+            self._feedback_phase = None
             self._sync_actions()
+            self.convert_button.setFocus(Qt.FocusReason.OtherFocusReason)
 
     def save_files(self) -> None:
         if self._thread is not None:
