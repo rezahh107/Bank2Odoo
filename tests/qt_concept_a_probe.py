@@ -91,6 +91,8 @@ def capture(app, window, name, directory, report):
     # The window may be larger than the logical work area at simulated scale.
     frame_fits = frame.width() <= available.width() and frame.height() <= available.height()
     image_file = directory / (name + ".png")
+    if image_file.exists():
+        raise AssertionError("Duplicate native Qt evidence filename: " + name)
     pix = window.grab()
     if pix.isNull() or not pix.save(str(image_file), "PNG"):
         raise RuntimeError("Native original-resolution Qt PNG capture failed: " + name)
@@ -225,7 +227,7 @@ def capture_publication_outcomes(app, output, results, root):
                     if outcome == "AMBIGUOUS" and csvs[0].read_bytes() != b"fictional independent writer bytes":
                         raise AssertionError("Independent writer's output was changed")
 
-                capture(app, w, f"{width}x{height}_{outcome.lower()}", output, results)
+                capture(app, w, f"{width}x{height}_pass_{outcome.lower()}", output, results)
                 results[-1]["publication_outcome"] = outcome
                 results[-1]["focus_after_publication"] = transition_focus
                 results[-1]["retry_blocked"] = w._destination_retry_blocked()
