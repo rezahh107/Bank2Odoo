@@ -214,7 +214,8 @@ class AccountantUiTests(unittest.TestCase):
                 self.assertTrue(w.approved.isChecked())
                 self.assertEqual(w._selected_digest, w._approved_digest)
                 self.assertEqual(w._conversion_is_ready_for_emphasis(), valid)
-                self.assertTrue(w.convert_button.styleSheet())\n                self.assertEqual(w._conversion_is_ready_for_emphasis(), valid)
+                self.assertTrue(w.convert_button.styleSheet())
+                self.assertEqual(w._conversion_is_ready_for_emphasis(), valid)
                 self.assertEqual(w.select_button.styleSheet(), "")
                 self.assertTrue(w.convert_button.isEnabled(),
                                 "Incomplete/invalid context must retain safe guidance")
@@ -248,7 +249,8 @@ class AccountantUiTests(unittest.TestCase):
         w.output_directory.setText(str(self.private))
         self._save()
         self.assertTrue(w._saved)
-        self.assertTrue(w.convert_button.isEnabled())\n        self.assertIn("صورت‌حساب بعدی", w.convert_button.text())
+        self.assertTrue(w.convert_button.isEnabled())
+        self.assertIn("صورت‌حساب بعدی", w.convert_button.text())
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
         self.assertIn("نه تأیید حسابداری", w.result_state.text())
 
@@ -1049,7 +1051,8 @@ class AccountantUiTests(unittest.TestCase):
         self.assertTrue(self.window.saved_path_fields.isVisible())
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
         self.assertEqual(len(list(self.private.glob(".bank2odoo-*.tmp"))), 1)
-        self.assertTrue(self.window.convert_button.isEnabled())\n        self.assertIn("صورت‌حساب بعدی", self.window.convert_button.text())
+        self.assertTrue(self.window.convert_button.isEnabled())
+        self.assertIn("صورت‌حساب بعدی", self.window.convert_button.text())
         for path in self.private.glob(".bank2odoo-*.tmp"):
             path.unlink()
 
@@ -1351,7 +1354,8 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(self.window.result_state.text(), old_balance)
         self.assertIn("ذخیره هر دو فایل موفق بود", self.window.status.text())
         self.assertEqual(len(list(recovered.glob("Bank2Odoo_*"))), 2)
-        self.assertTrue(self.window.convert_button.isEnabled())\n        self.assertIn("صورت‌حساب بعدی", self.window.convert_button.text())
+        self.assertTrue(self.window.convert_button.isEnabled())
+        self.assertIn("صورت‌حساب بعدی", self.window.convert_button.text())
 
 
     def test_genuine_repeated_save_same_statement_preserves_existing_pair(self):
@@ -1671,7 +1675,8 @@ class AccountantUiTests(unittest.TestCase):
         self.window.convert_button.click()
         self._wait_operation(self.window.save_done)
         self.assertTrue(self.window._saved)
-        self.assertTrue(self.window.convert_button.isEnabled())\n        self.assertIn("صورت‌حساب بعدی", self.window.convert_button.text())
+        self.assertTrue(self.window.convert_button.isEnabled())
+        self.assertIn("صورت‌حساب بعدی", self.window.convert_button.text())
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
         self.assertTrue(self.window.result_state.text().startswith("PASS"))
         self.assertIn("نه تأیید حسابداری", self.window.result_state.text())
