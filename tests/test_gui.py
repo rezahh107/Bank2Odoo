@@ -1330,7 +1330,12 @@ class AccountantUiTests(unittest.TestCase):
         self.assertTrue(w.output_directory.text())
         self.assertFalse(w.save_button.isEnabled())
         self.assertEqual(w.convert_button.text(), "انتخاب یا تأیید دوبارهٔ پوشه…")
-        self.assertIs(self.app.focusWidget(), w.convert_button)
+        # The warning is the first readable focus target, not the retry CTA.
+        self.assertIs(self.app.focusWidget(), w.decision_heading)
+        self.assertTrue(w.save_outcome_label.isVisible())
+        warning_point = w.save_outcome_label.mapTo(
+            w.scroll.viewport(), w.save_outcome_label.rect().center())
+        self.assertTrue(w.scroll.viewport().rect().contains(warning_point))
         self.assertTrue(w.directory_button.isVisible())
         self.assertFalse(w.saved_path_fields.isVisible())
         # The primary action must explicitly confirm a destination, not retry.
@@ -1679,7 +1684,9 @@ class AccountantUiTests(unittest.TestCase):
                                  "Result/action clipped below narrow viewport")
         self.assertIn("انتخاب پوشه", self.window.convert_button.text())
         self.assertFalse(self.window.save_button.isEnabled())
-        self.assertIs(self.app.focusWidget(), self.window.convert_button)
+        # On conversion completion, focus remains with the result heading so
+        # that the financial evidence precedes the available save action.
+        self.assertIs(self.app.focusWidget(), self.window.decision_heading)
         with patch("bank2odoo.ui.window.QFileDialog.getExistingDirectory",
                    return_value=str(self.private)) as picker:
             self.window.convert_button.click()
