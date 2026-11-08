@@ -1155,11 +1155,21 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIn("تأیید دوباره", self.window.convert_button.text())
 
     def _await_join_attempts(self, calls: list[int], count: int) -> None:
-        for _ in range(160):
+        # Qt finished/quit delivery is asynchronous; a Windows hosted runner
+        # can schedule the callback after 1.6s under load. All later checks
+        # still require exact join order, native QThread safety, one save and
+        # recovery. This is a bounded wait, not an unconditional pass.
+        for _ in range(500):  # ~5s under normal scheduling
             if len(calls) >= count:
                 return
             QTest.qWait(10)
-        self.fail(f"Expected {count} Qt join attempts, saw {calls}")
+        state = self.window._job_state
+        thread = self.window._thread
+        self.fail(
+            f"Expected {count} Qt join attempts, saw {calls}; "
+            f"worker_kind={state['kind'] if state else None}; "
+            f"thread_running={thread.isRunning() if thread else None}"
+        )
 
     def test_thread_join_immediate_success_and_single_publication(self):
         self._convert()
