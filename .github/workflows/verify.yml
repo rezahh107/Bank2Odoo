@@ -70,6 +70,25 @@ jobs:
           w.close()
           print("Windows QPA widget creation OK (not a human visual review)")
           '@ | uv run --locked python -
+      - name: Capture Concept A native Qt critical states and measured geometry
+        env:
+          QT_QPA_PLATFORM: windows
+          PYTHONFAULTHANDLER: "1"
+        shell: pwsh
+        run: |
+          foreach ($scale in @('1', '1.25', '1.5')) {
+            $env:QT_SCALE_FACTOR = $scale
+            uv run --locked python -m tests.qt_concept_a_probe --output "$env:RUNNER_TEMP/concept-a/$scale"
+            if ($LASTEXITCODE -ne 0) { throw "Concept A Windows Qt probe failed: scale=$scale" }
+          }
+      - name: Upload Concept A native Qt synthetic PNGs and frame-fit evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: concept-a-native-qt-critical-states
+          path: ${{ runner.temp }}/concept-a/
+          retention-days: 14
+          if-no-files-found: warn
       - name: Capture before/after Windows QPA diagnostic images (blank synthetic UI)
         env:
           QT_QPA_PLATFORM: windows
