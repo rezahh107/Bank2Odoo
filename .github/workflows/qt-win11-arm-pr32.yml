@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/qt-win11-arm-pr32.yml'
       - 'tests/qt_concept_a_probe.py'
+      - 'tests/qt_connected_operator_pilot.py'
 
 permissions:
   contents: read
@@ -121,6 +122,11 @@ jobs:
             uv run --locked python -m tests.qt_concept_a_probe --output "$env:RUNNER_TEMP/bank2odoo-win11-arm/qt-$scale"
             if ($LASTEXITCODE -ne 0) { throw "Native ARM64 Qt state probe failed at simulated scale $scale" }
           }
+      - name: Connected two-statement operator pilot (native Qt, synthetic)
+        shell: pwsh
+        run: |
+          uv run --locked python -m tests.qt_connected_operator_pilot --output "$env:RUNNER_TEMP/bank2odoo-win11-arm/connected-pilot"
+          if ($LASTEXITCODE -ne 0) { throw 'Connected operator pilot failed' }
       - name: Record evidence limitations
         if: always()
         shell: pwsh
