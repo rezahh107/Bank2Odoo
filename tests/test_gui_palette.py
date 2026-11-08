@@ -84,7 +84,7 @@ class PaletteContrastTests(unittest.TestCase):
                         self.assertGreaterEqual(contrast_ratio(foreground, expected_bg), 4.5)
 
             cards = window.findChildren(QGroupBox)
-            self.assertEqual(len(cards), 4)
+            self.assertEqual(len(cards), 3)  # source, financial context, current decision
             expected_bg = palette.color(QPalette.ColorRole.Base)
             expected_fg = palette.color(QPalette.ColorRole.Text)
             for card in cards:
