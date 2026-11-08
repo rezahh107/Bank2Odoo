@@ -903,9 +903,13 @@ class MainWindow(QMainWindow):
         self.summary.setVisible(has_result)
         self.candidate_state.setVisible(has_result)
         self.save_box.setVisible(has_result)
-        self.result_state.setVisible(has_result or phase in (
-            "convert_error", "cancelled", "financial_review", "approval"
-        ) and self.result_state.text().startswith("نیازمند تبدیل تازه"))
+        # A failed or cancelled conversion must remain visible even without
+        # any candidate; never hide an ERROR behind the decision heading.
+        self.result_state.setVisible(
+            has_result or self.result_state.text().startswith(
+                ("ERROR", "توقف درخواست‌شده", "نیازمند تبدیل تازه")
+            )
+        )
         self.cancel_button.setVisible(
             active and self._job_state is not None and self._job_state["kind"] == "convert"
         )
