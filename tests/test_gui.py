@@ -144,22 +144,23 @@ class AccountantUiTests(unittest.TestCase):
 
     def test_minimal_initial_workspace_guidance_and_click_validation(self):
         w = self.window
+        self.assertEqual(w._decision_phase(), "initial")
+        self.assertIn("انتخاب", w.decision_heading.text())
         self.assertTrue(w.convert_button.isVisible())
-        self.assertTrue(w.convert_button.isEnabled(), "Guidance-first action stays available")
-        self.assertEqual(w.convert_button.styleSheet(), "")
-        self.assertTrue(w.select_button.styleSheet(), "Source selection must be visually primary")
-        self.assertIn("راهنمای تکمیل مراحل", w.convert_button.accessibleName())
-        self.assertFalse(w.metrics_panel.isVisible())
-        self.assertFalse(w.summary.isVisible())
-        self.assertFalse(w.result_state.isVisible())
-        self.assertFalse(w.save_box.isVisible())
-        self.assertFalse(w.cancel_button.isVisible())
-        self.assertFalse(w.details_button.isVisible())
+        self.assertTrue(w.convert_button.isEnabled())
+        self.assertEqual(w.select_button.styleSheet(), "")
+        self.assertTrue(w.convert_button.styleSheet(), "Decision desk owns the primary action")
+        self.assertIn("اقدام اصلی", w.convert_button.accessibleName())
+        for section in (w.metrics_panel, w.summary, w.result_state,
+                        w.save_box, w.cancel_button, w.details_button):
+            self.assertFalse(section.isVisible())
         self.assertFalse(w.approved.isChecked())
-        QTest.mouseClick(w.convert_button, Qt.MouseButton.LeftButton)
-        self.assertIn("ابتدا یک گزارش بانکی", w.status.text())
-        self.assertIs(self.app.focusWidget(), w.select_button)
+        with patch("bank2odoo.ui.window.QFileDialog.getOpenFileName",
+                   return_value=("", "")) as picker:
+            QTest.mouseClick(w.convert_button, Qt.MouseButton.LeftButton)
+        picker.assert_called_once()
         self.assertIsNone(w._thread)
+        self.assertIsNone(w.source)
         self.assertIsNone(w.result)
 
     def test_selected_source_guides_financial_review_without_false_stale_claim(self):
@@ -169,24 +170,28 @@ class AccountantUiTests(unittest.TestCase):
         w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
         self.assertIsNone(w.result)
         self.assertFalse(w.approved.isChecked())
+        self.assertEqual(w._decision_phase(), "approval")
         self.assertIn("گام بعد: اطلاعات مالی", w.status.text())
         self.assertNotIn("نتیجه قبلی معتبر نیست", w.status.text())
         self.assertTrue(w.convert_button.isEnabled())
-        self.assertEqual(w.convert_button.styleSheet(), "")
+        self.assertTrue(w.convert_button.styleSheet())
         self.assertEqual(w.select_button.styleSheet(), "")
-
+        w.convert_button.click()
+        self.assertFalse(w.approved.isChecked(), "Navigation never grants financial consent")
+        self.assertIs(self.app.focusWidget(), w.approved)
+        self.assertIsNone(w._thread)
 
     def test_authoritative_preflight_factor_matrix_and_recovery(self):
         """Real widgets: rejected factors never earn primary styling or conversion."""
         w = self.window
         self.assertIsNone(w.source)
-        self.assertTrue(w.select_button.styleSheet())
-        self.assertFalse(w.convert_button.styleSheet())
+        self.assertEqual(w.select_button.styleSheet(), "")
+        self.assertTrue(w.convert_button.styleSheet())
         self.assertTrue(w.convert_button.isEnabled())
         self._select(self.source)
         self.assertFalse(w.approved.isChecked())
-        self.assertFalse(w.select_button.styleSheet())
-        self.assertFalse(w.convert_button.styleSheet())
+        self.assertEqual(w.select_button.styleSheet(), "")
+        self.assertTrue(w.convert_button.styleSheet())
 
         matrix = (
             ("IRR", "IRR", "", 0, True),
@@ -209,14 +214,15 @@ class AccountantUiTests(unittest.TestCase):
                 self.assertTrue(w.approved.isChecked())
                 self.assertEqual(w._selected_digest, w._approved_digest)
                 self.assertEqual(w._conversion_is_ready_for_emphasis(), valid)
-                self.assertEqual(bool(w.convert_button.styleSheet()), valid)
-                self.assertFalse(w.select_button.styleSheet())
+                self.assertTrue(w.convert_button.styleSheet())
+                self.assertEqual(w._conversion_is_ready_for_emphasis(), valid)
+                self.assertEqual(w.select_button.styleSheet(), "")
                 self.assertTrue(w.convert_button.isEnabled(),
                                 "Incomplete/invalid context must retain safe guidance")
                 if valid:
                     self.assertIn("اقدام اصلی", w.convert_button.accessibleName())
                 else:
-                    self.assertIn("راهنمای تکمیل", w.convert_button.accessibleName())
+                    self.assertIn("اقدام اصلی", w.convert_button.accessibleName())
                     self.assertIn("ضریب تبدیل", w.status.text())
                     self.assertNotIn("اعتبارسنجی و تبدیل را اجرا", w.status.text())
                     w.convert_button.click()
@@ -225,14 +231,14 @@ class AccountantUiTests(unittest.TestCase):
                     self.assertFalse(w.save_button.isEnabled())
                     self.assertIn("ضریب", w.status.text())
                     self.assertIs(self.app.focusWidget(), w.factor)
-                    self.assertFalse(w.convert_button.styleSheet())
+                    self.assertTrue(w.convert_button.styleSheet())
 
         # Regression guard: simply suppressing all emphasis would fail the
         # positive matrix rows above. The user can fix the invalid value and
         # complete the real conversion/save without selecting a new source.
         w.factor.setText("0.1")  # Earlier 0.2 was rejected, changing it revokes approval.
         self.assertFalse(w.approved.isChecked())
-        self.assertFalse(w.convert_button.styleSheet())
+        self.assertTrue(w.convert_button.styleSheet())
         w.approved.setChecked(True)
         self.assertTrue(w.convert_button.styleSheet())
         w.start_conversion()
@@ -243,7 +249,8 @@ class AccountantUiTests(unittest.TestCase):
         w.output_directory.setText(str(self.private))
         self._save()
         self.assertTrue(w._saved)
-        self.assertFalse(w.convert_button.isEnabled())
+        self.assertTrue(w.convert_button.isEnabled())
+        self.assertIn("صورت‌حساب بعدی", w.convert_button.text())
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
         self.assertIn("نه تأیید حسابداری", w.result_state.text())
 
@@ -251,39 +258,36 @@ class AccountantUiTests(unittest.TestCase):
         w = self.window
         result = self._convert()
         self.assertTrue(result.balance_status.startswith("PASS"))
-        for section in (w.metrics_panel, w.summary, w.result_state, w.save_box):
+        for section in (w.metrics_panel, w.summary, w.result_state, w.save_box,
+                        w.candidate_state):
             self.assertTrue(section.isVisible())
         self.assertFalse(w.cancel_button.isVisible())
         self.assertIn("PASS", w.result_state.text())
         self.assertIn("تأیید حسابداری", w.result_state.text())
-        self.assertIn("خصوصی", w.directory_button.text())
-        w.resize(600, 480)
-        QTest.qWait(30)
-        self.assertEqual(w._workspace.direction(), QBoxLayout.Direction.TopToBottom)
+        w.resize(900, 480)
+        self.app.processEvents()
+        self.assertEqual(w._workspace.direction(), QBoxLayout.Direction.LeftToRight)
         self.assertEqual(w.scroll.horizontalScrollBar().maximum(), 0)
         for control in (w.output_directory, w.directory_button):
             self.assertTrue(control.isVisible())
-            x = control.mapTo(w.scroll.widget(), QPoint(0, 0)).x()
-            self.assertGreaterEqual(x, 0)
-            self.assertLessEqual(x + control.width(), w.scroll.widget().width() + 1)
             w.scroll.ensureWidgetVisible(control)
             self.app.processEvents()
-            visible_center = control.mapTo(w.scroll.viewport(), control.rect().center())
-            self.assertTrue(w.scroll.viewport().rect().contains(visible_center))
+            center = control.mapTo(w.scroll.viewport(), control.rect().center())
+            self.assertTrue(w.scroll.viewport().rect().contains(center))
         w.precision.setValue(1)
         self.assertIsNone(w.result)
         self.assertFalse(w.approved.isChecked())
         self.assertFalse(w.metrics_panel.isVisible())
         self.assertFalse(w.save_box.isVisible())
-        self.assertTrue(w.result_state.isVisible())
         self.assertIn("نتیجه قبلی معتبر نیست", w.result_state.text())
         w._failed("invalid headers")
-        self.assertTrue(w.result_state.isVisible(), "Errors must remain visible")
-        self.assertTrue(w.details_button.isVisible(), "Technical diagnosis remains reachable")
-        self.assertFalse(w.metrics_panel.isVisible())
+        self.assertTrue(w.result_state.isVisible(), "ERROR must be visible")
+        self.assertTrue(w.details_button.isVisible())
+        self.assertEqual(w._decision_phase(), "convert_error")
         statement(self.source, not_proven=True)
-        w.resize(940, 830)
+        w.resize(940, 650)
         self._convert()
+        self.assertEqual(w._decision_phase(), "not_proven")
         self.assertIn("NOT_PROVEN", w.result_state.text())
         self.assertTrue(w.summary.isVisible())
         self.assertTrue(w.save_box.isVisible())
@@ -301,9 +305,14 @@ class AccountantUiTests(unittest.TestCase):
             assert_no_unearned_review()
         w._sync_actions()
         assert_no_unearned_review()
-        # A clickable primary action must not bypass incomplete-input validation.
-        w.convert_button.click()
+        # Concept A's initial primary action opens the real native source
+        # picker; cancel it synthetically rather than blocking headless CI.
+        with patch("bank2odoo.ui.window.QFileDialog.getOpenFileName",
+                   return_value=("", "")) as picker:
+            w.convert_button.click()
+        picker.assert_called_once()
         self.assertIsNone(w._thread)
+        self.assertIsNone(w.source)
         self.assertIsNone(w.result)
         self.assertFalse(w.approved.isChecked())
         self.assertFalse(w.save_button.isEnabled())
@@ -350,7 +359,7 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(self.window.styleSheet(), "")
         self.assertEqual(self.window.approved.styleSheet(), "")
         self.assertEqual(self.window.source_unit.styleSheet(), "")
-        self.assertEqual(len(self.window.findChildren(QGroupBox)), 4)
+        self.assertEqual(len(self.window.findChildren(QGroupBox)), 3)
         self.assertEqual(self.window.approved.minimumHeight(), 52)
         self.assertGreaterEqual(
             self.window.approved.style().pixelMetric(QStyle.PixelMetric.PM_IndicatorWidth), 22
@@ -931,6 +940,8 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(self.window.output_directory.text(), str(self.private))
         self.assertFalse(self.window.save_button.isEnabled())
         self.assertFalse(self.window._saved)
+        self.assertIn("NO_FINALS", self.window.save_outcome_label.text())
+        self.assertFalse(self.window.saved_path_fields.isVisible())
         self.assertIs(self.window.result, candidate)
         self.assertEqual(self.window.result_state.text(), balance)
         self.assertTrue(self.window.approved.isChecked())
@@ -1041,13 +1052,16 @@ class AccountantUiTests(unittest.TestCase):
                    side_effect=write_with_cleanup_fault):
             self._save()
         self.assertTrue(self.window._saved)
+        self.assertIn("COMPLETE_PAIR", self.window.save_outcome_label.text())
+        self.assertIn("هشدار", self.window.save_outcome_label.text())
         self.assertEqual(self.window.result_state.text(), balance)
         self.assertIn("با محتوای مورد انتظار", self.window.status.text())
         self.assertNotIn("ذخیره هر دو فایل موفق بود", self.window.status.text())
         self.assertTrue(self.window.saved_path_fields.isVisible())
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
         self.assertEqual(len(list(self.private.glob(".bank2odoo-*.tmp"))), 1)
-        self.assertFalse(self.window.convert_button.isEnabled())
+        self.assertTrue(self.window.convert_button.isEnabled())
+        self.assertIn("صورت‌حساب بعدی", self.window.convert_button.text())
         for path in self.private.glob(".bank2odoo-*.tmp"):
             path.unlink()
 
@@ -1072,6 +1086,9 @@ class AccountantUiTests(unittest.TestCase):
                    side_effect=fail_after_report_published):
             self._save()
         self.assertFalse(self.window._saved)
+        self.assertIn("PARTIAL", self.window.save_outcome_label.text())
+        self.assertTrue(self.window.save_outcome_label.isVisible())
+        self.assertFalse(self.window.saved_path_fields.isVisible())
         self.assertIn("بخشی", self.window.status.text())
         self.assertEqual(self.window.output_directory.text(), str(self.private))
         self.assertFalse(self.window.save_button.isEnabled())
@@ -1102,6 +1119,9 @@ class AccountantUiTests(unittest.TestCase):
                    side_effect=ambiguous_second_link):
             self._save()
         self.assertFalse(self.window._saved)
+        self.assertIn("AMBIGUOUS", self.window.save_outcome_label.text())
+        self.assertTrue(self.window.save_outcome_label.isVisible())
+        self.assertFalse(self.window.saved_path_fields.isVisible())
         self.assertIn("نامشخص", self.window.status.text())
         self.assertEqual(self.window.output_directory.text(), str(self.private))
         self.assertFalse(self.window.save_button.isEnabled())
@@ -1135,11 +1155,21 @@ class AccountantUiTests(unittest.TestCase):
         self.assertIn("تأیید دوباره", self.window.convert_button.text())
 
     def _await_join_attempts(self, calls: list[int], count: int) -> None:
-        for _ in range(160):
+        # Qt finished/quit delivery is asynchronous; a Windows hosted runner
+        # can schedule the callback after 1.6s under load. All later checks
+        # still require exact join order, native QThread safety, one save and
+        # recovery. This is a bounded wait, not an unconditional pass.
+        for _ in range(500):  # ~5s under normal scheduling
             if len(calls) >= count:
                 return
             QTest.qWait(10)
-        self.fail(f"Expected {count} Qt join attempts, saw {calls}")
+        state = self.window._job_state
+        thread = self.window._thread
+        self.fail(
+            f"Expected {count} Qt join attempts, saw {calls}; "
+            f"worker_kind={state['kind'] if state else None}; "
+            f"thread_running={thread.isRunning() if thread else None}"
+        )
 
     def test_thread_join_immediate_success_and_single_publication(self):
         self._convert()
@@ -1310,7 +1340,12 @@ class AccountantUiTests(unittest.TestCase):
         self.assertTrue(w.output_directory.text())
         self.assertFalse(w.save_button.isEnabled())
         self.assertEqual(w.convert_button.text(), "انتخاب یا تأیید دوبارهٔ پوشه…")
-        self.assertIs(self.app.focusWidget(), w.convert_button)
+        # The warning is the first readable focus target, not the retry CTA.
+        self.assertIs(self.app.focusWidget(), w.decision_heading)
+        self.assertTrue(w.save_outcome_label.isVisible())
+        warning_point = w.save_outcome_label.mapTo(
+            w.scroll.viewport(), w.save_outcome_label.rect().center())
+        self.assertTrue(w.scroll.viewport().rect().contains(warning_point))
         self.assertTrue(w.directory_button.isVisible())
         self.assertFalse(w.saved_path_fields.isVisible())
         # The primary action must explicitly confirm a destination, not retry.
@@ -1349,7 +1384,8 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(self.window.result_state.text(), old_balance)
         self.assertIn("ذخیره هر دو فایل موفق بود", self.window.status.text())
         self.assertEqual(len(list(recovered.glob("Bank2Odoo_*"))), 2)
-        self.assertFalse(self.window.convert_button.isEnabled())
+        self.assertTrue(self.window.convert_button.isEnabled())
+        self.assertIn("صورت‌حساب بعدی", self.window.convert_button.text())
 
 
     def test_genuine_repeated_save_same_statement_preserves_existing_pair(self):
@@ -1599,66 +1635,46 @@ class AccountantUiTests(unittest.TestCase):
         self.assertEqual(before, {path.name: path.read_bytes() for path in paths})
 
 
-    def test_workspace_responsive_columns_and_long_mixed_direction_paths(self):
+    def test_workspace_fixed_columns_and_long_mixed_direction_paths(self):
         self.assertEqual(self.window.source_unit.accessibleName(), "واحد پول فایل بانک")
         self.assertEqual(self.window.target_unit.accessibleName(), "واحد پول ژورنال مقصد")
         very_long = "C:/Private/" + ("مسیر_ساختگی_" * 24) + "statement_2026_10_IRR_A" + "f" * 64 + ".csv"
         self.window.path_field.setText(very_long)
         self.window.output_directory.setText(very_long + "/output")
-        for width, height, direction in (
-            (940, 830, QBoxLayout.Direction.LeftToRight),
-            (650, 520, QBoxLayout.Direction.TopToBottom),
-            (600, 480, QBoxLayout.Direction.TopToBottom),
-        ):
+        self.assertGreaterEqual(self.window.minimumWidth(), 900)
+        for width, height in ((900, 650), (940, 650), (900, 480)):
             with self.subTest(size=(width, height)):
                 self.window.resize(width, height)
                 self.app.processEvents()
                 self.window._reflow_workspace()
                 self.app.processEvents()
-                self.assertEqual(self.window._workspace.direction(), direction,
-                                 f"Measured breakpoint={self.window._workspace_breakpoint}, parts={self.window._workspace_measurements}, viewport={self.window.scroll.viewport().width()}")
-                viewport = self.window.scroll.viewport()
-                input_rect = self.window._input_column.geometry()
-                result_rect = self.window._result_column.geometry()
-                if direction == QBoxLayout.Direction.LeftToRight:
-                    self.assertGreater(input_rect.center().x(), result_rect.center().x(),
-                                       "RTL accountant entry must render on the right")
-                    # Real adversarial control: deliberately reverse the Qt
-                    # horizontal mechanism and require geometry to detect it.
-                    self.window._workspace.setDirection(QBoxLayout.Direction.RightToLeft)
-                    self.window._workspace.invalidate()
-                    self.window._workspace.activate()
-                    self.app.processEvents()
-                    reversed_input = self.window._input_column.geometry()
-                    reversed_result = self.window._result_column.geometry()
-                    self.assertLess(reversed_input.center().x(),
-                                    reversed_result.center().x(),
-                                    "Reversed-order negative control was not detected")
-                    self.window._workspace.setDirection(QBoxLayout.Direction.LeftToRight)
-                    self.window._workspace.invalidate()
-                    self.window._workspace.activate()
-                    self.app.processEvents()
-                    self.assertGreater(self.window._input_column.geometry().center().x(),
-                                       self.window._result_column.geometry().center().x())
-                else:
-                    self.assertLess(input_rect.center().y(), result_rect.center().y(),
-                                    "Narrow accountant stages must stack top-to-bottom")
+                self.assertEqual(self.window._workspace.direction(),
+                                 QBoxLayout.Direction.LeftToRight)
+                inp = self.window._input_column.geometry()
+                out = self.window._result_column.geometry()
+                self.assertGreater(inp.center().x(), out.center().x(),
+                                   "RTL source/financial context belongs on the right")
+                self.window._workspace.setDirection(QBoxLayout.Direction.RightToLeft)
+                self.window._workspace.invalidate()
+                self.window._workspace.activate()
+                self.app.processEvents()
+                self.assertLess(self.window._input_column.geometry().center().x(),
+                                self.window._result_column.geometry().center().x(),
+                                "Deliberately reversed direction must be detected")
+                self.window._workspace.setDirection(QBoxLayout.Direction.LeftToRight)
+                self.window._workspace.invalidate()
+                self.window._workspace.activate()
+                self.app.processEvents()
                 self.assertEqual(self.window.scroll.horizontalScrollBar().maximum(), 0)
-                content = self.window.scroll.widget()
-                for control in (
-                    self.window.source_unit, self.window.target_unit,
-                    self.window.precision, self.window.path_field,
-                    self.window.approved, self.window.convert_button,
-                    self.window.output_directory, self.window.directory_button,
-                ):
-                    # Hidden future-step controls have no current layout
-                    # geometry; geometry only matters once they are shown.
+                for control in (self.window.source_unit, self.window.target_unit,
+                                self.window.precision, self.window.path_field,
+                                self.window.approved, self.window.convert_button):
                     if not control.isVisible():
                         continue
-                    x = control.mapTo(content, QPoint(0, 0)).x()
-                    self.assertGreaterEqual(x, 0, control.objectName())
-                    self.assertLessEqual(x + control.width(), content.width() + 1,
-                                         f"Horizontal clipping: {control}, {width}px")
+                    left = control.mapTo(self.window.scroll.widget(), QPoint(0, 0)).x()
+                    self.assertGreaterEqual(left, 0, control.objectName())
+                    self.assertLessEqual(left + control.width(),
+                                         self.window.scroll.widget().width() + 1)
         self.assertEqual(self.window.path_field.text(), very_long)
         self.assertFalse(self.window.approved.isChecked())
 
@@ -1678,7 +1694,9 @@ class AccountantUiTests(unittest.TestCase):
                                  "Result/action clipped below narrow viewport")
         self.assertIn("انتخاب پوشه", self.window.convert_button.text())
         self.assertFalse(self.window.save_button.isEnabled())
-        self.assertIs(self.app.focusWidget(), self.window.convert_button)
+        # On conversion completion, focus remains with the result heading so
+        # that the financial evidence precedes the available save action.
+        self.assertIs(self.app.focusWidget(), self.window.decision_heading)
         with patch("bank2odoo.ui.window.QFileDialog.getExistingDirectory",
                    return_value=str(self.private)) as picker:
             self.window.convert_button.click()
@@ -1689,7 +1707,8 @@ class AccountantUiTests(unittest.TestCase):
         self.window.convert_button.click()
         self._wait_operation(self.window.save_done)
         self.assertTrue(self.window._saved)
-        self.assertFalse(self.window.convert_button.isEnabled())
+        self.assertTrue(self.window.convert_button.isEnabled())
+        self.assertIn("صورت‌حساب بعدی", self.window.convert_button.text())
         self.assertEqual(len(list(self.private.glob("Bank2Odoo_*"))), 2)
         self.assertTrue(self.window.result_state.text().startswith("PASS"))
         self.assertIn("نه تأیید حسابداری", self.window.result_state.text())
@@ -1709,7 +1728,7 @@ class AccountantUiTests(unittest.TestCase):
         self.assertNotIn("موفق بود", self.window.status.text())
         self.assertNotIn("دو فایل ایجاد شدند", self.window.saved_paths.text())
         self.assertIn("معتبر نیست", self.window.result_state.text())
-        self.assertEqual(self.window.convert_button.text(), "اعتبارسنجی و تبدیل")
+        self.assertEqual(self.window.convert_button.text(), "رفتن به فیلد لازم")
         self.window.start_conversion()
         self.assertIsNone(self.window._thread)
         self.assertIn("تأیید", self.window.status.text())

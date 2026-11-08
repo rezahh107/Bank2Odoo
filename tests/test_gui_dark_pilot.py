@@ -177,7 +177,7 @@ class DarkThemePilotTests(unittest.TestCase):
             self.assertFalse(self.pilot._queued)
             self.assertFalse(window._presentation_refresh_queued)
             self.assertEqual(window.approved.styleSheet(), "")
-            self.assertEqual(window.convert_button.styleSheet(), "")
+            self.assertEqual(window.convert_button.styleSheet(), _PRIMARY_LIGHT_QSS)
             self.assertEqual(self._metric(window.approved), (22, 22, 22, 22))
 
     def test_fusion_fallback_resets_native_colors_when_style_name_does_not_change(self):
@@ -228,19 +228,19 @@ class DarkThemePilotTests(unittest.TestCase):
     def test_native_light_selection_and_scoped_dark_rules(self):
         w = self._window()
         self.assertEqual(w.approved.styleSheet(), "")
-        self.assertEqual(w.convert_button.styleSheet(), "")
+        self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_LIGHT_QSS)
         self.assertFalse(w.styleSheet())
         self._scheme(Qt.ColorScheme.Dark)
         if "Fusion" not in QStyleFactory.keys():
             self.skipTest("Fusion not installed; no dark override may be fabricated")
         self.assertEqual(self.app.style().objectName().casefold(), "fusion")
         self.assertEqual(w.approved.styleSheet(), _APPROVAL_DARK_QSS)
-        self.assertEqual(w.convert_button.styleSheet(), "")
-        self.assertEqual(w.select_button.styleSheet(), _SOURCE_DARK_QSS)
+        self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_DARK_QSS)
+        self.assertEqual(w.select_button.styleSheet(), "")
         self.assertFalse(w.styleSheet())
         self.assertFalse(w.source_unit.styleSheet())
         self.assertFalse(w.precision.styleSheet())
-        self.assertEqual(len(w.findChildren(QGroupBox)), 4)
+        self.assertEqual(len(w.findChildren(QGroupBox)), 3)
         for control in (w.source_unit, w.target_unit, w.factor,
                         w.precision, w.approved, w.convert_button):
             self.assertTrue(control.isEnabled() or control is w.factor)
@@ -249,50 +249,44 @@ class DarkThemePilotTests(unittest.TestCase):
         self.assertEqual(w.approved.accessibleName(), "تأیید صریح اطلاعات مالی")
         self._scheme(Qt.ColorScheme.Light)
         self.assertEqual(w.approved.styleSheet(), "")
-        self.assertEqual(w.convert_button.styleSheet(), "")
-        self.assertEqual(w.select_button.styleSheet(), _SOURCE_LIGHT_QSS)
-        self.assertEqual(self.pilot.dark, False)
-
+        self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_LIGHT_QSS)
+        self.assertEqual(w.select_button.styleSheet(), "")
 
     def test_phase_accent_is_unique_and_follows_sha_approval_in_both_themes(self):
         w = self._window()
         for scheme in (Qt.ColorScheme.Light, Qt.ColorScheme.Dark):
             self._scheme(scheme)
-            source_qss = _SOURCE_DARK_QSS if scheme == Qt.ColorScheme.Dark else _SOURCE_LIGHT_QSS
             primary_qss = _PRIMARY_DARK_QSS if scheme == Qt.ColorScheme.Dark else _PRIMARY_LIGHT_QSS
-            self.assertEqual(w.select_button.styleSheet(), source_qss)
-            self.assertEqual(w.convert_button.styleSheet(), "")
-            self.assertTrue(w.convert_button.isEnabled(), "Missing-input guidance remains clickable")
-            # Negative control: old empty-state prominence must be detectable.
-            w.convert_button.setStyleSheet(primary_qss)
-            with self.assertRaises(AssertionError):
-                self.assertEqual(w.convert_button.styleSheet(), "")
+            self.assertEqual(w.select_button.styleSheet(), "")
+            self.assertEqual(w.convert_button.styleSheet(), primary_qss)
+            self.assertTrue(w.convert_button.isEnabled())
+            # Negative control: an erroneously accented competing source action
+            # must be removed by the actual presentation refresh.
+            w.select_button.setStyleSheet(_SOURCE_DARK_QSS)
+            self.assertNotEqual(w.select_button.styleSheet(), "")
             w._apply_theme_controls()
-            self.assertEqual(w.convert_button.styleSheet(), "")
+            self.assertEqual(w.select_button.styleSheet(), "")
         self._validated_approval(w)
         self.assertIsNotNone(w._selected_digest)
         self.assertEqual(w._approved_digest, w._selected_digest)
         self.assertIn("گام بعد: اعتبارسنجی و تبدیل", w.status.text())
-        self.assertEqual(w.select_button.styleSheet(), "")
+        self.assertEqual(w._decision_phase(), "ready")
         self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_DARK_QSS)
         w.approved.setChecked(False)
-        self.assertEqual(w.convert_button.styleSheet(), "")
-        w.approved.setChecked(True)
+        self.assertEqual(w._decision_phase(), "approval")
         self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_DARK_QSS)
+        self.assertIn("تأیید مالی", w.convert_button.text())
+        w.approved.setChecked(True)
+        self.assertEqual(w._decision_phase(), "ready")
         self._scheme(Qt.ColorScheme.Light)
         self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_LIGHT_QSS)
-        self._scheme(Qt.ColorScheme.Dark)
-        self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_DARK_QSS)
-        self.assertEqual(w.select_button.styleSheet(), "")
         w.precision.setValue(1)
         self.assertFalse(w.approved.isChecked())
-        self.assertEqual(w.convert_button.styleSheet(), "")
-        self.assertEqual(w.select_button.styleSheet(), "")
-        self._scheme(Qt.ColorScheme.Light)
-        self.assertEqual(w.convert_button.styleSheet(), "")
-
+        self.assertEqual(w._decision_phase(), "approval")
+        self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_LIGHT_QSS)
 
     def test_invalid_factor_is_secondary_but_corrected_factor_primary_across_themes(self):
+        """Invalid finance may guide focus, but never start conversion."""
         w = self._window()
         self._validated_approval(w)
         for scheme in (Qt.ColorScheme.Light, Qt.ColorScheme.Dark):
@@ -306,21 +300,24 @@ class DarkThemePilotTests(unittest.TestCase):
                 w.approved.setChecked(True)
                 self.assertTrue(w.approved.isChecked())
                 self.assertEqual(w._approved_digest, w._selected_digest)
-                self.assertFalse(w.convert_button.styleSheet(),
-                                 "A SHA-approved but invalid factor must not become primary")
+                self.assertFalse(w._conversion_is_ready_for_emphasis())
+                self.assertEqual(w.convert_button.styleSheet(), primary)
+                self.assertEqual(w._decision_phase(), "financial_review")
                 self.assertIn("ضریب تبدیل", w.status.text())
-                self.assertTrue(w.convert_button.isEnabled())
+                w.convert_button.click()
+                self.assertIsNone(w._thread)
+                self.assertIsNone(w.result)
+                self.assertIs(self.app.focusWidget(), w.factor)
                 w.factor.setText("10")
                 self.assertFalse(w.approved.isChecked())
-                self.assertFalse(w.convert_button.styleSheet())
                 w.approved.setChecked(True)
+                self.assertTrue(w._conversion_is_ready_for_emphasis())
+                self.assertEqual(w._decision_phase(), "ready")
                 self.assertEqual(w.convert_button.styleSheet(), primary)
-                self.assertFalse(w.select_button.styleSheet())
-                # Revoke between schemes, so the second iteration starts valid.
+                self.assertEqual(w.select_button.styleSheet(), "")
                 w.source_unit.setCurrentIndex(w.source_unit.findData("IRR"))
                 w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
                 w.approved.setChecked(True)
-                self.assertEqual(w.convert_button.styleSheet(), primary)
 
     def test_dark_palette_roles_native_inputs_and_focus(self):
         w = self._window()
@@ -408,7 +405,7 @@ class DarkThemePilotTests(unittest.TestCase):
                 self.app.processEvents()
             self.assertFalse(self.pilot.dark)
             self.assertEqual(w.approved.styleSheet(), "")
-            self.assertEqual(w.convert_button.styleSheet(), "")
+            self.assertEqual(w.convert_button.styleSheet(), _PRIMARY_LIGHT_QSS)
             self.assertFalse(w._presentation_refresh_queued)
             self.assertFalse(self.pilot._queued)
         finally:

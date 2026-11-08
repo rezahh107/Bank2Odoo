@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 import platform
 import subprocess
 import sys
+from unittest.mock import patch
 
 from PySide6.QtCore import Qt, qVersion
 from PySide6.QtGui import QFontInfo, QPalette
@@ -58,7 +59,13 @@ def assert_hierarchy(w, variant, phase):
     if count > 1:
         raise AssertionError("Two competing accented actions")
     if variant == "baseline":
-        return  # The known defect is evidence, not a passing requirement.
+        return  # The historical known defect is evidence, not a passing requirement.
+    if variant == "product":
+        # Concept A: the decision desk CTA is the sole accent in every idle
+        # phase, including navigation to the one real approval checkbox.
+        if count != 1 or not w.convert_button.styleSheet() or w.select_button.styleSheet():
+            raise AssertionError("Current Decision Desk does not own the unique primary action")
+        return
     if phase == "initial":
         expected = 1 if variant in ("variant_B", "product") else 0
         if bool(w.convert_button.styleSheet()) or count != expected:
@@ -132,21 +139,23 @@ def run_case(app, ui_module, variant, scheme, width, height, source, output):
     app.processEvents()
     ui_module.configure_application(app)
     w = ui_module.MainWindow()
-    w.resize(width, height)
+    # The 600/650px historical variants are preserved for comparison; Concept
+    # A must remain fixed two-column and report the clamped native window size.
+    effective_width = max(width, w.minimumWidth()) if variant == "product" else width
+    w.resize(effective_width, height)
     w.show()
     app.processEvents()
-    # Qt/Windows may shrink oversized windows on first show. Reassert native
-    # QWidget size after show before acquiring any original-resolution PNG.
-    w.resize(width, height)
+    w.resize(effective_width, height)
     app.processEvents()
-    if (w.width(), w.height()) != (width, height):
+    if (w.width(), w.height()) != (effective_width, height):
         raise RuntimeError(
             f"Windows Qt cannot capture requested widget geometry: "
-            f"requested={(width, height)} actual={(w.width(), w.height())}"
+            f"requested={(effective_width, height)} actual={(w.width(), w.height())}"
         )
     key = f"{variant}_{scheme}_{width}x{height}"
     meta = {
-        "variant": variant, "requested_size": [width, height],
+        "variant": variant, "requested_size": [effective_width, height],
+        "nominal_historical_size": [width, height],
         "actual_postshow_widget_size": [w.width(), w.height()],
         "scheme": scheme, "effective_style": app.style().objectName(),
         "effective_scheme_hint": app.styleHints().colorScheme().name,
@@ -166,11 +175,12 @@ def run_case(app, ui_module, variant, scheme, width, height, source, output):
             # Genuine pointer-to-guidance path, including focus selection.
             w.scroll.ensureWidgetVisible(w.convert_button)
             app.processEvents()
-            QTest.mouseClick(w.convert_button, Qt.MouseButton.LeftButton)
+            with patch.object(product.QFileDialog, "getOpenFileName",
+                              return_value=("", "")) as picker:
+                QTest.mouseClick(w.convert_button, Qt.MouseButton.LeftButton)
             app.processEvents()
-            if ("ابتدا یک گزارش بانکی" not in w.status.text()
-                    or app.focusWidget() is not w.select_button or w.result is not None):
-                raise AssertionError("Enabled guidance-first conversion no longer guides safely")
+            if picker.call_count != 1 or w.source is not None or w.result is not None:
+                raise AssertionError("Initial decision must open source picker without inventing a result")
         w.set_source(source)
         wait_finished(w, w.detection_done, app)
         if w.source is None:
@@ -202,8 +212,8 @@ def run_case(app, ui_module, variant, scheme, width, height, source, output):
             w.approved.setChecked(True)
             if w._approved_digest != w._selected_digest:
                 raise AssertionError("Invalid-factor snapshot lacks explicit SHA approval")
-            if w.convert_button.styleSheet():
-                raise AssertionError("Financially invalid factor wrongly gains primary accent")
+            if w._conversion_is_ready_for_emphasis() or not w.convert_button.styleSheet():
+                raise AssertionError("Invalid factor must stay unconvertible despite visual guidance")
             if ("ضریب تبدیل" not in w.status.text()
                     or "اعتبارسنجی و تبدیل را اجرا" in w.status.text()):
                 raise AssertionError("Approved invalid-factor guidance is misleading")
@@ -215,13 +225,12 @@ def run_case(app, ui_module, variant, scheme, width, height, source, output):
                     or "ضریب" not in w.status.text()):
                 raise AssertionError("Rejected factor did not guide to its actual field")
             w.factor.setText("10")
-            if w.approved.isChecked() or w.convert_button.styleSheet():
+            if w.approved.isChecked() or w._conversion_is_ready_for_emphasis():
                 raise AssertionError("Factor correction failed to revoke old approval")
             w.approved.setChecked(True)
             assert_hierarchy(w, variant, "approved")
             capture(app, w, output, key, "corrected_factor", meta)
-        # Explicit negative control: resurrect the historically conflicting
-        # bright convert style while the source is missing; detector MUST fail.
+        # Negative control: a competing accented source button must be detected.
         if variant == "product":
             # Reset only the UI's input identity for this isolated style
             # mutation; never start a nonexistent source-detection worker.
@@ -232,16 +241,16 @@ def run_case(app, ui_module, variant, scheme, width, height, source, output):
             app.processEvents()
             if w.source is not None or w._thread is not None:
                 raise AssertionError("Negative-control setup failed")
-            w.convert_button.setStyleSheet(
-                product._PRIMARY_DARK_QSS if scheme == "dark"
-                else product._PRIMARY_LIGHT_QSS
+            w.select_button.setStyleSheet(
+                product._SOURCE_DARK_QSS if scheme == "dark"
+                else product._SOURCE_LIGHT_QSS
             )
             try:
                 assert_hierarchy(w, variant, "initial")
             except AssertionError:
-                meta["negative_control_conflicting_convert"] = "DETECTED"
+                meta["negative_control_competing_source"] = "DETECTED"
             else:
-                raise AssertionError("Prominent empty-state conversion negative control escaped")
+                raise AssertionError("Competing source accent negative control escaped")
             w._apply_theme_controls()
             assert_hierarchy(w, variant, "initial")
         return meta
@@ -298,7 +307,7 @@ def main():
         f"Base: {args.baseline_sha}; head: {report['checkout_head']}\n"
         f"Cases: {len(report['cases'])}; source selected vs SHA-approved "
         "and initial, Light/Dark, 940/650/600 requested widths.\n"
-        "Negative control on product reintroduces prominent invalid conversion "
+        "Negative control on product introduces a second accented source action "
         "and must be detected. Original PNGs and effective environment in JSON.\n"
         "This does not prove physical Windows 11, alternate DPI, Persian font "
         "raster quality, or human accountant UX acceptance.\n",
@@ -331,7 +340,7 @@ def main():
                       + base64.b64encode(bytes(data)).decode("ascii"))
     print("PRIMARY_ACTION_HIERARCHY_QT_CASES:", len(report["cases"]))
     print("NEGATIVE_CONTROL:", [
-        c.get("negative_control_conflicting_convert")
+        c.get("negative_control_competing_source")
         for c in report["cases"] if c["variant"] == "product"
     ])
 

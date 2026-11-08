@@ -1,0 +1,152 @@
+name: Bank2Odoo PR32 Windows 11 ARM64 native Qt qualification
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/qt-win11-arm-pr32.yml'
+      - 'tests/qt_concept_a_probe.py'
+      - 'tests/qt_connected_operator_pilot.py'
+
+permissions:
+  contents: read
+
+jobs:
+  windows11-arm-native-qt:
+    if: github.event.pull_request.number == 32 && github.event.pull_request.head.repo.full_name == 'rezahh107/Bank2Odoo'
+    runs-on: windows-11-arm
+    timeout-minutes: 35
+    env:
+      QT_QPA_PLATFORM: windows
+      PYTHONFAULTHANDLER: "1"
+    steps:
+      - name: Check out exact PR Head (no stored credentials)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Verify exact checkout and Windows 11 ARM64 runner
+        shell: pwsh
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $actual = (git rev-parse HEAD).Trim()
+          if ($actual -ne $env:EXPECTED_HEAD) { throw "PR checkout mismatch: $actual" }
+          if ($env:RUNNER_ARCH -ne 'ARM64') { throw "Runner is not ARM64: $env:RUNNER_ARCH" }
+          $osInfo = Get-CimInstance Win32_OperatingSystem
+          if ($osInfo.Caption -notmatch 'Windows 11') { throw "Not Windows 11: $($osInfo.Caption)" }
+          $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
+          $metadata = [ordered]@{
+            head = $actual
+            runner_name = $env:RUNNER_NAME
+            runner_arch = $env:RUNNER_ARCH
+            runner_os = $env:RUNNER_OS
+            image_os = $env:ImageOS
+            image_version = $env:ImageVersion
+            os_caption = $osInfo.Caption
+            os_version = $osInfo.Version
+            os_build = $osInfo.BuildNumber
+            cpu_name = $cpu.Name
+            processor_architecture = $env:PROCESSOR_ARCHITECTURE
+            display_scale = 'NOT_PROVEN: simulated QT_SCALE_FACTOR only'
+          }
+          $dir = Join-Path $env:RUNNER_TEMP 'bank2odoo-win11-arm'
+          New-Item -ItemType Directory -Path $dir -Force | Out-Null
+          $metadata | ConvertTo-Json -Depth 4 | Set-Content -Path (Join-Path $dir 'runner.json') -Encoding utf8
+          $metadata | Format-List
+      - name: Install existing pinned uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.10.0"
+          enable-cache: false
+      - name: Install native ARM64 Python 3.13 and exact locked dependencies
+        shell: pwsh
+        run: |
+          uv --version
+          uv python install cpython-3.13-windows-aarch64
+          if ($LASTEXITCODE -ne 0) { throw 'Native Python 3.13 installation failed' }
+          uv sync --locked --python cpython-3.13-windows-aarch64
+          if ($LASTEXITCODE -ne 0) { throw 'Locked ARM64 wheel resolution or sync failed' }
+      - name: Assert native Python architecture and real Windows QPA widget
+        shell: pwsh
+        run: |
+          @'
+          import json
+          import os
+          import platform
+          import sys
+          from pathlib import Path
+          import PySide6
+          import shiboken6
+          from PySide6.QtCore import qVersion
+          from PySide6.QtGui import QFontInfo
+          from PySide6.QtWidgets import QApplication
+          from bank2odoo.ui.window import MainWindow, configure_application
+          machine = platform.machine()
+          assert machine.lower() in ("arm64", "aarch64"), f"Emulated Python: {machine}"
+          assert sys.version_info[:2] == (3, 13)
+          app = QApplication([])
+          configure_application(app)
+          assert app.platformName() == "windows", f"Not native Windows QPA: {app.platformName()}"
+          w = MainWindow()
+          w.show()
+          app.processEvents()
+          assert w.isVisible()
+          report = {
+              "python": sys.version, "python_executable": sys.executable,
+              "machine": machine, "platform": platform.platform(),
+              "pyside": PySide6.__version__, "shiboken": shiboken6.__version__,
+              "qt": qVersion(), "qpa": app.platformName(),
+              "qt_style": app.style().objectName(),
+              "font": QFontInfo(app.font()).family(),
+              "qt_scale_factor": os.environ.get("QT_SCALE_FACTOR"),
+              "actual_windows_dpi_and_physical_display": "NOT_PROVEN",
+          }
+          output = Path(os.environ["RUNNER_TEMP"]) / "bank2odoo-win11-arm"
+          output.mkdir(parents=True, exist_ok=True)
+          (output / "native-qt.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+          print("NATIVE_ARM64_QT_PREFLIGHT", json.dumps(report))
+          w.close()
+          '@ | uv run --locked python -
+          if ($LASTEXITCODE -ne 0) { throw 'Native Windows ARM64 Qt initialization failed' }
+      - name: Run bounded synthetic financial, publisher, keyboard and focus regressions
+        shell: pwsh
+        run: |
+          uv run --locked python -m unittest -v tests.test_concept_a tests.test_save_lifecycle tests.test_gui.AccountantUiTests.test_gui_partial_report_publication_requires_manual_review tests.test_gui.AccountantUiTests.test_gui_ambiguous_external_race_does_not_claim_success tests.test_gui.AccountantUiTests.test_complete_pair_with_temp_cleanup_fault_is_warning_not_false_failure tests.test_gui.AccountantUiTests.test_mutated_valid_source_digest_rejected_after_conversion
+          if ($LASTEXITCODE -ne 0) { throw 'Focused native ARM64 regression failed' }
+      - name: Capture native Qt critical states and geometry at simulated scales
+        shell: pwsh
+        run: |
+          foreach ($scale in @('1', '1.25', '1.5')) {
+            $env:QT_SCALE_FACTOR = $scale
+            uv run --locked python -m tests.qt_concept_a_probe --output "$env:RUNNER_TEMP/bank2odoo-win11-arm/qt-$scale"
+            if ($LASTEXITCODE -ne 0) { throw "Native ARM64 Qt state probe failed at simulated scale $scale" }
+          }
+      - name: Connected two-statement operator pilot (native Qt, synthetic)
+        shell: pwsh
+        run: |
+          uv run --locked python -m tests.qt_connected_operator_pilot --output "$env:RUNNER_TEMP/bank2odoo-win11-arm/connected-pilot"
+          if ($LASTEXITCODE -ne 0) { throw 'Connected operator pilot failed' }
+      - name: Record evidence limitations
+        if: always()
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP 'bank2odoo-win11-arm'
+          New-Item -ItemType Directory -Path $dir -Force | Out-Null
+          @'
+          PR #32 experimental Windows 11 ARM64 native Qt qualification only.
+          All input and output data are fictional. No private financial data.
+          QT_SCALE_FACTOR=1/1.25/1.5 is Qt-simulated scaling, not physical display DPI.
+          Internal Qt scroll reachability is independent of whole-frame work-area fit.
+          No evidence of Windows 11 x64, installed accountant font, physical display,
+          Narrator/NVDA, live keyboard accounting workflow, or human UX acceptance.
+          New experimental job is not an approved release gate.
+          '@ | Set-Content -Path (Join-Path $dir 'LIMITS.txt') -Encoding utf8
+      - name: Upload scoped Windows 11 ARM64 synthetic artifacts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pr32-windows11-arm64-native-qt
+          path: ${{ runner.temp }}/bank2odoo-win11-arm/
+          retention-days: 7
+          if-no-files-found: warn
