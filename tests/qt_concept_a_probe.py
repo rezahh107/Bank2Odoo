@@ -20,6 +20,8 @@ from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QBoxLayout
 
 from bank2odoo.ui.window import MainWindow, configure_application
+from bank2odoo.reporting import output as publisher
+from bank2odoo.reporting.output import save_candidate as actual_save_candidate
 from tests.test_gui import statement
 
 
@@ -127,6 +129,113 @@ def capture(app, window, name, directory, report):
         raise AssertionError("Concept A evidence/action hierarchy failed: " + name)
 
 
+
+def capture_publication_outcomes(app, output, results, root):
+    """Native Qt PASS + real synthetic PARTIAL/AMBIGUOUS publisher paths.
+
+    Only test fixtures inject a second-link fault. The production publisher,
+    classification, and UI rendering paths are unchanged.
+    """
+    for width, height in ((900, 480), (940, 650)):
+        for outcome in ("COMPLETE_PAIR", "PARTIAL", "AMBIGUOUS"):
+            source = root / f"fictional_{outcome}_{width}_{height}.csv"
+            statement(source)
+            folder = root / f"private_{outcome}_{width}_{height}"
+            folder.mkdir()
+            w = MainWindow()
+            w.resize(width, height)
+            w.show()
+            app.processEvents()
+            try:
+                w.set_source(source)
+                joined(w, w.detection_done)
+                if w.source is None:
+                    raise AssertionError("Fictional source detection failed")
+                w.source_unit.setCurrentIndex(w.source_unit.findData("IRR"))
+                w.target_unit.setCurrentIndex(w.target_unit.findData("IRR"))
+                w.approved.setFocus()
+                QTest.keyClick(w.approved, Qt.Key.Key_Space)
+                if not w.approved.isChecked() or w._approved_digest != w._selected_digest:
+                    raise AssertionError("Explicit keyboard approval was not SHA-bound")
+                w.start_conversion()
+                joined(w, w.conversion_done)
+                if w.result is None or not w.result.balance_status.startswith("PASS"):
+                    raise AssertionError("Fictional PASS prerequisite failed")
+                w.output_directory.setText(str(folder))
+
+                if outcome == "COMPLETE_PAIR":
+                    w.save_files()
+                    joined(w, w.save_done)
+                else:
+                    real_link = publisher.os.link
+                    call_count = 0
+
+                    def synthetic_second_link_failure(src, dst):
+                        nonlocal call_count
+                        call_count += 1
+                        if call_count == 2:
+                            if outcome == "AMBIGUOUS":
+                                Path(dst).write_bytes(b"fictional independent writer bytes")
+                            raise OSError("synthetic second-link publication fault")
+                        return real_link(src, dst)
+
+                    def injected_save(result, csv_path, report_path):
+                        with patch.object(publisher.os, "link",
+                                          side_effect=synthetic_second_link_failure):
+                            return actual_save_candidate(result, csv_path, report_path)
+
+                    with patch("bank2odoo.ui.window.save_candidate",
+                               side_effect=injected_save):
+                        w.save_files()
+                        joined(w, w.save_done)
+
+                observed = w.save_outcome_label.text()
+                focus = app.focusWidget()
+                transition_focus = (
+                    focus.accessibleName() or focus.objectName()
+                    or type(focus).__name__ if focus is not None else None
+                )
+                if not observed.startswith(outcome):
+                    raise AssertionError(f"Expected {outcome}, received {observed}")
+                if outcome == "COMPLETE_PAIR":
+                    if not w._saved or not w.saved_path_fields.isVisible():
+                        raise AssertionError("Verified full pair not presented")
+                    for field in (w.saved_csv_path, w.saved_report_path):
+                        if not field.isReadOnly() or field.layoutDirection() != Qt.LayoutDirection.LeftToRight:
+                            raise AssertionError("Saved output path is not read-only LTR")
+                        field.selectAll()
+                        field.copy()
+                        if app.clipboard().text() != field.text():
+                            raise AssertionError("Saved output path cannot be copied")
+                    if not Path(w.saved_csv_path.text()).is_file() or not Path(w.saved_report_path.text()).is_file():
+                        raise AssertionError("Verified final paths are not actual files")
+                    if not Path(w.saved_csv_path.text()).read_text(encoding="utf-8-sig").startswith("Date,Label,Amount"):
+                        raise AssertionError("CSV output contract changed")
+                else:
+                    if (w._saved or w.saved_path_fields.isVisible()
+                            or w.saved_csv_path.text() or w.saved_report_path.text()
+                            or not w._destination_retry_blocked()
+                            or w.save_button.isEnabled()
+                            or w._decision_phase() != "save_error"):
+                        raise AssertionError(f"{outcome} incorrectly advertised a safe full save")
+                    reports = list(folder.glob("*_control.txt"))
+                    csvs = list(folder.glob("*_candidate.csv"))
+                    if len(reports) != 1 or len(csvs) != (1 if outcome == "AMBIGUOUS" else 0):
+                        raise AssertionError(f"{outcome} disk outcome differs from actual expected files")
+                    if outcome == "AMBIGUOUS" and csvs[0].read_bytes() != b"fictional independent writer bytes":
+                        raise AssertionError("Independent writer's output was changed")
+
+                capture(app, w, f"{width}x{height}_{outcome.lower()}", output, results)
+                results[-1]["publication_outcome"] = outcome
+                results[-1]["focus_after_publication"] = transition_focus
+                results[-1]["retry_blocked"] = w._destination_retry_blocked()
+                results[-1]["final_paths_exposed"] = w.saved_path_fields.isVisible()
+                results[-1]["disk_final_count"] = len(list(folder.glob("Bank2Odoo_*")))
+            finally:
+                w.close()
+                app.processEvents()
+
+
 def run(output):
     output.mkdir(parents=True, exist_ok=True)
     app = QApplication.instance() or QApplication([])
@@ -185,10 +294,15 @@ def run(output):
             finally:
                 w.close()
                 app.processEvents()
+        capture_publication_outcomes(app, output, results, tmpdir)
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     report = {
         "head": head, "github_event_sha": os.getenv("GITHUB_SHA"),
         "platform": platform.platform(), "python": sys.version.split()[0],
+        "machine": platform.machine(), "os_release": platform.release(),
+        "runner_arch": os.getenv("RUNNER_ARCH"),
+        "runner_image_os": os.getenv("ImageOS"),
+        "runner_image_version": os.getenv("ImageVersion"),
         "pyside": __import__("PySide6").__version__, "qt": qVersion(),
         "qpa": app.platformName(), "qt_scale_factor": os.getenv("QT_SCALE_FACTOR"),
         "visual_reference": "B2O-CRE-S5-001 Concept A; images are native Qt, not HTML",
